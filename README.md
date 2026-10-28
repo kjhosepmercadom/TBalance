@@ -46,6 +46,16 @@ perfiles/<ID>/productos.json   categorias.json  proveedores.json
 perfiles/<ID>/entradas.json    salidas.json     ventas.json
 ```
 
+## Copias de seguridad
+
+Sección **Respaldos** del menú lateral:
+
+- **Crear copia:** genera `~/.inventariopro/respaldos/TBalance_<fecha>_<hora>.zip` con todos los perfiles y sus datos.
+- **Restaurar:** reemplaza los datos actuales por los de la copia elegida. Antes guarda automáticamente una copia del estado actual (`TBalance_antes-de-restaurar_...zip`), así que una restauración siempre se puede deshacer.
+- **Eliminar:** borra el archivo de la copia.
+
+Clases involucradas: `ArchivadorZip` y `RespaldoRepository` (persistencia), `GestorRespaldo` (servicio), `AppContext.recargar()` y `RespaldoController` (bridge).
+
 ## Gestión con Git
 
 | Rama | Uso |
