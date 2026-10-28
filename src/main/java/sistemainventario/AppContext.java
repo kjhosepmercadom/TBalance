@@ -1,13 +1,17 @@
 package sistemainventario;
 
 import sistemainventario.exception.ValidacionException;
+import sistemainventario.model.Respaldo;
+import sistemainventario.repository.ArchivadorZip;
 import sistemainventario.repository.ConfiguracionGlobalRepository;
 import sistemainventario.repository.DirectorioPerfiles;
 import sistemainventario.repository.JsonFileStore;
 import sistemainventario.repository.PerfilRepository;
+import sistemainventario.repository.RespaldoRepository;
 import sistemainventario.service.FabricaServiciosPerfil;
 import sistemainventario.service.GestorConfiguracionGlobal;
 import sistemainventario.service.GestorPerfiles;
+import sistemainventario.service.GestorRespaldo;
 import sistemainventario.service.ServiciosPerfil;
 
 import java.nio.file.Path;
@@ -23,19 +27,37 @@ import java.util.Optional;
  *
  * <p>Cambios respecto a P2: los campos dejaron de ser públicos y mutables
  * (encapsulamiento) y ya no se crean repositorios duplicados para el mismo
- * archivo.</p>
+ * archivo. Después de restaurar una copia de seguridad, {@link #recargar()}
+ * vuelve a leer todos los datos desde disco.</p>
  */
 public final class AppContext {
 
     private static final Path DIRECTORIO_DATOS =
             Paths.get(System.getProperty("user.home"), ".inventariopro", "data");
 
+    private static final String CARPETA_RESPALDOS = "respaldos";
+
     private static AppContext instancia;
 
-    private final GestorPerfiles gestorPerfiles;
+    private final Path directorioDatos;
+    private final GestorRespaldo gestorRespaldo;
+    private GestorPerfiles gestorPerfiles;
     private ServiciosPerfil serviciosActivos;
 
     private AppContext(Path directorioDatos) {
+        this.directorioDatos = directorioDatos;
+        JsonFileStore.crearDirectorio(directorioDatos);
+        Path carpetaRespaldos = directorioDatos.resolveSibling(CARPETA_RESPALDOS);
+        this.gestorRespaldo = new GestorRespaldo(directorioDatos,
+                new RespaldoRepository(carpetaRespaldos), new ArchivadorZip());
+        recargar();
+    }
+
+    /**
+     * Construye de nuevo los repositorios y servicios leyendo los archivos
+     * JSON. Se usa al iniciar y después de restaurar una copia de seguridad.
+     */
+    public void recargar() {
         JsonFileStore.crearDirectorio(directorioDatos);
         DirectorioPerfiles directorios = new DirectorioPerfiles(directorioDatos);
         this.gestorPerfiles = new GestorPerfiles(
@@ -46,6 +68,22 @@ public final class AppContext {
         this.serviciosActivos = gestorPerfiles.resolverPerfilInicial()
                 .map(gestorPerfiles::crearServicios)
                 .orElse(null);
+    }
+
+    /**
+     * Restaura una copia de seguridad y recarga todos los datos en memoria.
+     *
+     * @param nombre archivo .zip a restaurar
+     * @return la copia automática del estado anterior
+     */
+    public Respaldo restaurarRespaldo(String nombre) {
+        Respaldo copiaPrevia = gestorRespaldo.restaurar(nombre);
+        recargar();
+        return copiaPrevia;
+    }
+
+    public GestorRespaldo getGestorRespaldo() {
+        return gestorRespaldo;
     }
 
     /** @return la instancia única, creada la primera vez que se solicita */
