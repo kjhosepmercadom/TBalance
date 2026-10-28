@@ -17,6 +17,8 @@
         <maven.compiler.target>17</maven.compiler.target>
         <javafx.version>21.0.2</javafx.version>
         <gson.version>2.10.1</gson.version>
+        <zxing.version>3.5.3</zxing.version>
+        <webcam.version>0.3.12</webcam.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <mainClass>sistemainventario.Launcher</mainClass>
     </properties>
@@ -47,6 +49,24 @@
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
             <version>${gson.version}</version>
+        </dependency>
+        <!-- ZXing: generacion de codigos QR (funciona sin internet) -->
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>core</artifactId>
+            <version>${zxing.version}</version>
+        </dependency>
+        <!-- webcam-capture: lee la camara del computador para la venta por QR -->
+        <dependency>
+            <groupId>com.github.sarxos</groupId>
+            <artifactId>webcam-capture</artifactId>
+            <version>${webcam.version}</version>
+        </dependency>
+        <!-- Silencia los mensajes de registro internos de webcam-capture -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-nop</artifactId>
+            <version>1.7.36</version>
         </dependency>
     </dependencies>
 
