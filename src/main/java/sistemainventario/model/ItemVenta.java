@@ -1,54 +1,96 @@
 package sistemainventario.model;
 
+import sistemainventario.exception.ValidacionException;
+import sistemainventario.util.TextoUtil;
+
+/**
+ * Línea de detalle de una {@link Venta}: producto, cantidad y precio.
+ *
+ * <p><b>GRASP Experto:</b> conoce cantidad y precio unitario, por lo tanto
+ * es quien calcula su subtotal. El atributo {@code subtotal} se conserva
+ * solo para que el JSON de P2 siga siendo compatible.</p>
+ */
 public class ItemVenta {
 
     private String productoId;
     private String nombreProducto;
-    private int    cantidad;
+    private int cantidad;
     private double precioUnitario;
     private double subtotal;
 
-    public ItemVenta() {}
-
-    public ItemVenta(String productoId, String nombreProducto,
-                     int cantidad, double precioUnitario) {
-        this.productoId      = productoId;
-        this.nombreProducto  = nombreProducto;
-        this.cantidad        = cantidad;
-        this.precioUnitario  = precioUnitario;
-        this.subtotal        = calcularSubtotal();
-    }
-
-    private double calcularSubtotal() {
-        return cantidad * precioUnitario;
+    /** Constructor vacío requerido por Gson. */
+    public ItemVenta() {
     }
 
     /**
-     * Devuelve el subtotal siempre calculado como cantidad × precio.
-     * Si por deserialización el subtotal almacenado es 0, se recalcula
-     * para garantizar la consistencia del total de la venta.
+     * Visibilidad de paquete: según GRASP Creator, solo {@link Venta}
+     * (que agrega sus ítems) crea instancias con datos.
      */
+    ItemVenta(String productoId, String nombreProducto, int cantidad, double precioUnitario) {
+        this.productoId = productoId;
+        this.nombreProducto = nombreProducto;
+        this.cantidad = cantidad;
+        this.precioUnitario = precioUnitario;
+        sincronizarSubtotal();
+    }
+
+    /**
+     * @throws ValidacionException si falta el producto, la cantidad no es
+     *                             positiva o el precio es negativo
+     */
+    public void validar() {
+        if (TextoUtil.esVacio(productoId)) {
+            throw new ValidacionException("Cada item de la venta debe tener un producto");
+        }
+        if (cantidad <= 0) {
+            throw new ValidacionException("La cantidad vendida debe ser mayor que cero");
+        }
+        if (precioUnitario < 0) {
+            throw new ValidacionException("El precio unitario no puede ser negativo");
+        }
+    }
+
+    /** @return cantidad × precio unitario, siempre calculado */
     public double getSubtotal() {
-        if (subtotal > 0) return subtotal;
-        return calcularSubtotal();
+        return cantidad * precioUnitario;
     }
 
-    public void setCantidad(int c) {
-        this.cantidad = c;
-        this.subtotal = calcularSubtotal();
+    /** Actualiza el atributo persistido con el subtotal calculado. */
+    void sincronizarSubtotal() {
+        this.subtotal = getSubtotal();
     }
 
-    public void setPrecioUnitario(double p) {
-        this.precioUnitario = p;
-        this.subtotal = calcularSubtotal();
+    public String getProductoId() {
+        return productoId;
     }
 
-    public void setSubtotal(double s) { this.subtotal = s; }
+    public void setProductoId(String productoId) {
+        this.productoId = productoId;
+    }
 
-    public String getProductoId()             { return productoId; }
-    public void   setProductoId(String p)     { this.productoId = p; }
-    public String getNombreProducto()         { return nombreProducto; }
-    public void   setNombreProducto(String n) { this.nombreProducto = n; }
-    public int    getCantidad()               { return cantidad; }
-    public double getPrecioUnitario()         { return precioUnitario; }
+    public String getNombreProducto() {
+        return nombreProducto;
+    }
+
+    public void setNombreProducto(String nombreProducto) {
+        this.nombreProducto = nombreProducto;
+    }
+
+    public int getCantidad() {
+        return cantidad;
+    }
+
+    public void setCantidad(int cantidad) {
+        this.cantidad = cantidad;
+        sincronizarSubtotal();
+    }
+
+    public double getPrecioUnitario() {
+        return precioUnitario;
+    }
+
+    public void setPrecioUnitario(double precioUnitario) {
+        this.precioUnitario = precioUnitario;
+        sincronizarSubtotal();
+    }
 }

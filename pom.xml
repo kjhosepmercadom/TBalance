@@ -7,9 +7,10 @@
 
     <groupId>com.inventariopro</groupId>
     <artifactId>SistemaInventario</artifactId>
-    <version>2.0.0</version>
+    <version>3.0.0-SNAPSHOT</version>
     <packaging>jar</packaging>
-    <name>Sistema de Inventario - Tbase</name>
+    <name>Sistema de Inventario TBalance</name>
+    <description>Sistema de inventario de escritorio (JavaFX + WebView + JSON). Proyecto de aula Programacion III - UPC.</description>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
@@ -64,23 +65,9 @@
                 <artifactId>javafx-maven-plugin</artifactId>
                 <version>0.0.8</version>
                 <configuration>
-                    <jdkHome>C:\Program Files\Java\jdk-17</jdkHome>
+                    <mainClass>sistemainventario.Main</mainClass>
+                    <launcher>inventario</launcher>
                 </configuration>
-                <executions>
-                    <execution>
-                        <id>default-cli</id>
-                        <configuration>
-                            <mainClass>${mainClass}</mainClass>
-                            <launcher>inventario</launcher>
-                            <jvmOptions>
-                                <option>--module-path</option>
-                                <option>${java.home}/lib</option>
-                                <option>--add-modules</option>
-                                <option>javafx.controls,javafx.fxml,javafx.web</option>
-                            </jvmOptions>
-                        </configuration>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
