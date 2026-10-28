@@ -22,3 +22,24 @@
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
+
+# ── Reglas del proyecto TBalance ──
+# Compilación
+target/
+out/
+*.class
+
+# IDEs
+.idea/
+*.iml
+nbproject/
+nb-configuration.xml
+nbactions.xml
+.vscode/
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Carpetas de trabajo de cada integrante (scripts de commits del avance)
+P3_*/
