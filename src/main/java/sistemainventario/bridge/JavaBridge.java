@@ -10,7 +10,8 @@ import sistemainventario.AppContext;
  * conversión JSON, reglas de negocio, generación de IDs y manejo de
  * errores. Ahora solo delega en controladores por caso de uso
  * ({@link PerfilController}, {@link InventarioController},
- * {@link CatalogoController}, {@link TransaccionController}), cada uno con
+ * {@link CatalogoController}, {@link TransaccionController},
+ * {@link RespaldoController}), cada uno con
  * <b>alta cohesión</b>.</p>
  *
  * <p>Los nombres y firmas de los métodos públicos se mantienen idénticos a
@@ -22,6 +23,7 @@ public class JavaBridge {
     private final InventarioController inventario;
     private final CatalogoController catalogo;
     private final TransaccionController transacciones;
+    private final RespaldoController respaldos;
     private final NotificadorVista notificador;
 
     public JavaBridge(AppContext contexto, NotificadorVista notificador) {
@@ -30,6 +32,7 @@ public class JavaBridge {
         this.inventario = new InventarioController(contexto);
         this.catalogo = new CatalogoController(contexto);
         this.transacciones = new TransaccionController(contexto);
+        this.respaldos = new RespaldoController(contexto, notificador);
     }
 
     // ── Perfiles ────────────────────────────────────────────────────────
@@ -156,6 +159,28 @@ public class JavaBridge {
 
     public String crearVenta(String jsonVenta) {
         return transacciones.crearVenta(jsonVenta);
+    }
+
+    // ── Copias de seguridad ─────────────────────────────────────────────
+
+    public String listarRespaldos() {
+        return respaldos.listarRespaldos();
+    }
+
+    public String crearRespaldo() {
+        return respaldos.crearRespaldo();
+    }
+
+    public String restaurarRespaldo(String nombre) {
+        return respaldos.restaurarRespaldo(nombre);
+    }
+
+    public String eliminarRespaldo(String nombre) {
+        return respaldos.eliminarRespaldo(nombre);
+    }
+
+    public String obtenerCarpetaRespaldos() {
+        return respaldos.obtenerCarpetaRespaldos();
     }
 
     // ── Utilidades de la vista ──────────────────────────────────────────
