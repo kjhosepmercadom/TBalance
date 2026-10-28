@@ -20,11 +20,11 @@ public class GestorProveedores {
     }
 
     public Proveedor buscarPorId(String id) {
-        return repo.buscarPorId(id);
+        return repo.buscarPorId(id).orElse(null);
     }
 
     public boolean agregar(Proveedor p) {
-        if (p == null || repo.buscarPorId(p.getId()) != null) return false;
+        if (p == null || repo.existe(p.getId())) return false;
         if (p.getId() == null || p.getId().isBlank())
             p.setId(IdGenerator.siguienteNumerico(
                     repo.listarTodos().stream().map(Proveedor::getId).collect(Collectors.toList())));
@@ -33,11 +33,11 @@ public class GestorProveedores {
     }
 
     public boolean actualizar(Proveedor p) {
-        return repo.actualizar(x -> x.getId().equals(p.getId()), p);
+        return repo.actualizar(p);
     }
 
     public boolean eliminar(String id) {
-        return repo.eliminar(p -> p.getId().equals(id));
+        return repo.eliminar(id);
     }
 
     public List<Proveedor> buscar(String texto) {

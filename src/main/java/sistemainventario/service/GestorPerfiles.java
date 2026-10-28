@@ -47,7 +47,7 @@ public class GestorPerfiles {
     }
 
     public Perfil buscarPorId(String id) {
-        return perfilRepo.buscarPorId(id);
+        return perfilRepo.buscarPorId(id).orElse(null);
     }
 
     public Perfil getPerfilActivo() {
@@ -104,14 +104,14 @@ public class GestorPerfiles {
 
     // ── EDITAR ────────────────────────────────────────────────────────
     public boolean actualizar(Perfil perfil) {
-        return perfilRepo.actualizar(p -> p.getId().equals(perfil.getId()), perfil);
+        return perfilRepo.actualizar(perfil);
     }
 
     // ── ELIMINAR ──────────────────────────────────────────────────────
     public boolean eliminar(String id) {
         if (id == null) return false;
-        if (perfilRepo.buscarPorId(id) == null) return false;
-        boolean ok = perfilRepo.eliminar(p -> id.equals(p.getId()));
+        if (!perfilRepo.existe(id)) return false;
+        boolean ok = perfilRepo.eliminar(id);
         if (ok) {
             eliminarDirectorioPerfil(id);
             if (id.equals(getPerfilActivoId())) {
