@@ -20,15 +20,16 @@ public class GestorCategorias {
     }
 
     public Categoria buscarPorId(String id) {
-        return repo.buscarPorId(id);
+        return repo.buscarPorId(id).orElse(null);
     }
 
     public Categoria buscarPorNombre(String nombre) {
-        return repo.buscarPorNombre(nombre);
+        if (nombre == null) return null;
+        return repo.filtrar(c -> nombre.equalsIgnoreCase(c.getNombre())).stream().findFirst().orElse(null);
     }
 
     public boolean agregar(Categoria c) {
-        if (c == null || repo.buscarPorId(c.getId()) != null) return false;
+        if (c == null || repo.existe(c.getId())) return false;
         if (c.getId() == null || c.getId().isBlank())
             c.setId("CAT-" + System.currentTimeMillis());
         repo.agregar(c);
@@ -36,10 +37,10 @@ public class GestorCategorias {
     }
 
     public boolean actualizar(Categoria c) {
-        return repo.actualizar(x -> x.getId().equals(c.getId()), c);
+        return repo.actualizar(c);
     }
 
     public boolean eliminar(String id) {
-        return repo.eliminar(c -> c.getId().equals(id));
+        return repo.eliminar(id);
     }
 }

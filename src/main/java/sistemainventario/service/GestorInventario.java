@@ -22,11 +22,11 @@ public class GestorInventario {
     }
 
     public Producto buscarPorId(String id) {
-        return repo.buscarPorId(id);
+        return repo.buscarPorId(id).orElse(null);
     }
 
     public boolean agregar(Producto p) {
-        if (p == null || repo.idExiste(p.getId())) return false;
+        if (p == null || repo.existe(p.getId())) return false;
         if (p.getId() == null || p.getId().isBlank())
             p.setId(IdGenerator.siguienteNumerico(
                     repo.listarTodos().stream().map(Producto::getId).collect(Collectors.toList())));
@@ -35,11 +35,11 @@ public class GestorInventario {
     }
 
     public boolean actualizar(Producto p) {
-        return repo.actualizar(x -> x.getId().equals(p.getId()), p);
+        return repo.actualizar(p);
     }
 
     public boolean eliminar(String id) {
-        return repo.eliminar(p -> p.getId().equals(id));
+        return repo.eliminar(id);
     }
 
     public List<Producto> buscarPorTexto(String texto) {
