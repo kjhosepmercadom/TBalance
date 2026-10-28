@@ -1,0 +1,2345 @@
+<!DOCTYPE html>
+<html lang="es" class="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tbalance</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] },
+          colors: {
+            brand: {
+              50:  '#fdf8f0',
+              100: '#faefd9',
+              200: '#f4d9a8',
+              300: '#ecbd6c',
+              400: '#e29d38',
+              500: '#d4821b',
+              600: '#c06a10',
+              700: '#a05010',
+              800: '#7e3f14',
+              900: '#663514',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #d1d5db; }
+    .dark ::-webkit-scrollbar-thumb { background: #374151; }
+    .dark ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+
+    @keyframes slide-up {
+      from { opacity: 0; transform: translateY(16px) scale(0.98); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .animate-slide-up { animation: slide-up 0.2s cubic-bezier(0.16,1,0.3,1) forwards; }
+
+    @keyframes fade-row {
+      from { opacity: 0; transform: translateX(-6px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    .fade-row { animation: fade-row 0.18s ease forwards; }
+
+    .kpi-card { transition: transform 0.18s ease, box-shadow 0.18s ease; }
+    .kpi-card:hover { transform: translateY(-2px); }
+
+    .nav-active { border-left: 3px solid #d4821b; padding-left: calc(0.75rem - 3px) !important; }
+
+    input:focus, select:focus { outline: none; box-shadow: 0 0 0 3px rgba(212,130,27,0.18); }
+    select { transition: background 0.15s, border-color 0.15s; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .animate-spin { animation: spin 0.9s linear infinite; }
+
+    .section-panel { display: none; }
+    .section-panel.active { display: block; }
+
+    @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+    .section-panel.active { animation: fadeIn 0.2s ease; }
+  </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 font-sans antialiased">
+
+<div class="flex h-screen overflow-hidden">
+
+  <!-- SIDEBAR -->
+  <aside id="sidebar" class="w-[210px] min-w-[210px] bg-white dark:bg-gray-800 border-r border-gray-100 dark:border-gray-700 flex flex-col shadow-sm z-20">
+
+    <div class="flex items-center gap-2.5 px-5 py-5 border-b border-gray-100 dark:border-gray-700">
+      <div class="w-9 h-9 rounded-xl bg-brand-500 flex items-center justify-center shadow-md">
+        <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10"/>
+        </svg>
+      </div>
+      <span class="font-bold text-[15px] text-gray-900 dark:text-white tracking-tight">Tbalance</span>
+    </div>
+
+    <nav class="flex-1 px-3 py-4 overflow-y-auto space-y-0.5">
+      <a href="#" class="nav-item nav-active flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-400 transition-all" data-section="dashboard">
+        <svg class="w-[18px] h-[18px] flex-shrink-0 text-brand-600 dark:text-brand-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+        </svg>
+        Dashboard
+      </a>
+      <a href="#" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-white transition-all" data-section="productos">
+        <svg class="w-[18px] h-[18px] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+        </svg>
+        Productos
+      </a>
+      <a href="#" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-white transition-all" data-section="categorias">
+        <svg class="w-[18px] h-[18px] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+        </svg>
+        Categorias
+      </a>
+      <a href="#" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-white transition-all" data-section="proveedores">
+        <svg class="w-[18px] h-[18px] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0"/>
+        </svg>
+        Proveedores
+      </a>
+      <a href="#" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-white transition-all" data-section="entradas">
+        <svg class="w-[18px] h-[18px] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4M17 8v12m0 0l4-4m-4 4l-4-4"/>
+        </svg>
+        Entradas
+      </a>
+      <a href="#" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-white transition-all" data-section="salidas">
+        <svg class="w-[18px] h-[18px] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M7 8V4m0 0L3 8m4-4l4 4M17 16v4m0 0l4-4m-4 4l-4-4M7 12h10"/>
+        </svg>
+        Salidas
+      </a>
+      <a href="#" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-white transition-all" data-section="ventas">
+        <svg class="w-[18px] h-[18px] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+        </svg>
+        Ventas
+      </a>
+      <div class="my-2 border-t border-gray-100 dark:border-gray-700"></div>
+      <a href="#" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-800 dark:hover:text-white transition-all" data-section="perfiles">
+        <svg class="w-[18px] h-[18px] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        Perfiles
+      </a>
+    </nav>
+
+    <div class="px-4 py-4 border-t border-gray-100 dark:border-gray-700">
+      <div class="flex items-center justify-between">
+        <span id="theme-label" class="text-xs font-semibold text-gray-500 dark:text-gray-400">Modo Claro</span>
+        <button id="theme-toggle" onclick="toggleDarkMode()"
+          class="relative w-11 h-6 rounded-full bg-brand-500 transition-colors duration-200 focus:outline-none">
+          <div id="theme-toggle-dot"
+            class="absolute top-1 translate-x-6 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200"></div>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+
+    <header class="h-14 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between px-6 shadow-sm z-10 flex-shrink-0">
+      <div class="relative w-72">
+        <svg class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <input id="header-search" type="text" placeholder="Buscar productos..."
+          class="w-full pl-10 pr-4 py-2 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-400 text-gray-700 dark:text-gray-200 placeholder-gray-400 transition" />
+      </div>
+      <div class="flex items-center gap-3">
+        <div id="profile-selector" class="relative">
+          <button id="profile-selector-btn" onclick="toggleProfileMenu()" class="flex items-center gap-2.5 px-3 py-1.5 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-200 dark:border-gray-600 rounded-xl transition">
+            <div id="profile-avatar" class="w-7 h-7 rounded-lg bg-brand-500 flex items-center justify-center text-white text-xs font-bold shadow-sm">?</div>
+            <div class="text-left">
+              <p class="text-[10px] uppercase font-semibold text-gray-400 leading-none">Perfil activo</p>
+              <p id="profile-name" class="text-sm font-semibold text-gray-700 dark:text-gray-200 leading-tight mt-0.5">Cargando...</p>
+            </div>
+            <svg class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+          </button>
+          <div id="profile-menu" class="hidden absolute right-0 mt-2 w-72 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-2xl z-30 overflow-hidden">
+            <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
+              <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Cambiar de perfil</p>
+            </div>
+            <div id="profile-menu-list" class="max-h-64 overflow-y-auto py-1"></div>
+            <div class="border-t border-gray-100 dark:border-gray-700">
+              <button onclick="openModal('modal-perfil'); closeProfileMenu();" class="w-full text-left px-4 py-2.5 text-sm font-medium text-brand-600 dark:text-brand-400 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                Nuevo perfil
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="flex-1 overflow-y-auto p-6">
+
+      <!-- DASHBOARD -->
+      <div id="sec-dashboard" class="section-panel active">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h1 class="text-xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+            <p class="text-xs text-gray-400 mt-0.5">Resumen general del sistema</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+          <div class="kpi-card bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow overflow-hidden relative">
+            <div class="flex items-start justify-between mb-3">
+              <div>
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Total Productos</p>
+                <p id="dash-total" class="text-3xl font-extrabold text-gray-900 dark:text-white">0</p>
+                <p class="text-xs text-green-500 font-medium mt-1">en inventario</p>
+              </div>
+              <div class="w-11 h-11 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="kpi-card bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow overflow-hidden relative">
+            <div class="flex items-start justify-between mb-3">
+              <div>
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Bajo Stock</p>
+                <p id="dash-bajo-stock" class="text-3xl font-extrabold text-gray-900 dark:text-white">0</p>
+                <p class="text-xs text-yellow-500 font-medium mt-1">requieren atencion</p>
+              </div>
+              <div class="w-11 h-11 rounded-xl bg-yellow-50 dark:bg-yellow-900/20 flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="kpi-card bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow overflow-hidden relative">
+            <div class="flex items-start justify-between mb-3">
+              <div>
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Ventas Registradas</p>
+                <p id="dash-ventas" class="text-3xl font-extrabold text-gray-900 dark:text-white">0</p>
+                <p class="text-xs text-green-500 font-medium mt-1">operaciones</p>
+              </div>
+              <div class="w-11 h-11 rounded-xl bg-green-50 dark:bg-green-900/20 flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="kpi-card bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow overflow-hidden relative">
+            <div class="flex items-start justify-between mb-3">
+              <div>
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Proveedores</p>
+                <p id="dash-proveedores" class="text-3xl font-extrabold text-gray-900 dark:text-white">0</p>
+                <p class="text-xs text-gray-400 font-medium mt-1">registrados</p>
+              </div>
+              <div class="w-11 h-11 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- KPIs de vencimiento (solo Farmacia / Supermercado / Tienda de barrio) -->
+        <div id="dash-venc-grid" class="hidden grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          <div class="kpi-card bg-white dark:bg-gray-800 rounded-2xl p-5 border border-red-100 dark:border-red-900/40 shadow-sm hover:shadow-md transition-shadow overflow-hidden relative">
+            <div class="flex items-start justify-between mb-3">
+              <div>
+                <p class="text-xs font-semibold text-red-500 uppercase tracking-wider mb-1">Vencidos</p>
+                <p id="dash-vencidos" class="text-3xl font-extrabold text-red-600 dark:text-red-400">0</p>
+                <p class="text-xs text-red-400 font-medium mt-1">fuera de plazo</p>
+              </div>
+              <div class="w-11 h-11 rounded-xl bg-red-50 dark:bg-red-900/30 flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+          <div class="kpi-card bg-white dark:bg-gray-800 rounded-2xl p-5 border border-orange-100 dark:border-orange-900/40 shadow-sm hover:shadow-md transition-shadow overflow-hidden relative">
+            <div class="flex items-start justify-between mb-3">
+              <div>
+                <p class="text-xs font-semibold text-orange-500 uppercase tracking-wider mb-1">Por vencer &lt; 7 días</p>
+                <p id="dash-venc7" class="text-3xl font-extrabold text-orange-600 dark:text-orange-400">0</p>
+                <p class="text-xs text-orange-400 font-medium mt-1">atencion inmediata</p>
+              </div>
+              <div class="w-11 h-11 rounded-xl bg-orange-50 dark:bg-orange-900/30 flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+          <div class="kpi-card bg-white dark:bg-gray-800 rounded-2xl p-5 border border-yellow-100 dark:border-yellow-900/40 shadow-sm hover:shadow-md transition-shadow overflow-hidden relative">
+            <div class="flex items-start justify-between mb-3">
+              <div>
+                <p class="text-xs font-semibold text-yellow-600 uppercase tracking-wider mb-1">Por vencer &lt; 30 días</p>
+                <p id="dash-venc30" class="text-3xl font-extrabold text-yellow-600 dark:text-yellow-400">0</p>
+                <p class="text-xs text-yellow-500 font-medium mt-1">planificar reposicion</p>
+              </div>
+              <div class="w-11 h-11 rounded-xl bg-yellow-50 dark:bg-yellow-900/30 flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Alertas de vencimiento -->
+        <div id="dash-venc-alerts" class="hidden mb-6 space-y-2"></div>
+
+        <!-- Calendario lite (usa fecha del sistema) -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-5 mb-6">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-base font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <svg class="w-4 h-4 text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              Calendario
+            </h2>
+            <div class="flex items-center gap-1">
+              <button onclick="calPrev()" class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 transition" title="Mes anterior">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+              </button>
+              <span id="cal-label" class="text-xs font-semibold text-gray-700 dark:text-gray-200 mx-2 min-w-[110px] text-center">—</span>
+              <button onclick="calNext()" class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 transition" title="Mes siguiente">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+              </button>
+              <button onclick="calToday()" class="ml-2 text-[11px] font-semibold text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-900/20 px-2.5 py-1 rounded-lg transition">Hoy</button>
+            </div>
+          </div>
+          <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-semibold text-gray-400 uppercase mb-1.5">
+            <div>Lun</div><div>Mar</div><div>Mie</div><div>Jue</div><div>Vie</div><div>Sab</div><div>Dom</div>
+          </div>
+          <div id="cal-grid" class="grid grid-cols-7 gap-1"></div>
+          <p id="cal-hoy" class="text-[11px] text-gray-400 mt-3 text-center"></p>
+        </div>
+      </div>
+
+      <!-- PRODUCTOS -->
+      <div id="sec-productos" class="section-panel">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h1 class="text-xl font-bold text-gray-900 dark:text-white">Productos</h1>
+            <nav class="flex items-center gap-1.5 mt-1 text-xs text-gray-400">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+              <span>Inicio</span>
+              <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+              <span class="text-gray-600 dark:text-gray-300 font-medium">Productos</span>
+            </nav>
+          </div>
+          <button onclick="openModalProducto()"
+            class="flex items-center gap-2 bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-md hover:shadow-lg transition-all duration-150">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+            Agregar Producto
+          </button>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+          <div class="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+            <h2 class="text-base font-bold text-gray-900 dark:text-white">Lista de Productos</h2>
+            <div class="flex items-center gap-2.5">
+              <div class="relative">
+                <select id="filter-cat-prod" onchange="filtrarProductos()"
+                  class="appearance-none text-sm font-medium text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600 pl-3 pr-8 py-1.5 rounded-lg bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition focus:outline-none focus:ring-2 focus:ring-brand-400 cursor-pointer">
+                  <option value="">Categorias</option>
+                </select>
+                <svg class="w-3.5 h-3.5 text-gray-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+              </div>
+              <div class="relative">
+                <svg class="w-3.5 h-3.5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                <input id="search-prod" type="text" placeholder="Buscar producto..." oninput="filtrarProductos()"
+                  class="pl-9 pr-4 py-1.5 text-sm bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-400 text-gray-700 dark:text-gray-200 placeholder-gray-400 transition" />
+              </div>
+            </div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="bg-gray-50 dark:bg-gray-700/50">
+                  <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">ID</th>
+                  <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Codigo</th>
+                  <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Producto</th>
+                  <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Categoria</th>
+                  <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Precio</th>
+                  <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Stock</th>
+                  <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Estado</th>
+                  <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Vencimiento</th>
+                  <th class="text-center px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="tabla-productos" class="divide-y divide-gray-50 dark:divide-gray-700"></tbody>
+            </table>
+          </div>
+          <div class="flex items-center justify-between px-6 py-4 border-t border-gray-100 dark:border-gray-700">
+            <p id="prod-pag-info" class="text-sm text-gray-500 dark:text-gray-400"></p>
+            <div class="flex items-center gap-1" id="prod-pag-ctrl"></div>
+            <div class="relative">
+              <select id="prod-per-page" onchange="renderTablaProductos()"
+                class="appearance-none text-sm font-medium text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600 pl-3 pr-8 py-1.5 rounded-lg bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-brand-400 cursor-pointer">
+                <option value="5">5 por pagina</option><option value="10">10 por pagina</option><option value="20">20 por pagina</option>
+              </select>
+              <svg class="w-3.5 h-3.5 text-gray-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CATEGORIAS -->
+      <div id="sec-categorias" class="section-panel">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h1 class="text-xl font-bold text-gray-900 dark:text-white">Categorias</h1>
+            <p class="text-xs text-gray-400 mt-0.5">Gestion de categorias de productos</p>
+          </div>
+          <button onclick="openModalCategoria()"
+            class="flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-md hover:shadow-lg transition-all duration-150">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+            Nueva Categoria
+          </button>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="grid-categorias"></div>
+      </div>
+
+      <!-- PROVEEDORES -->
+      <div id="sec-proveedores" class="section-panel">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h1 class="text-xl font-bold text-gray-900 dark:text-white">Proveedores</h1>
+            <p class="text-xs text-gray-400 mt-0.5">Gestion de proveedores</p>
+          </div>
+          <button onclick="openModalProveedor()"
+            class="flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-md hover:shadow-lg transition-all duration-150">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+            Nuevo Proveedor
+          </button>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead><tr class="bg-gray-50 dark:bg-gray-700/50">
+                <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">ID</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Nombre</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Telefono</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Email</th>
+                <th class="text-center px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Acciones</th>
+              </tr></thead>
+              <tbody id="tabla-proveedores" class="divide-y divide-gray-50 dark:divide-gray-700"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ENTRADAS -->
+      <div id="sec-entradas" class="section-panel">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h1 class="text-xl font-bold text-gray-900 dark:text-white">Entradas</h1>
+            <p class="text-xs text-gray-400 mt-0.5">Registro de entradas de inventario</p>
+          </div>
+          <button onclick="openModalEntrada()"
+            class="flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-md hover:shadow-lg transition-all duration-150">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+            Registrar Entrada
+          </button>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead><tr class="bg-gray-50 dark:bg-gray-700/50">
+                <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">ID</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Producto</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Cantidad</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Proveedor</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Fecha</th>
+                <th class="text-center px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Accion</th>
+              </tr></thead>
+              <tbody id="tabla-entradas" class="divide-y divide-gray-50 dark:divide-gray-700"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- SALIDAS -->
+      <div id="sec-salidas" class="section-panel">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h1 class="text-xl font-bold text-gray-900 dark:text-white">Salidas</h1>
+            <p class="text-xs text-gray-400 mt-0.5">Registro de salidas de inventario</p>
+          </div>
+          <button onclick="openModalSalida()"
+            class="flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-md hover:shadow-lg transition-all duration-150">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+            Registrar Salida
+          </button>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead><tr class="bg-gray-50 dark:bg-gray-700/50">
+                <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">ID</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Producto</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Cantidad</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Motivo</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Fecha</th>
+                <th class="text-center px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Accion</th>
+              </tr></thead>
+              <tbody id="tabla-salidas" class="divide-y divide-gray-50 dark:divide-gray-700"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- VENTAS -->
+      <div id="sec-ventas" class="section-panel">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h1 class="text-xl font-bold text-gray-900 dark:text-white">Ventas</h1>
+            <p class="text-xs text-gray-400 mt-0.5">Registro de ventas realizadas</p>
+          </div>
+          <button onclick="openModalVenta()"
+            class="flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-md hover:shadow-lg transition-all duration-150">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+            Nueva Venta
+          </button>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead><tr class="bg-gray-50 dark:bg-gray-700/50">
+                <th class="text-left px-6 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">ID</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Producto</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Cantidad</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Precio Unit.</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Total</th>
+                <th class="text-left px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Fecha</th>
+                <th class="text-center px-4 py-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Accion</th>
+              </tr></thead>
+              <tbody id="tabla-ventas" class="divide-y divide-gray-50 dark:divide-gray-700"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- PERFILES -->
+      <div id="sec-perfiles" class="section-panel">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h1 class="text-xl font-bold text-gray-900 dark:text-white">Perfiles de trabajo</h1>
+            <p class="text-xs text-gray-400 mt-0.5">Cada perfil tiene sus propios datos independientes</p>
+          </div>
+          <button onclick="openModalPerfil()"
+            class="flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-md hover:shadow-lg transition-all duration-150">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+            Nuevo perfil
+          </button>
+        </div>
+        <div id="perfiles-grid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+        <div id="perfiles-empty" class="hidden bg-white dark:bg-gray-800 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700 p-12 text-center">
+          <div class="w-16 h-16 rounded-2xl bg-brand-50 dark:bg-brand-900/20 flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+          <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-1">No hay perfiles</h3>
+          <p class="text-sm text-gray-500 mb-4">Crea tu primer perfil para empezar a gestionar tu inventario.</p>
+          <button onclick="openModalPerfil()" class="px-5 py-2 bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold rounded-xl">Crear perfil</button>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- MODAL: Producto -->
+<div id="modal-producto" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden items-center justify-center p-4" onclick="closeModalOnOverlay(event,'modal-producto')">
+  <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg border border-gray-100 dark:border-gray-700 animate-slide-up">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+      <h3 id="modal-prod-title" class="text-base font-bold text-gray-900 dark:text-white">Agregar Producto</h3>
+      <button onclick="closeModal('modal-producto')" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition rounded-lg p-1 hover:bg-gray-100 dark:hover:bg-gray-700">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="px-6 py-5 space-y-4">
+      <input type="hidden" id="prod-id"/>
+      <div class="grid grid-cols-2 gap-4">
+        <div class="col-span-2">
+          <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Nombre del producto *</label>
+          <input id="prod-nombre" type="text" placeholder="Ej: Laptop HP 15"
+            class="w-full px-3.5 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-400 transition placeholder-gray-400"/>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Codigo <span class="text-gray-400 normal-case font-normal">(opcional)</span></label>
+          <input id="prod-codigo" type="text" placeholder="Ej: AB-001"
+            class="w-full px-3.5 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-400 transition placeholder-gray-400 font-mono"/>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Proveedor</label>
+          <select id="prod-proveedor" class="w-full px-3.5 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-400 transition">
+            <option value="">Seleccionar...</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Precio *</label>
+          <input id="prod-precio" type="number" min="0" step="0.01" placeholder="0.00"
+            class="w-full px-3.5 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-400 transition placeholder-gray-400"/>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Stock *</label>
+          <input id="prod-stock" type="number" min="0" placeholder="0"
+            class="w-full px-3.5 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-400 transition placeholder-gray-400"/>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Stock minimo</label>
+          <input id="prod-stock-min" type="number" min="0" placeholder="10"
+            class="w-full px-3.5 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-400 transition placeholder-gray-400"/>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Categoria</label>
+          <select id="prod-categoria" class="w-full px-3.5 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-400 transition">
+            <option value="">Seleccionar...</option>
+          </select>
+        </div>
+        <div class="col-span-2">
+          <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Descripcion</label>
+          <input id="prod-desc" type="text" placeholder="Descripcion breve del producto"
+            class="w-full px-3.5 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-400 transition placeholder-gray-400"/>
+        </div>
+      </div>
+
+      <!-- Control de vencimiento (solo Farmacia / Supermercado / Tienda) -->
+      <div id="prod-vencimiento-block" class="hidden border-t border-gray-100 dark:border-gray-700 pt-4">
+        <div class="flex items-start gap-3">
+          <div class="flex-1">
+            <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">¿Requiere control de fecha de vencimiento?</label>
+            <select id="prod-requiere-venc" onchange="onRequiereVencChange()"
+              class="w-full px-3.5 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-400 transition">
+              <option value="false">No</option>
+              <option value="true">Sí</option>
+            </select>
+          </div>
+          <div id="prod-venc-fecha-wrap" class="flex-1 hidden">
+            <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Fecha de vencimiento</label>
+            <div class="flex items-center gap-2 mb-2">
+              <div class="flex-1 px-3.5 py-2.5 text-sm font-semibold text-gray-800 dark:text-white border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700/40">
+                <span id="prod-fecha-venc-display" class="text-gray-400">— Selecciona una fecha —</span>
+              </div>
+              <button type="button" onclick="clearVencFecha()" class="text-[11px] font-semibold text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 px-2.5 py-1.5 rounded-lg transition">Limpiar</button>
+            </div>
+            <div class="border border-gray-200 dark:border-gray-600 rounded-xl p-3 bg-white dark:bg-gray-800">
+              <div class="flex items-center justify-between mb-2">
+                <button type="button" onclick="vencPrev()" class="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 transition" title="Mes anterior">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                </button>
+                <span id="venc-label" class="text-xs font-bold text-gray-800 dark:text-white">—</span>
+                <button type="button" onclick="vencNext()" class="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 transition" title="Mes siguiente">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                </button>
+              </div>
+              <div class="grid grid-cols-7 gap-0.5 text-center text-[9px] font-semibold text-gray-400 uppercase mb-1">
+                <div>L</div><div>M</div><div>M</div><div>J</div><div>V</div><div>S</div><div>D</div>
+              </div>
+              <div id="venc-grid" class="grid grid-cols-7 gap-0.5"></div>
+              <div class="flex justify-end mt-2">
+                <button type="button" onclick="vencPickToday()" class="text-[10px] font-semibold text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-900/20 px-2 py-0.5 rounded transition">Ir a hoy</button>
+              </div>
+            </div>
+            <input id="prod-fecha-venc" type="hidden"/>
+          </div>
+        </div>
+      </div>
+      <p id="prod-error" class="text-red-500 text-xs font-medium hidden"></p>
+    </div>
+    <div class="flex justify-end gap-2.5 px-6 py-4 border-t border-gray-100 dark:border-gray-700">
+      <button onclick="closeModal('modal-producto')" class="px-4 py-2 text-sm font-semibold text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition">Cancelar</button>
+      <button onclick="submitProducto()" class="px-5 py-2 text-sm font-semibold text-white bg-brand-500 hover:bg-brand-600 rounded-xl shadow-sm transition">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Categoria -->
+<div id="modal-categoria" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden items-center justify-center p-4" onclick="closeModalOnOverlay(event,'modal-categoria')">
+  <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md border border-gray-100 dark:border-gray-700 animate-slide-up">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+      <h3 id="modal-cat-title" class="text-base font-bold text-gray-900 dark:text-white">Nueva Categoria</h3>
+      <button onclick="closeModal('modal-categoria')" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition rounded-lg p-1 hover:bg-gray-100 dark:hover:bg-gray-700">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="px-6 py-5 space-y-4">
+      <input type="hidden" id="cat-id"/>
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Nombre *</label>
+        <input id="cat-nombre" type="text" placeholder="Ej: Electronicos"
+          class="w-full px-3.5 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-400 transition placeholder-gray-400"/>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Descripcion</label>
+        <input id="cat-desc" type="text" placeholder="Descripcion opcional"
+          class="w-full px-3.5 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-400 transition placeholder-gray-400"/>
+      </div>
+      <p id="cat-error" class="text-red-500 text-xs font-medium hidden"></p>
+    </div>
+    <div class="flex justify-end gap-2.5 px-6 py-4 border-t border-gray-100 dark:border-gray-700">
+      <button onclick="closeModal('modal-categoria')" class="px-4 py-2 text-sm font-semibold text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition">Cancelar</button>
+      <button onclick="submitCategoria()" class="px-5 py-2 text-sm font-semibold text-white bg-brand-500 hover:bg-brand-600 rounded-xl shadow-sm transition">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Proveedor -->
+<div id="modal-proveedor" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden items-center justify-center p-4" onclick="closeModalOnOverlay(event,'modal-proveedor')">
+  <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md border border-gray-100 dark:border-gray-700 animate-slide-up">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+      <h3 id="modal-prov-title" class="text-base font-bold text-gray-900 dark:text-white">Nuevo Proveedor</h3>
+      <button onclick="closeModal('modal-proveedor')" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition rounded-lg p-1 hover:bg-gray-100 dark:hover:bg-gray-700">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="px-6 py-5 space-y-4">
+      <input type="hidden" id="prov-id"/>
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Nombre *</label>
+        <input id="prov-nombre" type="text" placeholder="Nombre del proveedor"
+          class="w-full px-3.5 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-400 transition placeholder-gray-400"/>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Telefono</label>
+          <input id="prov-telefono" type="text" placeholder="+52 55 0000 0000"
+            class="w-full px-3.5 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-400 transition placeholder-gray-400"/>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Email</label>
+          <input id="prov-email" type="email" placeholder="contacto@empresa.com"
+            class="w-full px-3.5 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-400 transition placeholder-gray-400"/>
+        </div>
+      </div>
+      <p id="prov-error" class="text-red-500 text-xs font-medium hidden"></p>
+    </div>
+    <div class="flex justify-end gap-2.5 px-6 py-4 border-t border-gray-100 dark:border-gray-700">
+      <button onclick="closeModal('modal-proveedor')" class="px-4 py-2 text-sm font-semibold text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition">Cancelar</button>
+      <button onclick="submitProveedor()" class="px-5 py-2 text-sm font-semibold text-white bg-brand-500 hover:bg-brand-600 rounded-xl shadow-sm transition">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Entrada -->
+<div id="modal-entrada" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden items-center justify-center p-4" onclick="closeModalOnOverlay(event,'modal-entrada')">
+  <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md border border-gray-100 dark:border-gray-700 animate-slide-up">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+      <h3 class="text-base font-bold text-gray-900 dark:text-white">Registrar Entrada</h3>
+      <button onclick="closeModal('modal-entrada')" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition rounded-lg p-1 hover:bg-gray-100 dark:hover:bg-gray-700">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="px-6 py-5 space-y-4">
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Producto *</label>
+        <select id="ent-producto" class="w-full px-3.5 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-400 transition">
+          <option value="">Seleccionar producto...</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Cantidad *</label>
+        <input id="ent-cantidad" type="number" min="1" placeholder="0"
+          class="w-full px-3.5 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-400 transition placeholder-gray-400"/>
+      </div>
+      <p id="ent-error" class="text-red-500 text-xs font-medium hidden"></p>
+    </div>
+    <div class="flex justify-end gap-2.5 px-6 py-4 border-t border-gray-100 dark:border-gray-700">
+      <button onclick="closeModal('modal-entrada')" class="px-4 py-2 text-sm font-semibold text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition">Cancelar</button>
+      <button onclick="submitEntrada()" class="px-5 py-2 text-sm font-semibold text-white bg-brand-500 hover:bg-brand-600 rounded-xl shadow-sm transition">Registrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Salida -->
+<div id="modal-salida" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden items-center justify-center p-4" onclick="closeModalOnOverlay(event,'modal-salida')">
+  <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md border border-gray-100 dark:border-gray-700 animate-slide-up">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+      <h3 class="text-base font-bold text-gray-900 dark:text-white">Registrar Salida</h3>
+      <button onclick="closeModal('modal-salida')" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition rounded-lg p-1 hover:bg-gray-100 dark:hover:bg-gray-700">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="px-6 py-5 space-y-4">
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Producto *</label>
+        <select id="sal-producto" class="w-full px-3.5 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-400 transition">
+          <option value="">Seleccionar producto...</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Cantidad *</label>
+        <input id="sal-cantidad" type="number" min="1" placeholder="0"
+          class="w-full px-3.5 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-400 transition placeholder-gray-400"/>
+      </div>
+      <p id="sal-error" class="text-red-500 text-xs font-medium hidden"></p>
+    </div>
+    <div class="flex justify-end gap-2.5 px-6 py-4 border-t border-gray-100 dark:border-gray-700">
+      <button onclick="closeModal('modal-salida')" class="px-4 py-2 text-sm font-semibold text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition">Cancelar</button>
+      <button onclick="submitSalida()" class="px-5 py-2 text-sm font-semibold text-white bg-brand-500 hover:bg-brand-600 rounded-xl shadow-sm transition">Registrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Venta -->
+<div id="modal-venta" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden items-center justify-center p-4" onclick="closeModalOnOverlay(event,'modal-venta')">
+  <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md border border-gray-100 dark:border-gray-700 animate-slide-up">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+      <h3 class="text-base font-bold text-gray-900 dark:text-white">Nueva Venta</h3>
+      <button onclick="closeModal('modal-venta')" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition rounded-lg p-1 hover:bg-gray-100 dark:hover:bg-gray-700">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="px-6 py-5 space-y-4">
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Producto *</label>
+        <select id="ven-producto" onchange="actualizarPrecioVenta()" class="w-full px-3.5 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-400 transition">
+          <option value="">Seleccionar producto...</option>
+        </select>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Cantidad *</label>
+          <input id="ven-cantidad" type="number" min="1" placeholder="0" oninput="calcularTotalVenta()"
+            class="w-full px-3.5 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-400 transition placeholder-gray-400"/>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Precio Unit.</label>
+          <input id="ven-precio" type="number" min="0" step="0.01" placeholder="0.00" oninput="calcularTotalVenta()"
+            class="w-full px-3.5 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-400 transition placeholder-gray-400"/>
+        </div>
+      </div>
+      <div class="bg-brand-50 dark:bg-brand-900/20 rounded-xl px-4 py-3 flex items-center justify-between">
+        <span class="text-sm font-semibold text-gray-600 dark:text-gray-300">Total</span>
+        <span id="ven-total-display" class="text-lg font-extrabold text-brand-600 dark:text-brand-400">$0.00</span>
+      </div>
+      <p id="ven-error" class="text-red-500 text-xs font-medium hidden"></p>
+    </div>
+    <div class="flex justify-end gap-2.5 px-6 py-4 border-t border-gray-100 dark:border-gray-700">
+      <button onclick="closeModal('modal-venta')" class="px-4 py-2 text-sm font-semibold text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition">Cancelar</button>
+      <button onclick="submitVenta()" class="px-5 py-2 text-sm font-semibold text-white bg-brand-500 hover:bg-brand-600 rounded-xl shadow-sm transition">Registrar Venta</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Confirmar eliminacion -->
+<div id="modal-confirm" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] hidden items-center justify-center p-4">
+  <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm border border-gray-100 dark:border-gray-700 animate-slide-up">
+    <div class="px-6 py-5 text-center">
+      <div class="w-12 h-12 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center mx-auto mb-3">
+        <svg class="w-6 h-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+      </div>
+      <h3 id="confirm-title" class="text-base font-bold text-gray-900 dark:text-white mb-1">Eliminar elemento?</h3>
+      <p id="confirm-msg" class="text-sm text-gray-500 dark:text-gray-400">Esta accion no se puede deshacer.</p>
+    </div>
+    <div class="flex gap-2.5 px-6 pb-5">
+      <button onclick="closeModal('modal-confirm')" class="flex-1 px-4 py-2 text-sm font-semibold text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition">Cancelar</button>
+      <button id="confirm-btn" class="flex-1 px-4 py-2 text-sm font-semibold text-white bg-red-500 hover:bg-red-600 rounded-xl transition">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Bienvenida / Crear primer perfil -->
+<div id="modal-primer-perfil" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50 animate-slide-up">
+  <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
+    <div class="bg-gradient-to-br from-brand-500 to-brand-700 p-8 text-center text-white">
+      <div class="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mx-auto mb-4">
+        <svg class="w-9 h-9" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+      <h2 class="text-2xl font-bold mb-1">Bienvenido</h2>
+      <p class="text-sm text-white/80">Crea tu primer perfil de trabajo para comenzar</p>
+    </div>
+    <div class="p-8">
+      <p class="text-sm text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">
+        Los <strong>perfiles</strong> son espacios de trabajo independientes. Cada uno tiene sus propios productos, categorías, proveedores y ventas. Podrás crear tantos perfiles como necesites y cambiar entre ellos en cualquier momento.
+      </p>
+      <button onclick="openModalPerfil()" class="w-full py-3 bg-brand-500 hover:bg-brand-600 text-white font-semibold rounded-xl transition text-sm flex items-center justify-center gap-2">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        Crear mi primer perfil
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Crear / Editar perfil -->
+<div id="modal-perfil" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 animate-slide-up">
+  <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+      <h2 id="modal-perfil-titulo" class="text-lg font-bold text-gray-900 dark:text-white">Crear perfil</h2>
+      <button onclick="closeModal('modal-perfil')" class="p-1 rounded-lg text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="p-6 space-y-4">
+      <input type="hidden" id="perfil-id" />
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Nombre <span class="text-red-500">*</span></label>
+        <input id="perfil-nombre" type="text" placeholder="Ej: Tienda principal, Negocio X, Proyecto A..."
+          class="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-brand-400 focus:outline-none" />
+      </div>
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Descripción <span class="text-xs font-normal text-gray-400">(opcional)</span></label>
+        <textarea id="perfil-descripcion" rows="2" placeholder="Describe el propósito de este perfil..."
+          class="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-white resize-none focus:ring-2 focus:ring-brand-400 focus:outline-none"></textarea>
+      </div>
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
+          Tipo de negocio <span class="text-xs font-normal text-gray-400">(opcional — sugerencia)</span>
+        </label>
+        <select id="perfil-tipo" onchange="onTipoNegocioChange()"
+          class="w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-white focus:ring-2 focus:ring-brand-400 focus:outline-none">
+          <option value="NINGUNO">Personalizado (sin categorías predefinidas)</option>
+        </select>
+        <div id="perfil-tipo-preview" class="hidden mt-2 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/40 rounded-xl">
+          <p class="text-xs font-semibold text-amber-700 dark:text-amber-300 mb-1.5 flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Se crearán estas categorías automáticamente
+          </p>
+          <div id="perfil-tipo-chips" class="flex flex-wrap gap-1.5"></div>
+        </div>
+      </div>
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Color identificador</label>
+        <div id="perfil-color-picker" class="flex flex-wrap gap-2">
+          <button type="button" data-color="#d4821b" class="color-opt w-9 h-9 rounded-xl ring-2 ring-offset-2 ring-offset-white dark:ring-offset-gray-800 ring-brand-500" style="background:#d4821b"></button>
+          <button type="button" data-color="#3b82f6" class="color-opt w-9 h-9 rounded-xl ring-0" style="background:#3b82f6"></button>
+          <button type="button" data-color="#10b981" class="color-opt w-9 h-9 rounded-xl ring-0" style="background:#10b981"></button>
+          <button type="button" data-color="#ef4444" class="color-opt w-9 h-9 rounded-xl ring-0" style="background:#ef4444"></button>
+          <button type="button" data-color="#8b5cf6" class="color-opt w-9 h-9 rounded-xl ring-0" style="background:#8b5cf6"></button>
+          <button type="button" data-color="#ec4899" class="color-opt w-9 h-9 rounded-xl ring-0" style="background:#ec4899"></button>
+          <button type="button" data-color="#f59e0b" class="color-opt w-9 h-9 rounded-xl ring-0" style="background:#f59e0b"></button>
+          <button type="button" data-color="#06b6d4" class="color-opt w-9 h-9 rounded-xl ring-0" style="background:#06b6d4"></button>
+        </div>
+      </div>
+    </div>
+    <div class="flex justify-end gap-2 px-6 py-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/30">
+      <button onclick="closeModal('modal-perfil')" class="px-4 py-2 text-sm font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl">Cancelar</button>
+      <button onclick="submitPerfil()" class="px-5 py-2 text-sm font-semibold bg-brand-500 hover:bg-brand-600 text-white rounded-xl">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Confirmar eliminar perfil -->
+<div id="modal-confirmar-eliminar-perfil" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 animate-slide-up">
+  <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6">
+    <div class="w-12 h-12 rounded-2xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
+      <svg class="w-6 h-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M9 3h6a1 1 0 011 1v3H8V4a1 1 0 011-1z"/></svg>
+    </div>
+    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-1">Eliminar perfil</h3>
+    <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">¿Estás seguro de eliminar este perfil? Se eliminarán también todos sus productos, categorías, ventas y demás datos. Esta acción no se puede deshacer.</p>
+    <input type="hidden" id="perfil-eliminar-id" />
+    <div class="flex justify-end gap-2">
+      <button onclick="closeModal('modal-confirmar-eliminar-perfil')" class="px-4 py-2 text-sm font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl">Cancelar</button>
+      <button onclick="confirmarEliminarPerfil()" class="px-5 py-2 text-sm font-semibold bg-red-500 hover:bg-red-600 text-white rounded-xl">Sí, eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="fixed bottom-6 right-6 z-[100] hidden">
+  <div class="flex items-center gap-3 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-sm font-medium px-4 py-3 rounded-xl shadow-xl">
+    <svg id="toast-icon" class="w-4 h-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+    <span id="toast-msg">Operacion completada.</span>
+  </div>
+</div>
+
+<!-- JAVASCRIPT -->
+<script>
+'use strict';
+
+// ── STATE ──────────────────────────────────────────────────
+const state = {
+  perfiles:     [],
+  perfilActivo: null,
+  productos:    [],
+  categorias:   [],
+  proveedores:  [],
+  entradas:     [],
+  salidas:      [],
+  ventas:       [],
+  prodFiltrados: [],
+  prodPagina: 1,
+  prodPorPagina: 5,
+  editMode: { tabla: null, id: null },
+  nextId: { cat:1, prov:1, ent:1, sal:1, ven:1 },
+};
+
+// ── CARGA DESDE JAVA (Bridge) ──────────────────────────────
+function cargarEstadoDesdeJava() {
+  if (tiposNegocioCache.length === 0) cargarTiposNegocio();
+  cargarSugerencias();
+  try {
+    state.perfiles     = JSON.parse(window.javaBridge.listarPerfiles()     || '[]');
+    state.perfilActivo = JSON.parse(window.javaBridge.obtenerPerfilActivo() || 'null');
+    if (state.perfilActivo && (Object.keys(state.perfilActivo).length === 0)) state.perfilActivo = null;
+
+    if (state.perfilActivo) {
+      state.productos   = JSON.parse(window.javaBridge.obtenerProductos()   || '[]');
+      state.categorias  = JSON.parse(window.javaBridge.obtenerCategorias()  || '[]');
+      state.proveedores = JSON.parse(window.javaBridge.obtenerProveedores() || '[]');
+      state.entradas    = JSON.parse(window.javaBridge.obtenerEntradas()     || '[]');
+      state.salidas     = JSON.parse(window.javaBridge.obtenerSalidas()      || '[]');
+      state.ventas      = JSON.parse(window.javaBridge.obtenerVentas()       || '[]');
+      state.prodFiltrados = [...state.productos];
+    } else {
+      state.productos = state.categorias = state.proveedores = state.entradas = state.salidas = state.ventas = [];
+      state.prodFiltrados = [];
+    }
+  } catch(e) {
+    console.error('Error cargando desde Java:', e);
+  }
+
+  poblarFiltroCategorias();
+  renderSelectorPerfilActivo();
+  renderMenuPerfiles();
+  renderTarjetasPerfiles();
+  renderTablaProductos();
+  renderGridCategorias();
+  renderTablaProveedores();
+  renderTablaEntradas();
+  renderTablaSalidas();
+  renderTablaVentas();
+  actualizarDashboard();
+  checkPrimerArranque();
+}
+
+function checkPrimerArranque() {
+  try {
+    if (state.perfiles.length === 0) {
+      openModal('modal-primer-perfil');
+    }
+  } catch(e) {}
+}
+
+// ── CALENDARIO LITE ────────────────────────────────────────
+const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const DIAS  = ['Domingo','Lunes','Martes','Miercoles','Jueves','Viernes','Sabado'];
+let calCursor = new Date();
+
+function calRender() {
+  const y = calCursor.getFullYear();
+  const m = calCursor.getMonth();
+  document.getElementById('cal-label').textContent = MESES[m] + ' ' + y;
+
+  const first = new Date(y, m, 1);
+  const last  = new Date(y, m + 1, 0);
+  const startDow = (first.getDay() + 6) % 7;
+  const today = new Date();
+  const isThisMonth = today.getFullYear() === y && today.getMonth() === m;
+  const total = last.getDate();
+
+  let cells = '';
+  for (let i = 0; i < startDow; i++) cells += '<div></div>';
+  for (let d = 1; d <= total; d++) {
+    const isToday = isThisMonth && d === today.getDate();
+    const baseCls = 'aspect-square flex items-center justify-center text-xs rounded-lg cursor-pointer transition font-medium ';
+    const stateCls = isToday
+      ? 'bg-brand-500 text-white font-bold shadow-sm hover:bg-brand-600'
+      : 'text-gray-700 dark:text-gray-300 hover:bg-brand-50 dark:hover:bg-brand-900/20 hover:text-brand-600';
+    cells += '<div class="' + baseCls + stateCls + '" onclick="calPick(' + d + ')" title="' + d + ' de ' + MESES[m] + '">' + d + '</div>';
+  }
+  document.getElementById('cal-grid').innerHTML = cells;
+
+  const hoyStr = DIAS[today.getDay()] + ', ' + today.getDate() + ' de ' + MESES[today.getMonth()] + ' de ' + today.getFullYear();
+  document.getElementById('cal-hoy').textContent = 'Fecha del sistema: ' + hoyStr;
+}
+
+function calPrev() { calCursor.setMonth(calCursor.getMonth() - 1); calRender(); }
+function calNext() { calCursor.setMonth(calCursor.getMonth() + 1); calRender(); }
+function calToday() { calCursor = new Date(); calRender(); }
+function calPick(d) {
+  const y = calCursor.getFullYear();
+  const m = String(calCursor.getMonth() + 1).padStart(2, '0');
+  const dd = String(d).padStart(2, '0');
+  const iso = y + '-' + m + '-' + dd;
+  showToast('Fecha seleccionada: ' + iso);
+}
+
+// ── CALENDARIO MINI PARA FECHA DE VENCIMIENTO ─────────────
+let vencCursor = new Date();
+let vencSelected = null;
+const _DOW = ['Dom','Lun','Mar','Mie','Jue','Vie','Sab'];
+
+function _toIsoLocal(d) {
+  const y  = d.getFullYear();
+  const m  = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return y + '-' + m + '-' + dd;
+}
+
+function _todayLocal() {
+  const n = new Date();
+  return new Date(n.getFullYear(), n.getMonth(), n.getDate());
+}
+
+function _parseIsoLocal(iso) {
+  if (!iso || typeof iso !== 'string') return null;
+  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return null;
+  return new Date(parseInt(m[1],10), parseInt(m[2],10)-1, parseInt(m[3],10));
+}
+
+function _vencFmt(iso) {
+  const d = _parseIsoLocal(iso);
+  if (!d) return iso;
+  return d.getDate() + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear();
+}
+
+function _vencFmtLong(iso) {
+  const d = _parseIsoLocal(iso);
+  if (!d) return iso;
+  return _DOW[d.getDay()] + ' ' + d.getDate() + ' de ' + MESES[d.getMonth()] + ' de ' + d.getFullYear();
+}
+
+function vencRender() {
+  const y = vencCursor.getFullYear();
+  const m = vencCursor.getMonth();
+  document.getElementById('venc-label').textContent = MESES[m] + ' ' + y;
+
+  const first   = new Date(y, m, 1);
+  const last    = new Date(y, m + 1, 0);
+  const startDow = (first.getDay() + 6) % 7;
+  const total   = last.getDate();
+  const today   = _todayLocal();
+  const sel     = vencSelected ? _parseIsoLocal(vencSelected) : null;
+
+  let cells = '';
+  for (let i = 0; i < startDow; i++) cells += '<div></div>';
+  for (let d = 1; d <= total; d++) {
+    const day = new Date(y, m, d);
+    const isPast = day < today;
+    const isToday = day.getTime() === today.getTime();
+    const isSel   = sel && day.getTime() === sel.getTime();
+    let cls = 'aspect-square flex items-center justify-center text-[11px] rounded-md transition font-medium ';
+    if (isSel)        cls += 'bg-brand-500 text-white font-bold shadow-sm';
+    else if (isPast)  cls += 'text-gray-300 dark:text-gray-600 cursor-not-allowed';
+    else if (isToday) cls += 'border border-brand-400 text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-900/20 cursor-pointer';
+    else              cls += 'text-gray-700 dark:text-gray-300 hover:bg-brand-50 dark:hover:bg-brand-900/20 hover:text-brand-600 cursor-pointer';
+    cells += isPast
+      ? '<div class="' + cls + '">' + d + '</div>'
+      : '<div class="' + cls + '" onclick="vencPickDay(' + d + ')" title="' + _vencFmtLong(_toIsoLocal(day)) + '">' + d + '</div>';
+  }
+  document.getElementById('venc-grid').innerHTML = cells;
+}
+
+function vencPrev() { vencCursor.setMonth(vencCursor.getMonth() - 1); vencRender(); }
+function vencNext() { vencCursor.setMonth(vencCursor.getMonth() + 1); vencRender(); }
+function vencPickToday() { vencCursor = new Date(); vencRender(); }
+
+function vencPickDay(d) {
+  const y = vencCursor.getFullYear();
+  const m = vencCursor.getMonth();
+  const picked = new Date(y, m, d);
+  const today  = _todayLocal();
+  if (picked < today) return;
+  vencSelected = _toIsoLocal(picked);
+  vencCursor = picked;
+  document.getElementById('prod-fecha-venc').value = vencSelected;
+  const disp = document.getElementById('prod-fecha-venc-display');
+  disp.textContent = _vencFmtLong(vencSelected);
+  disp.classList.remove('text-gray-400');
+  disp.classList.add('text-brand-600','dark:text-brand-400');
+  vencRender();
+}
+
+function clearVencFecha() {
+  vencSelected = null;
+  document.getElementById('prod-fecha-venc').value = '';
+  const disp = document.getElementById('prod-fecha-venc-display');
+  disp.textContent = '— Selecciona una fecha —';
+  disp.classList.add('text-gray-400');
+  disp.classList.remove('text-brand-600','dark:text-brand-400');
+  vencRender();
+}
+
+function setVencFecha(iso) {
+  if (!iso) { clearVencFecha(); return; }
+  const d = _parseIsoLocal(iso);
+  if (!d) { clearVencFecha(); return; }
+  vencCursor = new Date(d.getFullYear(), d.getMonth(), 1);
+  vencPickDay(d.getDate());
+}
+
+// ── CALLBACKS DESDE JAVA ───────────────────────────────────
+function onPerfilSeleccionado(id) {
+  cargarEstadoDesdeJava();
+  showToast(id ? 'Perfil cambiado' : 'Sin perfil activo', 'success');
+}
+
+function onPerfilesActualizados() {
+  cargarEstadoDesdeJava();
+}
+
+// ── SELECTOR DE PERFIL ACTIVO (header) ─────────────────────
+function renderSelectorPerfilActivo() {
+  const p = state.perfilActivo;
+  const avatar = document.getElementById('profile-avatar');
+  const name   = document.getElementById('profile-name');
+  if (p) {
+    const initials = (p.nombre || '?').trim().substring(0,1).toUpperCase();
+    avatar.textContent = initials;
+    avatar.style.background = p.color || '#d4821b';
+    name.textContent = p.nombre;
+  } else {
+    avatar.textContent = '?';
+    avatar.style.background = '#9ca3af';
+    name.textContent = 'Sin perfil';
+  }
+}
+
+function renderMenuPerfiles() {
+  const cont = document.getElementById('profile-menu-list');
+  if (!cont) return;
+  if (state.perfiles.length === 0) {
+    cont.innerHTML = '<div class="px-4 py-6 text-center text-xs text-gray-400">No hay perfiles creados</div>';
+    return;
+  }
+  cont.innerHTML = state.perfiles.map(p => {
+    const active = state.perfilActivo && state.perfilActivo.id === p.id;
+    const tipo = tiposNegocioCache.find(t => t.clave === p.tipoNegocio);
+    return `
+      <button onclick="seleccionarPerfil('${p.id}')" class="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700 transition text-left ${active ? 'bg-brand-50 dark:bg-brand-900/20' : ''}">
+        <div class="w-9 h-9 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style="background:${p.color || '#d4821b'}">
+          ${(p.nombre || '?').substring(0,1).toUpperCase()}
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold text-gray-800 dark:text-white truncate">${escapeHtml(p.nombre)}</p>
+          <p class="text-xs text-gray-400 truncate">${p.tipoNegocio && p.tipoNegocio !== 'NINGUNO' && tipo ? escapeHtml(tipo.etiqueta) : (p.descripcion ? escapeHtml(p.descripcion) : 'Personalizado')}</p>
+        </div>
+        ${active ? '<svg class="w-4 h-4 text-brand-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>' : ''}
+      </button>`;
+  }).join('');
+}
+
+function toggleProfileMenu() {
+  document.getElementById('profile-menu').classList.toggle('hidden');
+}
+
+function closeProfileMenu() {
+  document.getElementById('profile-menu').classList.add('hidden');
+}
+
+document.addEventListener('click', (e) => {
+  const sel = document.getElementById('profile-selector');
+  if (sel && !sel.contains(e.target)) closeProfileMenu();
+});
+
+// ── ACCIONES DE PERFILES ───────────────────────────────────
+function seleccionarPerfil(id) {
+  closeProfileMenu();
+  const r = window.javaBridge.seleccionarPerfil(id || '');
+  if (typeof r === 'string' && r.startsWith('ERROR')) {
+    showToast(r, 'error');
+  }
+}
+
+let colorSeleccionado = '#d4821b';
+let tiposNegocioCache  = [];
+let sugerenciasCache   = { producto: '', categoria: '', proveedor: '' };
+
+function cargarSugerencias() {
+  try {
+    sugerenciasCache = JSON.parse(window.javaBridge.obtenerSugerencias() || '{}');
+  } catch (e) {
+    sugerenciasCache = { producto: '', categoria: '', proveedor: '' };
+  }
+}
+
+function aplicarSugerencias() {
+  // Modal producto
+  const prodNombre = document.getElementById('prod-nombre');
+  if (prodNombre) prodNombre.placeholder = sugerenciasCache.producto ? `Ej: ${sugerenciasCache.producto}` : 'Nombre del producto';
+
+  // Modal categoria
+  const catNombre = document.getElementById('cat-nombre');
+  if (catNombre) catNombre.placeholder = sugerenciasCache.categoria ? `Ej: ${sugerenciasCache.categoria}` : 'Nombre de la categoria';
+
+  // Modal proveedor
+  const provNombre = document.getElementById('prov-nombre');
+  if (provNombre) provNombre.placeholder = sugerenciasCache.proveedor ? `Ej: ${sugerenciasCache.proveedor}` : 'Nombre del proveedor';
+}
+
+function cargarTiposNegocio() {
+  const sel = document.getElementById('perfil-tipo');
+  if (!sel) return;
+
+  // Fallback: si el bridge no está listo, dejamos al menos "Personalizado"
+  if (typeof window.javaBridge === 'undefined' || !window.javaBridge.obtenerTiposNegocio) {
+    sel.innerHTML = '<option value="NINGUNO">Personalizado (sin categorías predefinidas)</option>';
+    tiposNegocioCache = [{ clave: 'NINGUNO', etiqueta: 'Personalizado (sin categorías predefinidas)', categorias: [] }];
+    return;
+  }
+
+  try {
+    const raw = window.javaBridge.obtenerTiposNegocio();
+    tiposNegocioCache = JSON.parse(raw || '[]');
+  } catch (e) {
+    console.error('Error cargando tipos de negocio:', e);
+    tiposNegocioCache = [];
+  }
+
+  if (!Array.isArray(tiposNegocioCache) || tiposNegocioCache.length === 0) {
+    sel.innerHTML = '<option value="NINGUNO">Personalizado (sin categorías predefinidas)</option>';
+    tiposNegocioCache = [{ clave: 'NINGUNO', etiqueta: 'Personalizado (sin categorías predefinidas)', categorias: [] }];
+    return;
+  }
+
+  sel.innerHTML = tiposNegocioCache.map(t =>
+    `<option value="${t.clave}">${escapeHtml(t.etiqueta)}${t.categorias && t.categorias.length ? ' (' + t.categorias.length + ' cat.)' : ''}</option>`
+  ).join('');
+}
+
+function onTipoNegocioChange() {
+  const clave = document.getElementById('perfil-tipo').value;
+  const tipo  = tiposNegocioCache.find(t => t.clave === clave);
+  const preview = document.getElementById('perfil-tipo-preview');
+  const chips   = document.getElementById('perfil-tipo-chips');
+  if (tipo && tipo.categorias && tipo.categorias.length > 0) {
+    chips.innerHTML = tipo.categorias.map(c =>
+      `<span class="px-2 py-0.5 text-[11px] font-semibold bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 rounded-md">${escapeHtml(c)}</span>`
+    ).join('');
+    preview.classList.remove('hidden');
+  } else {
+    preview.classList.add('hidden');
+  }
+}
+
+function openModalPerfil(perfil) {
+  if (tiposNegocioCache.length === 0) cargarTiposNegocio();
+  document.getElementById('modal-perfil-titulo').textContent = perfil ? 'Editar perfil' : 'Crear perfil';
+  document.getElementById('perfil-id').value          = perfil ? perfil.id : '';
+  document.getElementById('perfil-nombre').value      = perfil ? perfil.nombre : '';
+  document.getElementById('perfil-descripcion').value = perfil ? (perfil.descripcion || '') : '';
+  document.getElementById('perfil-tipo').value        = perfil ? (perfil.tipoNegocio || 'NINGUNO') : 'NINGUNO';
+  colorSeleccionado = perfil ? (perfil.color || '#d4821b') : '#d4821b';
+  actualizarColoresUI();
+  onTipoNegocioChange();
+  openModal('modal-perfil');
+}
+
+function actualizarColoresUI() {
+  document.querySelectorAll('.color-opt').forEach(b => {
+    if (b.dataset.color === colorSeleccionado) {
+      b.classList.add('ring-2','ring-offset-2','ring-offset-white','dark:ring-offset-gray-800','ring-brand-500');
+    } else {
+      b.classList.remove('ring-2','ring-offset-2','ring-offset-white','dark:ring-offset-gray-800','ring-brand-500');
+    }
+  });
+}
+
+document.addEventListener('click', (e) => {
+  if (e.target.classList && e.target.classList.contains('color-opt')) {
+    colorSeleccionado = e.target.dataset.color;
+    actualizarColoresUI();
+  }
+});
+
+function submitPerfil() {
+  const id          = document.getElementById('perfil-id').value.trim();
+  const nombre      = document.getElementById('perfil-nombre').value.trim();
+  const descripcion = document.getElementById('perfil-descripcion').value.trim();
+  const tipoNegocio = document.getElementById('perfil-tipo').value;
+
+  if (!nombre) { showToast('El nombre del perfil es obligatorio', 'error'); return; }
+
+  const perfil = { id: id || null, nombre, descripcion, color: colorSeleccionado, tipoNegocio };
+  const r = id
+    ? window.javaBridge.editarPerfil(JSON.stringify(perfil))
+    : window.javaBridge.crearPerfil(JSON.stringify(perfil));
+
+  if (typeof r === 'string' && r.startsWith('ERROR')) {
+    showToast(r, 'error');
+    return;
+  }
+
+  closeModal('modal-perfil');
+  closeModal('modal-primer-perfil');
+  if (!id) {
+    const nuevo = JSON.parse(r);
+    seleccionarPerfil(nuevo.id);
+    const tipo = tiposNegocioCache.find(t => t.clave === tipoNegocio);
+    const msg  = (tipo && tipo.categorias && tipo.categorias.length)
+      ? 'Perfil creado con ' + tipo.categorias.length + ' categorías predefinidas'
+      : 'Perfil creado y activado';
+    showToast(msg, 'success');
+  } else {
+    showToast('Perfil actualizado', 'success');
+  }
+}
+
+function confirmarEliminarPerfil() {
+  const id = document.getElementById('perfil-eliminar-id').value;
+  const r = window.javaBridge.eliminarPerfil(id);
+  closeModal('modal-confirmar-eliminar-perfil');
+  if (typeof r === 'string' && r.startsWith('ERROR')) {
+    showToast(r, 'error');
+  } else {
+    showToast('Perfil eliminado', 'success');
+  }
+}
+
+// ── TARJETAS DE PERFILES (sección /perfiles) ───────────────
+function renderTarjetasPerfiles() {
+  const grid = document.getElementById('perfiles-grid');
+  const empty = document.getElementById('perfiles-empty');
+  if (state.perfiles.length === 0) {
+    grid.classList.add('hidden');
+    empty.classList.remove('hidden');
+    return;
+  }
+  grid.classList.remove('hidden');
+  empty.classList.add('hidden');
+  grid.innerHTML = state.perfiles.map(p => {
+    const active = state.perfilActivo && state.perfilActivo.id === p.id;
+    const tipoEtiqueta = tiposNegocioCache.find(t => t.clave === p.tipoNegocio);
+    const tipoHtml = (p.tipoNegocio && p.tipoNegocio !== 'NINGUNO' && tipoEtiqueta)
+      ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold uppercase bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-md">${escapeHtml(tipoEtiqueta.etiqueta)}</span>`
+      : '';
+    return `
+      <div class="bg-white dark:bg-gray-800 rounded-2xl border ${active ? 'border-brand-500 ring-2 ring-brand-200 dark:ring-brand-900/40' : 'border-gray-100 dark:border-gray-700'} shadow-sm hover:shadow-md transition overflow-hidden">
+        <div class="h-2" style="background:${p.color || '#d4821b'}"></div>
+        <div class="p-5">
+          <div class="flex items-start gap-3 mb-3">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center text-white text-lg font-bold flex-shrink-0" style="background:${p.color || '#d4821b'}">
+              ${(p.nombre || '?').substring(0,1).toUpperCase()}
+            </div>
+            <div class="flex-1 min-w-0">
+              <h3 class="text-base font-bold text-gray-900 dark:text-white truncate">${escapeHtml(p.nombre)}</h3>
+              <div class="flex items-center gap-1.5 mt-1 flex-wrap">
+                ${tipoHtml}
+                <p class="text-[11px] text-gray-400">${p.fechaCreacion || ''}</p>
+              </div>
+            </div>
+            ${active ? '<span class="px-2 py-0.5 text-[10px] font-bold uppercase bg-brand-500 text-white rounded-md">Activo</span>' : ''}
+          </div>
+          ${p.descripcion ? `<p class="text-sm text-gray-500 dark:text-gray-400 mb-3 line-clamp-2">${escapeHtml(p.descripcion)}</p>` : '<div class="mb-3"></div>'}
+          <div class="flex gap-2">
+            ${active
+              ? '<button disabled class="flex-1 px-3 py-2 text-xs font-semibold bg-gray-100 dark:bg-gray-700 text-gray-400 rounded-xl cursor-not-allowed">En uso</button>'
+              : `<button onclick="seleccionarPerfil('${p.id}')" class="flex-1 px-3 py-2 text-xs font-semibold bg-brand-500 hover:bg-brand-600 text-white rounded-xl transition">Activar</button>`}
+            <button onclick="openModalPerfil(${escapeAttr(JSON.stringify(p))})" class="px-3 py-2 text-xs font-semibold bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-xl transition" title="Editar">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+            </button>
+            <button onclick="document.getElementById('perfil-eliminar-id').value='${p.id}'; openModal('modal-confirmar-eliminar-perfil')" class="px-3 py-2 text-xs font-semibold bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded-xl transition" title="Eliminar">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M9 3h6a1 1 0 011 1v3H8V4a1 1 0 011-1z"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function escapeHtml(s) {
+  if (s == null) return '';
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+function escapeAttr(s) {
+  return String(s).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+}
+
+// ── INIT ───────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  inicializarTema();
+  setupNavegacion();
+  setupHeaderSearch();
+  calRender();
+  if (typeof window.javaBridge !== 'undefined') {
+    cargarTiposNegocio();
+    cargarEstadoDesdeJava();
+  } else {
+    state.prodFiltrados = [...state.productos];
+    renderTablaProductos();
+    renderGridCategorias();
+    renderTablaProveedores();
+    renderTablaEntradas();
+    renderTablaSalidas();
+    renderTablaVentas();
+    actualizarDashboard();
+  }
+});
+
+// ── TEMA ───────────────────────────────────────────────────
+function inicializarTema() {
+  const t = localStorage.getItem('tema') || 'light';
+  aplicarTema(t);
+}
+function toggleDarkMode() {
+  const html  = document.documentElement;
+  const nuevo = html.classList.contains('dark') ? 'light' : 'dark';
+  localStorage.setItem('tema', nuevo);
+  aplicarTema(nuevo);
+}
+function aplicarTema(tema) {
+  const html  = document.documentElement;
+  const dot   = document.getElementById('theme-toggle-dot');
+  const label = document.getElementById('theme-label');
+  const tog   = document.getElementById('theme-toggle');
+  if (tema === 'dark') {
+    html.classList.add('dark');
+    dot.classList.replace('translate-x-6','translate-x-1');
+    tog.classList.replace('bg-brand-500','bg-gray-600');
+    label.textContent = 'Modo Oscuro';
+  } else {
+    html.classList.remove('dark');
+    dot.classList.replace('translate-x-1','translate-x-6');
+    tog.classList.replace('bg-gray-600','bg-brand-500');
+    label.textContent = 'Modo Claro';
+  }
+}
+
+// ── NAVEGACION ─────────────────────────────────────────────
+function setupNavegacion() {
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', e => {
+      e.preventDefault();
+      showSection(item.dataset.section);
+    });
+  });
+}
+
+function showSection(sec) {
+  document.querySelectorAll('.section-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('sec-'+sec).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    n.classList.remove('nav-active','bg-brand-50','dark:bg-brand-900/30','text-brand-700','dark:text-brand-400','font-semibold');
+    n.classList.add('text-gray-500','dark:text-gray-400','font-medium');
+  });
+  const active = document.querySelector('.nav-item[data-section="' + sec + '"]');
+  if (active) {
+    active.classList.add('nav-active','bg-brand-50','dark:bg-brand-900/30','text-brand-700','dark:text-brand-400','font-semibold');
+    active.classList.remove('text-gray-500','dark:text-gray-400','font-medium');
+  }
+}
+
+// ── HEADER SEARCH ──────────────────────────────────────────
+function setupHeaderSearch() {
+  document.getElementById('header-search').addEventListener('input', e => {
+    const s = document.getElementById('search-prod');
+    if (s) s.value = e.target.value;
+    filtrarProductos();
+  });
+}
+
+// ── HELPERS GENERALES ──────────────────────────────────────
+function esc(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function fmt(n, dec=2) { return Number(n).toLocaleString('es-MX',{minimumFractionDigits:dec,maximumFractionDigits:dec}); }
+function fmtFecha(f) { return f ? f.split('T')[0] : '—'; }
+function getNombreProd(id) { const p=state.productos.find(x=>x.id===id); return p?p.nombre:'—'; }
+function getNombreProv(id) { const p=state.proveedores.find(x=>x.id===id); return p?p.nombre:'—'; }
+
+function catPill(cat) {
+  const m = {
+    'electronicos':  { bg:'bg-red-50 dark:bg-red-900/20',     text:'text-red-600 dark:text-red-400'     },
+    'accesorios':    { bg:'bg-purple-50 dark:bg-purple-900/20',text:'text-purple-600 dark:text-purple-400'},
+    'mobiliario':    { bg:'bg-green-50 dark:bg-green-900/20',  text:'text-green-600 dark:text-green-400' },
+    'ropa':          { bg:'bg-pink-50 dark:bg-pink-900/20',    text:'text-pink-600 dark:text-pink-400'   },
+    'alimentos':     { bg:'bg-orange-50 dark:bg-orange-900/20',text:'text-orange-600 dark:text-orange-400'},
+  };
+  return m[(cat??'').toLowerCase()] ?? { bg:'bg-gray-100 dark:bg-gray-700', text:'text-gray-600 dark:text-gray-300' };
+}
+
+function estadoStock(p) {
+  const s = p.stock ?? 0;
+  if (s === 0) return { label:'Sin stock',    dot:'bg-red-400',    cls:'text-red-500'   };
+  if (s <= (p.stockMin ?? 10)) return { label:'Bajo stock', dot:'bg-yellow-400', cls:'text-yellow-600'};
+  return { label:'Disponible',  dot:'bg-green-400',  cls:'text-green-500' };
+}
+
+let _toastTimer;
+function showToast(msg, tipo='success') {
+  clearTimeout(_toastTimer);
+  const toast = document.getElementById('toast');
+  const msgEl = document.getElementById('toast-msg');
+  const icon  = document.getElementById('toast-icon');
+  msgEl.textContent = msg;
+  icon.innerHTML = tipo === 'success'
+    ? '<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>'
+    : '<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>';
+  icon.className = 'w-4 h-4 ' + (tipo==='success'?'text-green-400':'text-red-400');
+  toast.classList.remove('hidden');
+  _toastTimer = setTimeout(() => toast.classList.add('hidden'), 3200);
+}
+
+function openModal(id) {
+  const m = document.getElementById(id);
+  m.classList.remove('hidden');
+  m.classList.add('flex');
+}
+function closeModal(id) {
+  const m = document.getElementById(id);
+  m.classList.add('hidden');
+  m.classList.remove('flex');
+}
+function closeModalOnOverlay(e, id) {
+  if (e.target === document.getElementById(id)) closeModal(id);
+}
+
+// ── DASHBOARD ──────────────────────────────────────────────
+function actualizarDashboard() {
+  const bajoStock = state.productos.filter(p => p.stock > 0 && p.stock <= (p.stockMin ?? 10)).length;
+  document.getElementById('dash-total').textContent = state.productos.length;
+  document.getElementById('dash-bajo-stock').textContent = bajoStock;
+  document.getElementById('dash-ventas').textContent = state.ventas.length;
+  document.getElementById('dash-proveedores').textContent = state.proveedores.length;
+
+  // KPIs de vencimiento
+  const requiereVenc = !!window.javaBridge.requiereControlVencimiento();
+  const vencGrid   = document.getElementById('dash-venc-grid');
+  const alertsBox  = document.getElementById('dash-venc-alerts');
+  if (!requiereVenc || !state.perfilActivo) {
+    vencGrid.classList.add('hidden');
+    alertsBox.classList.add('hidden');
+    alertsBox.innerHTML = '';
+    return;
+  }
+  const hoy    = new Date();
+  hoy.setHours(0,0,0,0);
+  const vencidos   = [];
+  const porVencer7 = [];
+  const porVencer30= [];
+  state.productos.forEach(p => {
+    if (!p.requiereVencimiento || !p.fechaVencimiento) return;
+    const fv = new Date(p.fechaVencimiento);
+    if (isNaN(fv.getTime())) return;
+    const dias = Math.floor((fv - hoy) / 86400000);
+    if (dias < 0)         vencidos.push({ p, dias });
+    else if (dias < 7)    porVencer7.push({ p, dias });
+    else if (dias < 30)   porVencer30.push({ p, dias });
+  });
+  document.getElementById('dash-vencidos').textContent = vencidos.length;
+  document.getElementById('dash-venc7').textContent    = porVencer7.length;
+  document.getElementById('dash-venc30').textContent   = porVencer30.length;
+  vencGrid.classList.remove('hidden');
+
+  // Alertas visuales
+  const alerts = [];
+  if (vencidos.length) {
+    const top = vencidos.slice(0, 3).map(x => `<b>${escapeHtml(x.p.nombre)}</b> (vencido hace ${Math.abs(x.dias)} d)`).join(', ');
+    alerts.push(`<div class="flex items-center gap-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/40 rounded-xl text-sm text-red-700 dark:text-red-300">
+      <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+      <span><b>${vencidos.length} producto(s) vencido(s):</b> ${top}${vencidos.length>3?' y más':''}.</span>
+    </div>`);
+  }
+  if (porVencer7.length) {
+    const top = porVencer7.slice(0, 3).map(x => `<b>${escapeHtml(x.p.nombre)}</b> (en ${x.dias} d)`).join(', ');
+    alerts.push(`<div class="flex items-center gap-3 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-900/40 rounded-xl text-sm text-orange-700 dark:text-orange-300">
+      <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <span><b>${porVencer7.length} producto(s) por vencer en menos de 7 días:</b> ${top}${porVencer7.length>3?' y más':''}.</span>
+    </div>`);
+  }
+  if (porVencer30.length && !porVencer7.length) {
+    const top = porVencer30.slice(0, 3).map(x => `<b>${escapeHtml(x.p.nombre)}</b> (en ${x.dias} d)`).join(', ');
+    alerts.push(`<div class="flex items-center gap-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-900/40 rounded-xl text-sm text-yellow-700 dark:text-yellow-300">
+      <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+      <span><b>${porVencer30.length} producto(s) por vencer en menos de 30 días:</b> ${top}${porVencer30.length>3?' y más':''}.</span>
+    </div>`);
+  }
+  if (alerts.length) {
+    alertsBox.innerHTML = alerts.join('');
+    alertsBox.classList.remove('hidden');
+  } else {
+    alertsBox.classList.add('hidden');
+    alertsBox.innerHTML = '';
+  }
+}
+
+// ── PRODUCTOS ──────────────────────────────────────────────
+function filtrarProductos() {
+  const busq = (document.getElementById('search-prod')?.value || document.getElementById('header-search')?.value || '').trim().toLowerCase();
+  const cat  = document.getElementById('filter-cat-prod')?.value.toLowerCase() || '';
+  state.prodFiltrados = state.productos.filter(p => {
+    const matchB = !busq || p.nombre.toLowerCase().includes(busq) || (p.descripcion??'').toLowerCase().includes(busq) || String(p.id).includes(busq);
+    const matchC = !cat  || (p.categoria??'').toLowerCase() === cat;
+    return matchB && matchC;
+  });
+  state.prodPagina = 1;
+  renderTablaProductos();
+}
+
+function renderTablaProductos() {
+  const ppag = parseInt(document.getElementById('prod-per-page')?.value || 5);
+  state.prodPorPagina = ppag;
+  const inicio = (state.prodPagina - 1) * ppag;
+  const pagina = state.prodFiltrados.slice(inicio, inicio + ppag);
+  const tbody  = document.getElementById('tabla-productos');
+
+  if (pagina.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="9" class="text-center py-16 text-gray-400 text-sm">No se encontraron productos.</td></tr>';
+  } else {
+    const requiereVenc = !!window.javaBridge.requiereControlVencimiento();
+    tbody.innerHTML = pagina.map(p => {
+      const estado = estadoStock(p);
+      const { bg, text } = catPill(p.categoria);
+      const stockColor = p.stock === 0 ? 'text-red-500' : p.stock <= (p.stockMin??10) ? 'text-yellow-600' : 'text-gray-800 dark:text-white';
+      let vencCell = '';
+      if (requiereVenc && p.requiereVencimiento && p.fechaVencimiento) {
+        const hoy = new Date(); hoy.setHours(0,0,0,0);
+        const fv  = new Date(p.fechaVencimiento);
+        const dias = Math.floor((fv - hoy) / 86400000);
+        let badgeCls = 'bg-gray-100 text-gray-600';
+        if (dias < 0)        badgeCls = 'bg-red-100 text-red-700';
+        else if (dias < 7)   badgeCls = 'bg-orange-100 text-orange-700';
+        else if (dias < 30)  badgeCls = 'bg-yellow-100 text-yellow-700';
+        const label = dias < 0 ? `Vencido (${Math.abs(dias)}d)` : dias === 0 ? 'Vence hoy' : `${dias}d`;
+        vencCell = `<td class="px-4 py-3.5"><div class="flex flex-col gap-0.5"><span class="text-xs font-semibold text-gray-700 dark:text-gray-200">${esc(p.fechaVencimiento)}</span><span class="inline-block w-fit px-1.5 py-0.5 text-[10px] font-bold rounded ${badgeCls}">${label}</span></div></td>`;
+      } else {
+        vencCell = '<td class="px-4 py-3.5 text-xs text-gray-400">—</td>';
+      }
+      return '<tr class="fade-row hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors">\
+        <td class="px-6 py-3.5 text-xs font-semibold text-gray-400 dark:text-gray-500">#' + p.id + '</td>\
+        <td class="px-4 py-3.5">\
+          ' + (p.codigo ? '<span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-mono font-semibold bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200">' + esc(p.codigo) + '</span>' : '<span class="text-xs text-gray-300 dark:text-gray-600">—</span>') + '\
+        </td>\
+        <td class="px-4 py-3.5">\
+          <p class="text-sm font-semibold text-gray-800 dark:text-white">' + esc(p.nombre) + '</p>\
+          <p class="text-xs text-gray-400 mt-0.5">' + esc(p.descripcion||'') + '</p>\
+        </td>\
+        <td class="px-4 py-3.5">\
+          <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold ' + bg + ' ' + text + '">' + esc(p.categoria||'—') + '</span>\
+        </td>\
+        <td class="px-4 py-3.5 text-sm font-semibold text-gray-800 dark:text-white">$' + fmt(p.precioVenta || p.precio || 0) + '</td>\
+        <td class="px-4 py-3.5 text-sm font-bold ' + stockColor + '">' + p.stock + '</td>\
+        <td class="px-4 py-3.5">\
+          <div class="flex items-center gap-1.5">\
+            <span class="w-1.5 h-1.5 rounded-full ' + estado.dot + '"></span>\
+            <span class="text-sm font-semibold ' + estado.cls + '">' + estado.label + '</span>\
+          </div>\
+        </td>\
+        ' + vencCell + '\
+        <td class="px-4 py-3.5">\
+          <div class="flex items-center justify-center gap-1">\
+            <button onclick="editarProducto(\'' + p.id + '\')" title="Editar"\
+              class="p-1.5 text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-900/20 rounded-lg transition">\
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>\
+            </button>\
+            <button onclick="confirmarEliminar(\'' + p.id + '\', \'productos\')" title="Eliminar"\
+              class="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition">\
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>\
+            </button>\
+          </div>\
+        </td>\
+      </tr>';
+    }).join('');
+  }
+
+  const total  = state.prodFiltrados.length;
+  const paginas = Math.ceil(total / ppag);
+  const ini2   = total === 0 ? 0 : inicio + 1;
+  const fin    = Math.min(inicio + ppag, total);
+  document.getElementById('prod-pag-info').textContent = 'Mostrando ' + ini2 + ' a ' + fin + ' de ' + total + ' productos';
+
+  const ctrl = document.getElementById('prod-pag-ctrl');
+  if (paginas <= 1) { ctrl.innerHTML = ''; return; }
+  const btnCls  = 'w-8 h-8 flex items-center justify-center rounded-lg text-sm font-semibold transition';
+  const active  = btnCls + ' bg-brand-500 text-white shadow-sm';
+  const inact   = btnCls + ' text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700';
+  const disabl  = btnCls + ' text-gray-300 dark:text-gray-600 cursor-not-allowed';
+  const cur = state.prodPagina;
+
+  let html = '<button onclick="irProdPag(' + (cur-1) + ')" ' + (cur===1?'disabled':'') + ' class="' + (cur===1?disabl:inact) + '">\
+    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg></button>';
+  for (let i=1; i<=paginas; i++) {
+    html += '<button onclick="irProdPag(' + i + ')" class="' + (i===cur?active:inact) + '">' + i + '</button>';
+  }
+  html += '<button onclick="irProdPag(' + (cur+1) + ')" ' + (cur===paginas?'disabled':'') + ' class="' + (cur===paginas?disabl:inact) + '">\
+    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></button>';
+  ctrl.innerHTML = html;
+}
+
+function irProdPag(n) {
+  const max = Math.ceil(state.prodFiltrados.length / state.prodPorPagina);
+  if (n < 1 || n > max) return;
+  state.prodPagina = n;
+  renderTablaProductos();
+}
+
+function poblarFiltroCategorias() {
+  const sel = document.getElementById('filter-cat-prod');
+  if (!sel) return;
+  const registradas = (state.categorias || []).map(c => c.nombre).filter(Boolean);
+  const usadas      = state.productos.map(p => p.categoria).filter(Boolean);
+  const cats = [...new Set([...registradas, ...usadas])].sort();
+  sel.innerHTML = '<option value="">Todas las categorias</option>' +
+    cats.map(c => '<option value="' + esc(c) + '">' + esc(c) + '</option>').join('');
+}
+
+function openModalProducto() {
+  state.editMode = { tabla: 'productos', id: null };
+  document.getElementById('modal-prod-title').textContent = 'Agregar Producto';
+  ['prod-id','prod-nombre','prod-codigo','prod-precio','prod-stock','prod-stock-min','prod-desc','prod-fecha-venc'].forEach(function(id) {
+    const el = document.getElementById(id); if (el) el.value='';
+  });
+  document.getElementById('prod-categoria').value = '';
+  document.getElementById('prod-proveedor').value = '';
+  document.getElementById('prod-requiere-venc').value = 'false';
+  document.getElementById('prod-error').classList.add('hidden');
+  // Poblar selects
+  const catSel = document.getElementById('prod-categoria');
+  const catsList = Array.isArray(state.categorias) ? state.categorias : [];
+  catSel.innerHTML = '<option value="">Seleccionar...</option>' +
+    catsList.map(c => '<option value="' + (c.nombre || '') + '">' + (c.nombre || '') + '</option>').join('');
+  // Refrescar proveedores desde Java para garantizar datos actuales
+  try {
+    const provsFresh = JSON.parse(window.javaBridge.obtenerProveedores() || '[]');
+    if (Array.isArray(provsFresh)) {
+      state.proveedores = provsFresh;
+    }
+  } catch(e) { console.error('Error refrescando proveedores:', e); }
+  const provSel = document.getElementById('prod-proveedor');
+  const provsList = Array.isArray(state.proveedores) ? state.proveedores : [];
+  provSel.innerHTML = '<option value="">Seleccionar...</option>' +
+    provsList.map(p => '<option value="' + (p.id || '') + '">' + (p.nombre || '(sin nombre)') + '</option>').join('');
+  // Reset mini calendario de vencimiento
+  clearVencFecha();
+  vencCursor = new Date();
+  vencRender();
+  // Mostrar/ocultar bloque de vencimiento según tipo de negocio
+  configurarBloqueVencimiento(false);
+  // Aplicar placeholders dinámicos
+  aplicarSugerencias();
+  openModal('modal-producto');
+  setTimeout(function() { document.getElementById('prod-nombre').focus(); }, 80);
+}
+
+function configurarBloqueVencimiento(requiere) {
+  const block = document.getElementById('prod-vencimiento-block');
+  const req   = document.getElementById('prod-requiere-venc');
+  const fwrap = document.getElementById('prod-venc-fecha-wrap');
+  const habilitado = !!window.javaBridge.requiereControlVencimiento();
+  if (habilitado) {
+    block.classList.remove('hidden');
+    req.value = requiere ? 'true' : 'false';
+    fwrap.classList.toggle('hidden', !requiere);
+    if (requiere) {
+      vencCursor = new Date();
+      vencRender();
+    }
+  } else {
+    block.classList.add('hidden');
+    fwrap.classList.add('hidden');
+    req.value = 'false';
+  }
+}
+
+function onRequiereVencChange() {
+  const req = document.getElementById('prod-requiere-venc').value === 'true';
+  const fwrap = document.getElementById('prod-venc-fecha-wrap');
+  fwrap.classList.toggle('hidden', !req);
+  if (req) {
+    if (!vencSelected) {
+      vencCursor = new Date();
+      vencRender();
+    } else {
+      vencRender();
+    }
+  }
+}
+
+function editarProducto(id) {
+  const p = state.productos.find(function(x) { return x.id === id; }); if(!p) return;
+  state.editMode = { tabla:'productos', id: id };
+  document.getElementById('modal-prod-title').textContent = 'Editar Producto';
+  document.getElementById('prod-id').value        = p.id;
+  document.getElementById('prod-nombre').value    = p.nombre || '';
+  document.getElementById('prod-codigo').value    = p.codigo || '';
+  document.getElementById('prod-categoria').value = p.categoria || '';
+  document.getElementById('prod-precio').value    = p.precioVenta || p.precio || '';
+  document.getElementById('prod-stock').value     = p.stock || '';
+  document.getElementById('prod-stock-min').value = p.stockMin || '';
+  document.getElementById('prod-desc').value      = p.descripcion || '';
+  document.getElementById('prod-proveedor').value = p.proveedorId || '';
+  document.getElementById('prod-requiere-venc').value = p.requiereVencimiento ? 'true' : 'false';
+  setVencFecha(p.fechaVencimiento || '');
+  document.getElementById('prod-error').classList.add('hidden');
+  configurarBloqueVencimiento(!!p.requiereVencimiento);
+  aplicarSugerencias();
+  openModal('modal-producto');
+}
+
+function submitProducto() {
+  const id       = document.getElementById('prod-id').value.trim();
+  const nombre   = document.getElementById('prod-nombre').value.trim();
+  const codigo   = document.getElementById('prod-codigo').value.trim();
+  const categoria = document.getElementById('prod-categoria').value;
+  const precio   = parseFloat(document.getElementById('prod-precio').value) || 0;
+  const stock    = parseInt(document.getElementById('prod-stock').value) || 0;
+  const stockMin = parseInt(document.getElementById('prod-stock-min').value) || 0;
+  const desc     = document.getElementById('prod-desc').value.trim();
+  const proveedorId = document.getElementById('prod-proveedor').value;
+  const requiereVenc = document.getElementById('prod-requiere-venc').value === 'true';
+  const fechaVenc    = document.getElementById('prod-fecha-venc').value || null;
+  const errEl    = document.getElementById('prod-error');
+
+  if (!nombre) {
+    errEl.textContent = 'El nombre es obligatorio.'; errEl.classList.remove('hidden'); return;
+  }
+  if (requiereVenc && (!fechaVenc || fechaVenc === '')) {
+    errEl.textContent = 'La fecha de vencimiento es obligatoria si requiere control.'; errEl.classList.remove('hidden'); return;
+  }
+  if (requiereVenc && fechaVenc) {
+    const hoyIso = _toIsoLocal(_todayLocal());
+    if (fechaVenc < hoyIso) {
+      errEl.textContent = 'La fecha de vencimiento no puede ser anterior a hoy.'; errEl.classList.remove('hidden'); return;
+    }
+  }
+  errEl.classList.add('hidden');
+
+  var producto = {
+    id: id || undefined,
+    nombre: nombre,
+    codigo: codigo,
+    descripcion: desc,
+    categoria: categoria,
+    categoriaId: categoria,
+    proveedorId: proveedorId,
+    precioCompra: 0,
+    precioVenta: precio,
+    stock: stock,
+    stockMin: stockMin,
+    tipo: 'General',
+    requiereVencimiento: requiereVenc,
+    fechaVencimiento: requiereVenc ? fechaVenc : null
+  };
+
+  const resultado = window.javaBridge.guardarProducto(JSON.stringify(producto));
+
+  if (resultado === 'OK') {
+    closeModal('modal-producto');
+    cargarEstadoDesdeJava();
+    showToast(id ? 'Producto actualizado.' : 'Producto creado.');
+  } else {
+    errEl.textContent = resultado;
+    errEl.classList.remove('hidden');
+  }
+}
+
+// ── CATEGORIAS ─────────────────────────────────────────────
+function renderGridCategorias() {
+  const colores = [
+    { icon:'text-amber-500',  bg:'bg-amber-50 dark:bg-amber-900/20'   },
+    { icon:'text-purple-500', bg:'bg-purple-50 dark:bg-purple-900/20' },
+    { icon:'text-green-500',  bg:'bg-green-50 dark:bg-green-900/20'   },
+    { icon:'text-pink-500',   bg:'bg-pink-50 dark:bg-pink-900/20'     },
+    { icon:'text-orange-500', bg:'bg-orange-50 dark:bg-orange-900/20' },
+    { icon:'text-blue-500',   bg:'bg-blue-50 dark:bg-blue-900/20'     },
+  ];
+  const grid = document.getElementById('grid-categorias');
+  grid.innerHTML = state.categorias.map(function(c, i) {
+    const col = colores[i % colores.length];
+    const count = state.productos.filter(function(p) { return (p.categoria||'').toLowerCase()===c.nombre.toLowerCase(); }).length;
+    return '<div class="kpi-card bg-white dark:bg-gray-800 rounded-2xl p-5 border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">\
+      <div class="flex items-start justify-between mb-3">\
+        <div class="w-11 h-11 rounded-xl ' + col.bg + ' flex items-center justify-center">\
+          <svg class="w-5 h-5 ' + col.icon + '" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">\
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>\
+          </svg>\
+        </div>\
+        <div class="flex gap-1">\
+          <button onclick="editarCategoria(\'' + c.id + '\')" class="p-1.5 text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-900/20 rounded-lg transition">\
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>\
+          </button>\
+          <button onclick="confirmarEliminar(\'' + c.id + '\', \'categorias\')" class="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition">\
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>\
+          </button>\
+        </div>\
+      </div>\
+      <h3 class="text-base font-bold text-gray-900 dark:text-white mb-0.5">' + esc(c.nombre) + '</h3>\
+      <p class="text-xs text-gray-400 mb-3">' + esc(c.descripcion||'Sin descripcion') + '</p>\
+      <p class="text-sm font-semibold ' + col.icon + '">' + count + ' producto' + (count!==1?'s':'') + '</p>\
+    </div>';
+  }).join('');
+}
+
+function openModalCategoria() {
+  state.editMode = { tabla:'categorias', id:null };
+  document.getElementById('modal-cat-title').textContent = 'Nueva Categoria';
+  document.getElementById('cat-id').value = '';
+  document.getElementById('cat-nombre').value = '';
+  document.getElementById('cat-desc').value = '';
+  document.getElementById('cat-error').classList.add('hidden');
+  aplicarSugerencias();
+  openModal('modal-categoria');
+  setTimeout(function() { document.getElementById('cat-nombre').focus(); }, 80);
+}
+
+function editarCategoria(id) {
+  const c = state.categorias.find(function(x) { return x.id===id; }); if(!c) return;
+  state.editMode = { tabla:'categorias', id: id };
+  document.getElementById('modal-cat-title').textContent = 'Editar Categoria';
+  document.getElementById('cat-id').value     = c.id;
+  document.getElementById('cat-nombre').value = c.nombre;
+  document.getElementById('cat-desc').value   = c.descripcion || '';
+  document.getElementById('cat-error').classList.add('hidden');
+  openModal('modal-categoria');
+}
+
+function submitCategoria() {
+  const id    = document.getElementById('cat-id').value.trim();
+  const nombre = document.getElementById('cat-nombre').value.trim();
+  const desc   = document.getElementById('cat-desc').value.trim();
+  const errEl  = document.getElementById('cat-error');
+  if (!nombre) { errEl.textContent = 'El nombre es obligatorio.'; errEl.classList.remove('hidden'); return; }
+  errEl.classList.add('hidden');
+
+  var categoria = {
+    id: id || undefined,
+    nombre: nombre,
+    descripcion: desc
+  };
+
+  const resultado = window.javaBridge.guardarCategoria(JSON.stringify(categoria));
+
+  if (resultado === 'OK') {
+    closeModal('modal-categoria');
+    cargarEstadoDesdeJava();
+    showToast(id ? 'Categoria actualizada.' : 'Categoria creada.');
+  } else {
+    errEl.textContent = resultado;
+    errEl.classList.remove('hidden');
+  }
+}
+
+// ── PROVEEDORES ────────────────────────────────────────────
+function renderTablaProveedores() {
+  const tbody = document.getElementById('tabla-proveedores');
+  if (state.proveedores.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-16 text-sm text-gray-400">No hay proveedores registrados.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = state.proveedores.map(function(p) {
+    return '<tr class="fade-row hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors">\
+      <td class="px-6 py-3.5 text-xs font-semibold text-gray-400">#' + p.id + '</td>\
+      <td class="px-4 py-3.5 text-sm font-semibold text-gray-800 dark:text-white">' + esc(p.nombre) + '</td>\
+      <td class="px-4 py-3.5 text-sm text-gray-600 dark:text-gray-300">' + esc(p.telefono||'—') + '</td>\
+      <td class="px-4 py-3.5 text-sm text-gray-600 dark:text-gray-300">' + esc(p.email||'—') + '</td>\
+      <td class="px-4 py-3.5">\
+        <div class="flex items-center justify-center gap-1">\
+          <button onclick="editarProveedor(\'' + p.id + '\')" class="p-1.5 text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-900/20 rounded-lg transition">\
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>\
+          </button>\
+          <button onclick="confirmarEliminar(\'' + p.id + '\', \'proveedores\')" class="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition">\
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>\
+          </button>\
+        </div>\
+      </td>\
+    </tr>';
+  }).join('');
+}
+
+function openModalProveedor() {
+  state.editMode = { tabla:'proveedores', id:null };
+  document.getElementById('modal-prov-title').textContent = 'Nuevo Proveedor';
+  ['prov-id','prov-nombre','prov-telefono','prov-email'].forEach(function(id) {
+    const el = document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('prov-error').classList.add('hidden');
+  aplicarSugerencias();
+  openModal('modal-proveedor');
+  setTimeout(function() { document.getElementById('prov-nombre').focus(); }, 80);
+}
+
+function editarProveedor(id) {
+  const p = state.proveedores.find(function(x) { return x.id===id; }); if(!p) return;
+  state.editMode = { tabla:'proveedores', id: id };
+  document.getElementById('modal-prov-title').textContent = 'Editar Proveedor';
+  document.getElementById('prov-id').value       = p.id;
+  document.getElementById('prov-nombre').value   = p.nombre;
+  document.getElementById('prov-telefono').value = p.telefono || '';
+  document.getElementById('prov-email').value    = p.email || '';
+  document.getElementById('prov-error').classList.add('hidden');
+  openModal('modal-proveedor');
+}
+
+function submitProveedor() {
+  const id       = document.getElementById('prov-id').value.trim();
+  const nombre   = document.getElementById('prov-nombre').value.trim();
+  const telefono = document.getElementById('prov-telefono').value.trim();
+  const email    = document.getElementById('prov-email').value.trim();
+  const errEl    = document.getElementById('prov-error');
+  if (!nombre) { errEl.textContent = 'El nombre es obligatorio.'; errEl.classList.remove('hidden'); return; }
+  errEl.classList.add('hidden');
+
+  var proveedor = {
+    id: id || undefined,
+    nombre: nombre,
+    telefono: telefono,
+    email: email
+  };
+
+  const resultado = window.javaBridge.guardarProveedor(JSON.stringify(proveedor));
+
+  if (resultado === 'OK') {
+    closeModal('modal-proveedor');
+    cargarEstadoDesdeJava();
+    showToast(id ? 'Proveedor actualizado.' : 'Proveedor registrado.');
+  } else {
+    errEl.textContent = resultado;
+    errEl.classList.remove('hidden');
+  }
+}
+
+// ── ENTRADAS ───────────────────────────────────────────────
+function renderTablaEntradas() {
+  const tbody = document.getElementById('tabla-entradas');
+  if (state.entradas.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-16 text-sm text-gray-400">No hay entradas registradas.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = state.entradas.map(function(e) {
+    return '<tr class="fade-row hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors">\
+      <td class="px-6 py-3.5 text-xs font-semibold text-gray-400">#' + e.id + '</td>\
+      <td class="px-4 py-3.5 text-sm font-semibold text-gray-800 dark:text-white">' + esc(getNombreProd(e.productoId)) + '</td>\
+      <td class="px-4 py-3.5"><span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400">+' + e.cantidad + '</span></td>\
+      <td class="px-4 py-3.5 text-sm text-gray-600 dark:text-gray-300">' + esc(getNombreProv(e.proveedorId)) + '</td>\
+      <td class="px-4 py-3.5 text-xs text-gray-400">' + esc(fmtFecha(e.fecha)) + '</td>\
+      <td class="px-4 py-3.5 text-center">\
+        <button onclick="confirmarEliminar(\'' + e.id + '\', \'entradas\')" class="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition">\
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>\
+        </button>\
+      </td>\
+    </tr>';
+  }).join('');
+}
+
+function openModalEntrada() {
+  const prodSel = document.getElementById('ent-producto');
+  prodSel.innerHTML = '<option value="">Seleccionar producto...</option>' +
+    state.productos.map(function(p) { return '<option value="' + p.id + '">' + esc(p.nombre) + ' (stock: ' + p.stock + ')</option>'; }).join('');
+  document.getElementById('ent-cantidad').value  = '';
+  document.getElementById('ent-error').classList.add('hidden');
+  openModal('modal-entrada');
+}
+
+function submitEntrada() {
+  const prodId = document.getElementById('ent-producto').value;
+  const cant   = parseInt(document.getElementById('ent-cantidad').value, 10);
+  const errEl  = document.getElementById('ent-error');
+  if (!prodId || isNaN(cant) || cant < 1) { errEl.textContent='Selecciona producto y cantidad valida.'; errEl.classList.remove('hidden'); return; }
+  errEl.classList.add('hidden');
+
+  var entrada = {
+    productoId: prodId,
+    cantidad: cant,
+    precioUnitario: 0,
+    observacion: ''
+  };
+
+  const resultado = window.javaBridge.registrarEntrada(JSON.stringify(entrada));
+
+  if (resultado === 'OK') {
+    closeModal('modal-entrada');
+    cargarEstadoDesdeJava();
+    showToast('Entrada registrada correctamente.');
+  } else {
+    errEl.textContent = resultado;
+    errEl.classList.remove('hidden');
+  }
+}
+
+// ── SALIDAS ────────────────────────────────────────────────
+function renderTablaSalidas() {
+  const tbody = document.getElementById('tabla-salidas');
+  if (state.salidas.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-16 text-sm text-gray-400">No hay salidas registradas.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = state.salidas.map(function(s) {
+    return '<tr class="fade-row hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors">\
+      <td class="px-6 py-3.5 text-xs font-semibold text-gray-400">#' + s.id + '</td>\
+      <td class="px-4 py-3.5 text-sm font-semibold text-gray-800 dark:text-white">' + esc(getNombreProd(s.productoId)) + '</td>\
+      <td class="px-4 py-3.5"><span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400">-' + s.cantidad + '</span></td>\
+      <td class="px-4 py-3.5 text-sm text-gray-600 dark:text-gray-300">' + esc(s.motivo||'—') + '</td>\
+      <td class="px-4 py-3.5 text-xs text-gray-400">' + esc(fmtFecha(s.fecha)) + '</td>\
+      <td class="px-4 py-3.5 text-center">\
+        <button onclick="confirmarEliminar(\'' + s.id + '\', \'salidas\')" class="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition">\
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>\
+        </button>\
+      </td>\
+    </tr>';
+  }).join('');
+}
+
+function openModalSalida() {
+  const prodSel = document.getElementById('sal-producto');
+  prodSel.innerHTML = '<option value="">Seleccionar producto...</option>' +
+    state.productos.map(function(p) { return '<option value="' + p.id + '">' + esc(p.nombre) + ' (stock: ' + p.stock + ')</option>'; }).join('');
+  document.getElementById('sal-cantidad').value = '';
+  document.getElementById('sal-error').classList.add('hidden');
+  openModal('modal-salida');
+}
+
+function submitSalida() {
+  const prodId = document.getElementById('sal-producto').value;
+  const cant   = parseInt(document.getElementById('sal-cantidad').value, 10);
+  const errEl  = document.getElementById('sal-error');
+  if (!prodId || isNaN(cant) || cant < 1) { errEl.textContent='Selecciona producto y cantidad valida.'; errEl.classList.remove('hidden'); return; }
+  errEl.classList.add('hidden');
+
+  var salida = {
+    productoId: prodId,
+    cantidad: cant,
+    motivo: 'Salida manual',
+    tipo: 'AJUSTE'
+  };
+
+  const resultado = window.javaBridge.registrarSalida(JSON.stringify(salida));
+
+  if (resultado === 'OK') {
+    closeModal('modal-salida');
+    cargarEstadoDesdeJava();
+    showToast('Salida registrada correctamente.');
+  } else {
+    errEl.textContent = resultado;
+    errEl.classList.remove('hidden');
+  }
+}
+
+// ── VENTAS ─────────────────────────────────────────────────
+function renderTablaVentas() {
+  const tbody = document.getElementById('tabla-ventas');
+  if (state.ventas.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center py-16 text-sm text-gray-400">No hay ventas registradas.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = state.ventas.map(function(v) {
+    // For now, show first item in venta
+    const items = v.items || [];
+    const first = items[0] || {};
+    const prodName = first.nombreProducto || getNombreProd(first.productoId) || '—';
+    const cant = first.cantidad || 0;
+    const pu = first.precioUnitario || 0;
+    return '<tr class="fade-row hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors">\
+      <td class="px-6 py-3.5 text-xs font-semibold text-gray-400">#' + v.id + '</td>\
+      <td class="px-4 py-3.5 text-sm font-semibold text-gray-800 dark:text-white">' + esc(prodName) + '</td>\
+      <td class="px-4 py-3.5 text-sm text-gray-600 dark:text-gray-300">' + cant + '</td>\
+      <td class="px-4 py-3.5 text-sm text-gray-600 dark:text-gray-300">$' + fmt(pu) + '</td>\
+      <td class="px-4 py-3.5 text-sm font-bold text-brand-600 dark:text-brand-400">$' + fmt(v.total || 0) + '</td>\
+      <td class="px-4 py-3.5 text-xs text-gray-400">' + esc(fmtFecha(v.fecha)) + '</td>\
+      <td class="px-4 py-3.5 text-center">\
+        <button onclick="confirmarEliminar(\'' + v.id + '\', \'ventas\')" class="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition">\
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>\
+        </button>\
+      </td>\
+    </tr>';
+  }).join('');
+}
+
+function openModalVenta() {
+  const prodSel = document.getElementById('ven-producto');
+  prodSel.innerHTML = '<option value="">Seleccionar producto...</option>' +
+    state.productos.map(function(p) { return '<option value="' + p.id + '">' + esc(p.nombre) + ' (stock: ' + p.stock + ')</option>'; }).join('');
+  document.getElementById('ven-cantidad').value = '';
+  document.getElementById('ven-precio').value   = '';
+  document.getElementById('ven-total-display').textContent = '$0.00';
+  document.getElementById('ven-error').classList.add('hidden');
+  openModal('modal-venta');
+}
+
+function actualizarPrecioVenta() {
+  const id   = document.getElementById('ven-producto').value;
+  const prod = state.productos.find(function(p) { return p.id === id; });
+  if (prod) document.getElementById('ven-precio').value = prod.precioVenta || prod.precio || 0;
+  calcularTotalVenta();
+}
+
+function calcularTotalVenta() {
+  const cant   = parseFloat(document.getElementById('ven-cantidad').value) || 0;
+  const precio = parseFloat(document.getElementById('ven-precio').value) || 0;
+  document.getElementById('ven-total-display').textContent = '$' + fmt(cant * precio);
+}
+
+function submitVenta() {
+  const prodId = document.getElementById('ven-producto').value;
+  const cant   = parseInt(document.getElementById('ven-cantidad').value, 10);
+  const precio = parseFloat(document.getElementById('ven-precio').value);
+  const errEl  = document.getElementById('ven-error');
+  if (!prodId || isNaN(cant) || cant < 1 || isNaN(precio) || precio < 0) { errEl.textContent='Completa todos los campos.'; errEl.classList.remove('hidden'); return; }
+  const prod = state.productos.find(function(p) { return p.id === prodId; });
+  if (!prod || prod.stock < cant) { errEl.textContent='Stock insuficiente. Disponible: ' + (prod?.stock||0); errEl.classList.remove('hidden'); return; }
+  errEl.classList.add('hidden');
+
+  var venta = {
+    cliente: 'Cliente',
+    metodoPago: 'Efectivo',
+    observacion: '',
+    items: [{
+      productoId: prodId,
+      nombreProducto: prod.nombre,
+      cantidad: cant,
+      precioUnitario: precio
+    }]
+  };
+
+  const resultado = window.javaBridge.crearVenta(JSON.stringify(venta));
+
+  if (resultado.startsWith('ERROR')) {
+    errEl.textContent = resultado;
+    errEl.classList.remove('hidden');
+  } else {
+    closeModal('modal-venta');
+    cargarEstadoDesdeJava();
+    showToast('Venta registrada por $' + fmt(cant * precio) + '.');
+  }
+}
+
+// ── ELIMINAR (confirmacion con Bridge) ─────────────────────
+function confirmarEliminar(id, tabla) {
+  document.getElementById('confirm-title').textContent = 'Eliminar elemento?';
+  document.getElementById('confirm-msg').textContent   = 'Esta accion no se puede deshacer.';
+  const btn = document.getElementById('confirm-btn');
+  btn.onclick = function() { eliminarConBridge(id, tabla); closeModal('modal-confirm'); };
+  openModal('modal-confirm');
+}
+
+function eliminarConBridge(id, tabla) {
+  var resultado = 'ERROR';
+  switch(tabla) {
+    case 'productos':   resultado = window.javaBridge.eliminarProducto(id); break;
+    case 'categorias':  resultado = window.javaBridge.eliminarCategoria(id); break;
+    case 'proveedores': resultado = window.javaBridge.eliminarProveedor(id); break;
+  }
+  if (resultado === 'OK') {
+    cargarEstadoDesdeJava();
+    showToast('Elemento eliminado.');
+  } else {
+    showToast('Error al eliminar: ' + resultado, 'error');
+  }
+}
+
+// Escape
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    ['modal-producto','modal-categoria','modal-proveedor','modal-entrada','modal-salida','modal-venta','modal-confirm','modal-primer-perfil','modal-perfil','modal-confirmar-eliminar-perfil']
+      .forEach(function(id) { closeModal(id); });
+  }
+});
+</script>
+</body>
+</html>
