@@ -22,6 +22,9 @@ Cada fila indica dónde se aplica el principio en el código y por qué.
 | **Bajo acoplamiento** | `AppContext.getServiciosActivos()` | Los campos públicos y mutables de P2 se reemplazan por métodos de acceso; el bridge no conoce los repositorios. |
 | **Alta cohesión** | Paquete `bridge` | El `JavaBridge` de P2 (338 líneas) mezclaba JSON, reglas, IDs y errores. Ahora cada controlador atiende un único grupo de casos de uso. |
 | **Alta cohesión** | `JsonFileStore`, `DirectorioPerfiles`, `RespuestaBridge` | Clases pequeñas con un propósito único: E/S de archivos, carpetas de perfil y formato de respuestas a la vista. |
+| **Controller** | `RespaldoController` | Controlador del caso de uso "copias de seguridad"; `JavaBridge` le delega crear, listar, restaurar y eliminar. |
+| **Experto** | `RespaldoRepository.listar()`, `describir(Path)` | Conoce la carpeta de respaldos y los archivos que contiene; construye cada `Respaldo` con su nombre, fecha y tamaño. |
+| **Bajo acoplamiento** | `GestorRespaldo(Path, RespaldoRepository, ArchivadorZip)` | Recibe sus dependencias por constructor; no sabe cómo se comprime ni cómo se recargan los servicios (`AppContext.restaurarRespaldo`). |
 
 ## Principios SOLID
 
@@ -30,6 +33,7 @@ Cada fila indica dónde se aplica el principio en el código y por qué.
 | **SRP** | `JsonFileStore` / `JsonRepository<T>` / `Gestor*` | Tres razones de cambio separadas: cómo se escribe en disco, cómo se administra la colección en memoria y qué reglas de negocio aplican. |
 | **SRP** | `DirectorioPerfiles` (extraída de `GestorPerfiles`) | Las operaciones de sistema de archivos salieron del servicio de perfiles. |
 | **SRP** | `GestorConfiguracionGlobal` | Es el único que lee/escribe `configuracion-global.json`; en P2 `GestorPerfiles` también lo hacía. |
+| **SRP** | `ArchivadorZip` / `RespaldoRepository` / `GestorRespaldo` | Comprimir y extraer archivos, administrar la carpeta de respaldos y coordinar el caso de uso son tres responsabilidades separadas. |
 | **SRP** | `RespuestaBridge.ejecutar(Supplier<String>)` | Centraliza la traducción de excepciones a `"ERROR: ..."`; en P2 cada método del bridge repetía su `try/catch`. |
 | **OCP** | `JsonRepository<T>` y sus subclases (`ProductoRepository`, ...) | Para una entidad nueva se crea una subclase de pocas líneas; la clase base no se modifica. |
 | **OCP** | `Repository<T>` | Permitirá agregar en fases futuras una implementación DAO con base de datos relacional sin tocar la capa de servicios. |
@@ -47,5 +51,6 @@ Cada fila indica dónde se aplica el principio en el código y por qué.
 | Eliminación de código muerto | Se eliminaron `Usuario`, `UsuarioRepository` y `GestorUsuarios` (nunca se usaban), `GestorInventario.hoy()`, `diasParaVencer()`, `Venta.addItem()` e `IdGenerator.generar()`. |
 | Constantes en vez de valores mágicos | `Venta.ESTADO_COMPLETADA`, `Entrada.PREFIJO_ID`, `Perfil.COLOR_POR_DEFECTO`, dimensiones de ventana en `WebViewMain`. |
 | Manejo de excepciones | `ValidacionException` (reglas) y `PersistenciaException` (E/S) en lugar de `System.err` silencioso o códigos `"OK"` internos. |
+| Validación de datos de entrada | `RespaldoRepository.rutaNueva()` solo acepta nombres `.zip` válidos; `ArchivadorZip.extraer()` rechaza rutas fuera de la carpeta destino (*zip slip*); `GestorRespaldo` verifica que el zip sea de TBalance antes de reemplazar datos. |
 | Javadoc | Todas las clases y los métodos públicos relevantes están documentados. |
 | Convenciones Java | `PascalCase` para clases, `camelCase` para métodos y atributos, `UPPER_SNAKE_CASE` para constantes. |
