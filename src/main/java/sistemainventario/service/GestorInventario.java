@@ -1,141 +1,106 @@
 package sistemainventario.service;
 
 import sistemainventario.model.Producto;
-import sistemainventario.repository.ProductoRepository;
-import sistemainventario.util.IdGenerator;
+import sistemainventario.repository.Repository;
 
 import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
-public class GestorInventario {
+/**
+ * Casos de uso del catálogo de productos: CRUD, búsqueda, filtros y alertas
+ * de stock y vencimiento.
+ *
+ * <p><b>Alta cohesión:</b> todas sus operaciones giran alrededor de los
+ * productos. Las preguntas sobre un producto concreto (¿está vencido?, ¿está
+ * en bajo stock?) se delegan al propio {@link Producto} (<b>Experto</b>).</p>
+ */
+public class GestorInventario extends GestorEntidad<Producto> {
 
-    private final ProductoRepository repo;
-
-    public GestorInventario(ProductoRepository repo) {
-        this.repo = repo;
+    public GestorInventario(Repository<Producto> repositorio) {
+        super(repositorio);
     }
 
-    public List<Producto> listarTodos() {
-        return repo.listarTodos();
+    @Override
+    protected void validar(Producto producto) {
+        producto.validar(LocalDate.now());
     }
 
-    public Producto buscarPorId(String id) {
-        return repo.buscarPorId(id);
+    @Override
+    protected String generarId() {
+        return repositorio.siguienteIdNumerico();
     }
 
-    public boolean agregar(Producto p) {
-        if (p == null || repo.idExiste(p.getId())) return false;
-        if (p.getId() == null || p.getId().isBlank())
-            p.setId(IdGenerator.siguienteNumerico(
-                    repo.listarTodos().stream().map(Producto::getId).collect(Collectors.toList())));
-        repo.agregar(p);
-        return true;
+    @Override
+    protected String nombreEntidad() {
+        return "Producto";
     }
 
-    public boolean actualizar(Producto p) {
-        return repo.actualizar(x -> x.getId().equals(p.getId()), p);
+    /**
+     * Persiste un cambio de stock sin volver a validar la ficha completa;
+     * así un producto ya vencido puede seguir recibiendo movimientos.
+     *
+     * @param producto producto con el stock modificado
+     */
+    public void registrarCambioDeStock(Producto producto) {
+        repositorio.actualizar(producto);
     }
 
-    public boolean eliminar(String id) {
-        return repo.eliminar(p -> p.getId().equals(id));
-    }
-
+    /**
+     * @param texto texto a buscar; si está vacío se devuelven todos
+     * @return productos que coinciden por nombre, descripción, código o ID
+     */
     public List<Producto> buscarPorTexto(String texto) {
-        String q = texto.toLowerCase().trim();
-        return repo.filtrar(p ->
-                p.getNombre().toLowerCase().contains(q) ||
-                p.getDescripcion().toLowerCase().contains(q) ||
-                p.getId().contains(q));
-    }
-
-    public List<Producto> filtrarPorCategoria(String categoria) {
-        if (categoria == null || categoria.isBlank() || "Todas".equals(categoria))
+        if (texto == null || texto.isBlank()) {
             return listarTodos();
-        return repo.filtrar(p -> categoria.equals(p.getCategoria()));
+        }
+        return repositorio.filtrar(producto -> producto.coincideCon(texto));
     }
 
+    /**
+     * @param categoria nombre de la categoría; {@code "Todas"} o vacío devuelve todo
+     * @return productos de la categoría
+     */
+    public List<Producto> filtrarPorCategoria(String categoria) {
+        if (categoria == null || categoria.isBlank() || "Todas".equals(categoria)) {
+            return listarTodos();
+        }
+        return repositorio.filtrar(producto -> producto.perteneceACategoria(categoria));
+    }
+
+    /** @return productos con stock en el mínimo o por debajo (sin estar agotados) */
     public List<Producto> getBajoStock() {
-        return repo.filtrar(p -> p.getStock() > 0 && p.getStock() <= p.getStockMin());
+        return repositorio.filtrar(Producto::estaBajoStock);
     }
 
+    /** @return productos sin unidades */
     public List<Producto> getAgotados() {
-        return repo.filtrar(p -> p.getStock() == 0);
+        return repositorio.filtrar(Producto::estaAgotado);
     }
 
+    /** @return productos cuya fecha de vencimiento ya pasó */
+    public List<Producto> getVencidos() {
+        LocalDate hoy = LocalDate.now();
+        return repositorio.filtrar(producto -> producto.estaVencido(hoy));
+    }
+
+    /**
+     * @param dias ventana de días
+     * @return productos que vencen dentro de los próximos {@code dias} días
+     */
+    public List<Producto> getPorVencer(int dias) {
+        LocalDate hoy = LocalDate.now();
+        return repositorio.filtrar(producto -> producto.venceDentroDe(dias, hoy));
+    }
+
+    /** @return nombres de categorías usadas por los productos, ordenados */
     public Set<String> getCategorias() {
-        return repo.listarTodos().stream()
+        return listarTodos().stream()
                 .map(Producto::getCategoria)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toCollection(TreeSet::new));
-    }
-
-    public String generarNuevoId() {
-        return IdGenerator.siguienteNumerico(
-                repo.listarTodos().stream().map(Producto::getId).collect(Collectors.toList()));
-    }
-
-    // ── CONTROL DE VENCIMIENTO ──────────────────────────────────────
-
-    /**
-     * Devuelve la fecha de hoy en formato ISO (yyyy-MM-dd).
-     */
-    public static String hoy() {
-        return LocalDate.now().toString();
-    }
-
-    /**
-     * Valida que la fecha de vencimiento sea correcta:
-     * - Si requiere vencimiento, la fecha es obligatoria.
-     * - La fecha no puede ser anterior a hoy.
-     */
-    public static String validarFechaVencimiento(boolean requiere, String fecha) {
-        if (!requiere) return "OK";
-        if (fecha == null || fecha.isBlank()) return "La fecha de vencimiento es obligatoria";
-        try {
-            LocalDate fv = LocalDate.parse(fecha);
-            LocalDate hoy = LocalDate.now();
-            if (fv.isBefore(hoy)) return "La fecha de vencimiento no puede ser anterior a hoy";
-            return "OK";
-        } catch (Exception e) {
-            return "Formato de fecha invalido (use yyyy-MM-dd)";
-        }
-    }
-
-    public List<Producto> getVencidos() {
-        LocalDate hoy = LocalDate.now();
-        return repo.filtrar(p -> p.isRequiereVencimiento()
-                && p.getFechaVencimiento() != null
-                && !p.getFechaVencimiento().isBlank()
-                && parseFecha(p.getFechaVencimiento()) != null
-                && parseFecha(p.getFechaVencimiento()).isBefore(hoy));
-    }
-
-    public List<Producto> getPorVencer(int dias) {
-        LocalDate hoy    = LocalDate.now();
-        LocalDate limite = hoy.plusDays(dias);
-        return repo.filtrar(p -> {
-            if (!p.isRequiereVencimiento()) return false;
-            if (p.getFechaVencimiento() == null || p.getFechaVencimiento().isBlank()) return false;
-            LocalDate fv = parseFecha(p.getFechaVencimiento());
-            if (fv == null) return false;
-            return !fv.isBefore(hoy) && fv.isBefore(limite);
-        });
-    }
-
-    /**
-     * Devuelve los días restantes hasta el vencimiento. Negativo si ya venció.
-     */
-    public static long diasParaVencer(String fecha) {
-        if (fecha == null || fecha.isBlank()) return Long.MAX_VALUE;
-        LocalDate fv = parseFecha(fecha);
-        if (fv == null) return Long.MAX_VALUE;
-        return ChronoUnit.DAYS.between(LocalDate.now(), fv);
-    }
-
-    private static LocalDate parseFecha(String f) {
-        try { return LocalDate.parse(f); }
-        catch (Exception e) { return null; }
     }
 }

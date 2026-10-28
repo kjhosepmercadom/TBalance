@@ -4,33 +4,65 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Configuración global de la aplicación. Almacena la lista de perfiles
- * existentes y el identificador del perfil activo durante la sesión.
+ * Configuración global de la aplicación: registro de perfiles y puntero al
+ * perfil activo. No contiene datos de negocio.
  *
- * Esta clase NO contiene datos de negocio (productos, ventas, etc.);
- * solo persiste el registro de perfiles y el puntero al activo.
+ * <p>Se persiste en {@code configuracion-global.json} con la misma estructura de P2.</p>
  */
 public class ConfiguracionGlobal {
 
-    private List<Perfil> perfiles = new ArrayList<>();
-    private String       perfilActivoId;
-    private String       version;
+    public static final String VERSION_ACTUAL = "2.1.0";
 
-    public ConfiguracionGlobal() {
-        this.version = "2.1.0";
+    private List<Perfil> perfiles = new ArrayList<>();
+    private String perfilActivoId;
+    private String version = VERSION_ACTUAL;
+
+    /**
+     * <b>GRASP Experto:</b> la configuración conoce la lista y el ID activo.
+     *
+     * @return el perfil activo o {@code null} si no hay ninguno
+     */
+    public Perfil getPerfilActivo() {
+        if (perfilActivoId == null || perfiles == null) {
+            return null;
+        }
+        return perfiles.stream()
+                .filter(perfil -> perfilActivoId.equals(perfil.getId()))
+                .findFirst()
+                .orElse(null);
     }
 
-    public List<Perfil> getPerfiles()                  { return perfiles; }
-    public void         setPerfiles(List<Perfil> p)    { this.perfiles = p; }
-    public String       getPerfilActivoId()            { return perfilActivoId; }
-    public void         setPerfilActivoId(String id)   { this.perfilActivoId = id; }
-    public String       getVersion()                   { return version; }
-    public void         setVersion(String v)           { this.version = v; }
+    /** @return {@code true} si existe al menos un perfil registrado */
+    public boolean tienePerfiles() {
+        return perfiles != null && !perfiles.isEmpty();
+    }
 
-    public Perfil getPerfilActivo() {
-        if (perfilActivoId == null) return null;
-        return perfiles.stream()
-                .filter(p -> perfilActivoId.equals(p.getId()))
-                .findFirst().orElse(null);
+    /** @return {@code true} si hay un perfil marcado como activo */
+    public boolean tienePerfilActivo() {
+        return perfilActivoId != null && !perfilActivoId.isBlank();
+    }
+
+    public List<Perfil> getPerfiles() {
+        return perfiles;
+    }
+
+    public void setPerfiles(List<Perfil> perfiles) {
+        this.perfiles = perfiles == null ? new ArrayList<>() : new ArrayList<>(perfiles);
+    }
+
+    public String getPerfilActivoId() {
+        return perfilActivoId;
+    }
+
+    public void setPerfilActivoId(String perfilActivoId) {
+        this.perfilActivoId = perfilActivoId;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
     }
 }

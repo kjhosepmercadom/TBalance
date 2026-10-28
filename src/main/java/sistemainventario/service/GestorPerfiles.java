@@ -1,170 +1,170 @@
 package sistemainventario.service;
 
-import sistemainventario.model.Categoria;
+import sistemainventario.exception.ValidacionException;
 import sistemainventario.model.Perfil;
 import sistemainventario.model.PerfilNegocio;
-import sistemainventario.repository.CategoriaRepository;
-import sistemainventario.repository.ConfiguracionGlobalRepository;
-import sistemainventario.repository.PerfilRepository;
-import sistemainventario.util.IdGenerator;
+import sistemainventario.repository.DirectorioPerfiles;
+import sistemainventario.repository.Repository;
+import sistemainventario.util.TextoUtil;
 
-import java.io.IOException;
-import java.nio.file.*;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
- * Servicio central para la administración de perfiles de trabajo.
+ * Ciclo de vida de los perfiles: crear, editar, eliminar y seleccionar.
  *
- * Responsabilidad única (SRP): crear, editar, eliminar, seleccionar
- * perfiles y mantener la lista persistente.
- *
- * Los perfiles son independientes: cada uno tiene su propio subdirectorio
- * dentro de {@code ~/.inventariopro/data/perfiles/{id}/} donde se almacenan
- * sus datos (productos, categorías, ventas, etc.) de forma aislada.
- *
- * Opcionalmente, al crear un perfil el usuario puede indicar un
- * {@link PerfilNegocio} y el sistema creará automáticamente las categorías
- * predefinidas asociadas en el subdirectorio del nuevo perfil.
+ * <p><b>GRASP Creator:</b> registra los perfiles, por eso crea las instancias
+ * de {@link Perfil}. <b>SRP:</b> delega el sistema de archivos en
+ * {@link DirectorioPerfiles}, el archivo de configuración en
+ * {@link GestorConfiguracionGlobal} y la construcción de servicios en
+ * {@link FabricaServiciosPerfil}.</p>
  */
 public class GestorPerfiles {
 
-    private final ConfiguracionGlobalRepository configRepo;
-    private final PerfilRepository              perfilRepo;
-    private final Path dirBase;
+    private final Repository<Perfil> perfiles;
+    private final GestorConfiguracionGlobal configuracion;
+    private final DirectorioPerfiles directorios;
+    private final FabricaServiciosPerfil fabricaServicios;
 
-    public GestorPerfiles(Path dirBase,
-                          ConfiguracionGlobalRepository configRepo,
-                          PerfilRepository perfilRepo) {
-        this.dirBase    = dirBase;
-        this.configRepo = configRepo;
-        this.perfilRepo = perfilRepo;
+    public GestorPerfiles(Repository<Perfil> perfiles,
+                          GestorConfiguracionGlobal configuracion,
+                          DirectorioPerfiles directorios,
+                          FabricaServiciosPerfil fabricaServicios) {
+        this.perfiles = Objects.requireNonNull(perfiles);
+        this.configuracion = Objects.requireNonNull(configuracion);
+        this.directorios = Objects.requireNonNull(directorios);
+        this.fabricaServicios = Objects.requireNonNull(fabricaServicios);
     }
 
-    // ── LISTAR / BUSCAR ────────────────────────────────────────────────
     public List<Perfil> listarTodos() {
-        return perfilRepo.listarTodos();
+        return perfiles.listarTodos();
     }
 
-    public Perfil buscarPorId(String id) {
-        return perfilRepo.buscarPorId(id);
+    public Optional<Perfil> buscarPorId(String id) {
+        return perfiles.buscarPorId(id);
     }
 
-    public Perfil getPerfilActivo() {
-        return configRepo.cargar() != null
-                ? configRepo.cargar().getPerfilActivo()
-                : null;
+    /** @return el perfil activo, si existe */
+    public Optional<Perfil> getPerfilActivo() {
+        return configuracion.getPerfilActivoId().flatMap(perfiles::buscarPorId);
     }
 
-    public String getPerfilActivoId() {
-        return configRepo.cargar() != null
-                ? configRepo.cargar().getPerfilActivoId()
-                : null;
+    /** @return {@code true} si aún no se ha creado ningún perfil */
+    public boolean esPrimerArranque() {
+        return configuracion.esPrimerArranque();
     }
 
-    // ── CREAR ─────────────────────────────────────────────────────────
-    public Perfil crear(String nombre, String descripcion,
-                        String color, String tipoNegocio) {
-        if (nombre == null || nombre.isBlank())
-            throw new IllegalArgumentException("El nombre del perfil es obligatorio");
+    /**
+     * Determina qué perfil cargar al iniciar: el activo guardado o, si no hay,
+     * el primero de la lista (comportamiento de P2).
+     *
+     * @return ID del perfil a cargar, o vacío si no hay perfiles
+     */
+    public Optional<String> resolverPerfilInicial() {
+        Optional<String> activo = configuracion.getPerfilActivoId().filter(perfiles::existe);
+        if (activo.isPresent()) {
+            return activo;
+        }
+        Optional<String> primero = perfiles.listarTodos().stream().map(Perfil::getId).findFirst();
+        primero.ifPresent(configuracion::establecerPerfilActivo);
+        return primero;
+    }
 
-        Perfil p = new Perfil(
-                IdGenerator.siguienteNumerico(
-                        perfilRepo.listarTodos().stream()
-                                .map(Perfil::getId)
-                                .collect(Collectors.toList())),
-                nombre.trim(),
-                descripcion != null ? descripcion.trim() : null,
-                color,
-                tipoNegocio
-        );
-        perfilRepo.agregar(p);
-        crearDirectorioPerfil(p.getId());
+    /**
+     * <b>Creator:</b> crea el perfil, su carpeta y, si el tipo de negocio lo
+     * indica, sus categorías predefinidas.
+     *
+     * @param datos datos enviados por la vista (nombre, descripción, color, tipo)
+     * @return el perfil creado
+     * @throws ValidacionException si el nombre está vacío
+     */
+    public Perfil crear(Perfil datos) {
+        if (datos == null) {
+            throw new ValidacionException("No se recibieron datos del perfil");
+        }
+        Perfil perfil = new Perfil(
+                perfiles.siguienteIdNumerico(),
+                TextoUtil.recortar(datos.getNombre()),
+                TextoUtil.recortar(datos.getDescripcion()),
+                datos.getColor(),
+                datos.getTipoNegocio());
+        perfil.validar();
+        perfiles.agregar(perfil);
+        directorios.crear(perfil.getId());
+        crearCategoriasIniciales(perfil);
+        sincronizarConfiguracion();
+        return perfil;
+    }
 
-        // Si el usuario eligió un tipo de negocio con categorías predefinidas,
-        // las creamos en el subdirectorio del nuevo perfil.
-        PerfilNegocio tipo = PerfilNegocio.desdeClave(tipoNegocio);
+    private void crearCategoriasIniciales(Perfil perfil) {
+        PerfilNegocio tipo = perfil.getPerfilNegocio();
         if (tipo.tieneCategorias()) {
-            crearCategoriasPredefinidas(p.getId(), tipo);
-        }
-
-        return p;
-    }
-
-    private void crearCategoriasPredefinidas(String perfilId, PerfilNegocio tipo) {
-        CategoriaRepository catRepo = new CategoriaRepository(getDirPerfil(perfilId));
-        for (String nombreCat : tipo.getCategoriasPredefinidas()) {
-            catRepo.agregar(new Categoria(
-                    null,
-                    nombreCat,
-                    "Categoria predefinida para " + tipo.getEtiqueta()
-            ));
+            fabricaServicios.crear(perfil.getId()).categorias().crearPredefinidas(tipo);
         }
     }
 
-    // ── EDITAR ────────────────────────────────────────────────────────
-    public boolean actualizar(Perfil perfil) {
-        return perfilRepo.actualizar(p -> p.getId().equals(perfil.getId()), perfil);
+    /**
+     * Actualiza nombre, descripción y color; conserva el resto de datos.
+     *
+     * @param cambios datos enviados por la vista (debe incluir el ID)
+     * @return el perfil actualizado
+     * @throws ValidacionException si el perfil no existe o el nombre está vacío
+     */
+    public Perfil actualizar(Perfil cambios) {
+        Perfil perfil = obtener(cambios == null ? null : cambios.getId());
+        perfil.actualizarDatos(cambios.getNombre(), cambios.getDescripcion(), cambios.getColor());
+        perfiles.actualizar(perfil);
+        sincronizarConfiguracion();
+        return perfil;
     }
 
-    // ── ELIMINAR ──────────────────────────────────────────────────────
-    public boolean eliminar(String id) {
-        if (id == null) return false;
-        if (perfilRepo.buscarPorId(id) == null) return false;
-        boolean ok = perfilRepo.eliminar(p -> id.equals(p.getId()));
-        if (ok) {
-            eliminarDirectorioPerfil(id);
-            if (id.equals(getPerfilActivoId())) {
-                seleccionar(null);
-            }
+    /**
+     * Elimina el perfil y todos sus datos. Si era el activo, deja el sistema
+     * sin perfil activo.
+     *
+     * @param id ID del perfil
+     * @throws ValidacionException si el perfil no existe
+     */
+    public void eliminar(String id) {
+        obtener(id);
+        perfiles.eliminar(id);
+        directorios.eliminar(id);
+        if (configuracion.getPerfilActivoId().filter(id::equals).isPresent()) {
+            configuracion.establecerPerfilActivo(null);
         }
-        return ok;
+        sincronizarConfiguracion();
     }
 
-    // ── SELECCIONAR / CAMBIAR ─────────────────────────────────────────
-    public void seleccionar(String perfilId) {
-        var cfg = configRepo.cargar();
-        if (cfg == null) return;
-        cfg.setPerfilActivoId(perfilId);
-        configRepo.guardar(cfg);
-    }
-
-    // ── PERSISTIR LISTA DE PERFILES EN CONFIG ────────────────────────
-    public void sincronizarConfiguracion() {
-        var cfg = configRepo.cargar();
-        if (cfg == null) {
-            cfg = new sistemainventario.model.ConfiguracionGlobal();
+    /**
+     * @param id ID del perfil a activar, o vacío/{@code null} para ninguno
+     * @return servicios del perfil activado, o vacío si se desactivó
+     * @throws ValidacionException si el perfil no existe
+     */
+    public Optional<ServiciosPerfil> seleccionar(String id) {
+        if (TextoUtil.esVacio(id)) {
+            configuracion.establecerPerfilActivo(null);
+            return Optional.empty();
         }
-        cfg.setPerfiles(perfilRepo.listarTodos());
-        configRepo.guardar(cfg);
+        obtener(id);
+        configuracion.establecerPerfilActivo(id);
+        return Optional.of(fabricaServicios.crear(id));
     }
 
-    // ── UTILIDADES ────────────────────────────────────────────────────
-    public Path getDirPerfil(String perfilId) {
-        return dirBase.resolve("perfiles").resolve(perfilId);
+    /**
+     * @param id ID del perfil
+     * @return servicios para operar sobre los datos de ese perfil
+     */
+    public ServiciosPerfil crearServicios(String id) {
+        return fabricaServicios.crear(id);
     }
 
-    private void crearDirectorioPerfil(String perfilId) {
-        try {
-            Files.createDirectories(getDirPerfil(perfilId));
-        } catch (IOException e) {
-            System.err.println("No se pudo crear directorio del perfil " + perfilId + ": " + e.getMessage());
-        }
+    private Perfil obtener(String id) {
+        return perfiles.buscarPorId(id)
+                .orElseThrow(() -> new ValidacionException("Perfil no encontrado"));
     }
 
-    private void eliminarDirectorioPerfil(String perfilId) {
-        Path dir = getDirPerfil(perfilId);
-        if (!Files.exists(dir)) return;
-        try {
-            try (var stream = Files.walk(dir)) {
-                stream.sorted((a, b) -> b.compareTo(a))
-                        .forEach(p -> {
-                            try { Files.deleteIfExists(p); }
-                            catch (IOException ignored) {}
-                        });
-            }
-        } catch (IOException e) {
-            System.err.println("No se pudo eliminar directorio del perfil " + perfilId);
-        }
+    private void sincronizarConfiguracion() {
+        configuracion.sincronizarPerfiles(perfiles.listarTodos());
     }
 }

@@ -1,112 +1,131 @@
 package sistemainventario.repository;
 
+import com.google.gson.JsonParseException;
+import sistemainventario.exception.PersistenciaException;
 import sistemainventario.model.EntidadConId;
+import sistemainventario.util.IdGenerator;
 import sistemainventario.util.JsonUtil;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
- * Repositorio genérico con persistencia en JSON.
+ * Implementación genérica de {@link Repository} que guarda una lista de
+ * entidades en un archivo JSON y la mantiene en memoria (caché).
  *
- * Aplica POLIMORFISMO: trabaja con cualquier subclase de {@link EntidadConId}.
- * Cada subclase concreta es responsable de definir su propio ID y comportamientos
- * específicos (su clase de modelo).
+ * <p><b>OCP:</b> está cerrada a modificación y abierta a extensión. Cada
+ * entidad nueva solo necesita una subclase que indique el nombre del
+ * archivo y la clase (ver {@link ProductoRepository}).</p>
  *
- * Aplica SRP: solo gestiona CRUD + persistencia. La lógica de negocio
- * reside en los servicios (Gestor*).
+ * <p><b>SRP:</b> se ocupa del CRUD sobre la caché; la E/S de disco la delega
+ * en {@link JsonFileStore} y la lógica de negocio vive en los servicios.</p>
+ *
+ * @param <T> tipo de entidad, siempre subclase de {@link EntidadConId}
  */
-public abstract class JsonRepository<T extends EntidadConId> {
+public abstract class JsonRepository<T extends EntidadConId> implements Repository<T> {
 
-    protected final Path archivo;
-    protected final Class<T> tipo;
-    protected List<T> cache;
+    private final JsonFileStore almacen;
+    private final Class<T> tipo;
+    private final List<T> cache;
 
-    protected JsonRepository(Path dirBase, String nombreArchivo, Class<T> tipo) {
-        this.archivo = dirBase.resolve(nombreArchivo);
-        this.tipo    = tipo;
-        crearDirectorio(dirBase);
-        this.cache   = cargar();
+    /**
+     * @param directorio    carpeta del perfil o carpeta global
+     * @param nombreArchivo nombre del archivo JSON (por ejemplo {@code productos.json})
+     * @param tipo          clase de la entidad para deserializar
+     */
+    protected JsonRepository(Path directorio, String nombreArchivo, Class<T> tipo) {
+        this.almacen = new JsonFileStore(directorio.resolve(nombreArchivo));
+        this.tipo = tipo;
+        this.cache = cargar();
     }
 
+    @Override
     public List<T> listarTodos() {
         return new ArrayList<>(cache);
     }
 
-    public void guardarTodos(List<T> lista) {
-        this.cache = new ArrayList<>(lista);
-        persistir();
-    }
-
-    public void agregar(T entidad) {
-        cache.add(entidad);
-        persistir();
-    }
-
-    public boolean eliminar(Predicate<T> condicion) {
-        boolean removido = cache.removeIf(condicion);
-        if (removido) persistir();
-        return removido;
-    }
-
-    public boolean actualizar(Predicate<T> condicion, T nueva) {
-        for (int i = 0; i < cache.size(); i++) {
-            if (condicion.test(cache.get(i))) {
-                cache.set(i, nueva);
-                persistir();
-                return true;
-            }
+    @Override
+    public Optional<T> buscarPorId(String id) {
+        if (id == null) {
+            return Optional.empty();
         }
-        return false;
+        return cache.stream().filter(entidad -> id.equals(entidad.getId())).findFirst();
     }
 
+    @Override
+    public boolean existe(String id) {
+        return buscarPorId(id).isPresent();
+    }
+
+    @Override
     public List<T> filtrar(Predicate<T> condicion) {
         return cache.stream().filter(condicion).collect(Collectors.toList());
     }
 
-    public T buscarPorId(String id) {
-        if (id == null) return null;
-        return cache.stream()
-                .filter(e -> id.equals(e.getId()))
-                .findFirst().orElse(null);
+    @Override
+    public void agregar(T entidad) {
+        Objects.requireNonNull(entidad, "La entidad no puede ser nula");
+        cache.add(entidad);
+        persistir();
     }
 
-    public boolean idExiste(String id) {
-        return buscarPorId(id) != null;
+    @Override
+    public boolean actualizar(T entidad) {
+        int posicion = indiceDe(entidad.getId());
+        if (posicion < 0) {
+            return false;
+        }
+        cache.set(posicion, entidad);
+        persistir();
+        return true;
     }
 
-    protected List<T> cargar() {
-        if (!Files.exists(archivo)) return new ArrayList<>();
+    @Override
+    public boolean eliminar(String id) {
+        boolean eliminado = cache.removeIf(entidad -> Objects.equals(id, entidad.getId()));
+        if (eliminado) {
+            persistir();
+        }
+        return eliminado;
+    }
+
+    @Override
+    public String siguienteIdNumerico() {
+        return IdGenerator.siguienteNumerico(
+                cache.stream().map(EntidadConId::getId).collect(Collectors.toList()));
+    }
+
+    /** @return ruta del archivo JSON administrado */
+    public Path getArchivo() {
+        return almacen.getArchivo();
+    }
+
+    private int indiceDe(String id) {
+        for (int i = 0; i < cache.size(); i++) {
+            if (Objects.equals(id, cache.get(i).getId())) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private List<T> cargar() {
         try {
-            String json = Files.readString(archivo, StandardCharsets.UTF_8);
-            return JsonUtil.fromJsonList(json, tipo);
-        } catch (IOException e) {
-            System.err.println("[JsonRepository] Error cargando " + archivo + ": " + e.getMessage());
-            return new ArrayList<>();
+            return almacen.leer()
+                    .<List<T>>map(json -> new ArrayList<>(JsonUtil.fromJsonList(json, tipo)))
+                    .orElseGet(ArrayList::new);
+        } catch (JsonParseException e) {
+            throw new PersistenciaException("El archivo " + almacen.getArchivo().getFileName()
+                    + " tiene un formato JSON invalido", e);
         }
     }
 
-    protected void persistir() {
-        try {
-            Files.writeString(archivo,
-                    JsonUtil.toJson(cache),
-                    StandardCharsets.UTF_8,
-                    StandardOpenOption.CREATE,
-                    StandardOpenOption.TRUNCATE_EXISTING);
-        } catch (IOException e) {
-            System.err.println("[JsonRepository] Error guardando " + archivo + ": " + e.getMessage());
-        }
+    private void persistir() {
+        almacen.escribir(JsonUtil.toJson(cache));
     }
-
-    private void crearDirectorio(Path dir) {
-        try { Files.createDirectories(dir); }
-        catch (IOException e) { System.err.println("No se pudo crear: " + dir); }
-    }
-
-    public Path getArchivo() { return archivo; }
 }

@@ -1,38 +1,52 @@
 package sistemainventario.model;
 
-public class Salida extends EntidadConId {
+/**
+ * Retiro de mercancía que no es una venta (merma, daño, uso interno):
+ * reduce el stock del producto.
+ */
+public class Salida extends MovimientoInventario {
 
-    private String productoId;
-    private int    cantidad;
+    public static final String PREFIJO_ID = "SAL";
+
     private String motivo;
-    private String fecha;
     private String tipo;
 
-    public Salida() { super(); }
+    /** Constructor vacío requerido por Gson. */
+    public Salida() {
+        super();
+    }
 
     public Salida(String id, String productoId, int cantidad,
                   String motivo, String fecha, String tipo) {
-        super(id);
-        this.productoId  = productoId;
-        this.cantidad    = cantidad;
-        this.motivo      = motivo;
-        this.fecha       = fecha;
-        this.tipo        = tipo;
+        super(id, productoId, cantidad, fecha);
+        this.motivo = motivo;
+        this.tipo = tipo;
+    }
+
+    /** Polimorfismo: una salida descuenta unidades y valida el stock disponible. */
+    @Override
+    public void aplicarA(Producto producto) {
+        producto.disminuirStock(getCantidad());
     }
 
     @Override
-    public String getEtiqueta() {
-        return id == null ? "" : id;
+    public String getPrefijoId() {
+        return PREFIJO_ID;
     }
 
-    public String getProductoId()             { return productoId; }
-    public void   setProductoId(String p)     { this.productoId = p; }
-    public int    getCantidad()               { return cantidad; }
-    public void   setCantidad(int c)          { this.cantidad = c; }
-    public String getMotivo()                 { return motivo; }
-    public void   setMotivo(String m)         { this.motivo = m; }
-    public String getFecha()                  { return fecha; }
-    public void   setFecha(String f)          { this.fecha = f; }
-    public String getTipo()                   { return tipo; }
-    public void   setTipo(String t)           { this.tipo = t; }
+    public String getMotivo() {
+        return motivo;
+    }
+
+    public void setMotivo(String motivo) {
+        this.motivo = motivo;
+    }
+
+    public String getTipo() {
+        return tipo;
+    }
+
+    public void setTipo(String tipo) {
+        this.tipo = tipo;
+    }
 }

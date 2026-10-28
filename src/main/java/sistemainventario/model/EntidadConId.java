@@ -1,21 +1,28 @@
 package sistemainventario.model;
 
+import sistemainventario.util.TextoUtil;
+
+import java.util.Objects;
+
 /**
- * Clase abstracta base que aplica ABSTRACCIÓN y HERENCIA sobre todas las
- * entidades persistibles del sistema. Garantiza que cualquier entidad
- * (Producto, Categoria, Proveedor, Entrada, Salida, Venta, Perfil) tenga
- * un identificador único y operaciones polimórficas comunes.
+ * Superclase abstracta de todas las entidades persistibles del sistema.
  *
- * El polimorfismo se aplica en {@link sistemainventario.repository.JsonRepository}
- * que trabaja con cualquier subclase de esta clase.
+ * <p><b>Abstracción y herencia:</b> garantiza que Producto, Categoria,
+ * Proveedor, Perfil, Venta y los movimientos de inventario tengan un
+ * identificador y un comportamiento común.</p>
+ *
+ * <p><b>OCP:</b> el repositorio genérico
+ * {@link sistemainventario.repository.JsonRepository} trabaja con cualquier
+ * subclase; añadir una entidad nueva no obliga a modificarlo.</p>
  */
 public abstract class EntidadConId {
 
-    protected String id;
+    private String id;
 
-    public EntidadConId() {}
+    protected EntidadConId() {
+    }
 
-    public EntidadConId(String id) {
+    protected EntidadConId(String id) {
         this.id = id;
     }
 
@@ -28,23 +35,41 @@ public abstract class EntidadConId {
     }
 
     /**
-     * Etiqueta legible para mostrar en selectores y tablas.
-     * Las subclases pueden sobreescribirla (polimorfismo).
+     * <b>GRASP Experto:</b> la entidad sabe si ya fue identificada.
+     *
+     * @return {@code true} si el ID no es nulo ni vacío
      */
-    public String getEtiqueta() {
-        return id == null ? "" : id;
+    public boolean tieneId() {
+        return !TextoUtil.esVacio(id);
     }
 
+    /**
+     * Etiqueta legible para selectores y tablas. Las subclases con nombre
+     * la sobrescriben (polimorfismo); por defecto devuelve el ID.
+     *
+     * @return texto descriptivo de la entidad
+     */
+    public String getEtiqueta() {
+        return tieneId() ? id : "";
+    }
+
+    /**
+     * Dos entidades son iguales si son del mismo tipo concreto y comparten ID.
+     */
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof EntidadConId)) return false;
-        EntidadConId that = (EntidadConId) o;
-        return id != null && id.equals(that.id);
+    public boolean equals(Object otro) {
+        if (this == otro) {
+            return true;
+        }
+        if (otro == null || getClass() != otro.getClass()) {
+            return false;
+        }
+        EntidadConId entidad = (EntidadConId) otro;
+        return id != null && id.equals(entidad.id);
     }
 
     @Override
     public int hashCode() {
-        return id == null ? 0 : id.hashCode();
+        return Objects.hash(getClass(), id);
     }
 }

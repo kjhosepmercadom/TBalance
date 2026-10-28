@@ -7,68 +7,83 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Tipos de negocio permitidos en el sistema.
+ * Tipos de negocio que puede tener un {@link Perfil}.
  *
- * Cada tipo declara:
- * <ul>
- *   <li>Sus categorías predefinidas</li>
- *   <li>Si requiere control de fechas de vencimiento
- *       (solo Farmacia, Supermercado, Tienda de barrio)</li>
- *   <li>Sugerencias de placeholders para los formularios</li>
- * </ul>
+ * <p>Cada tipo declara sus categorías predefinidas, si exige control de
+ * vencimiento y textos de ejemplo para los formularios.</p>
  *
- * Elegir un tipo es OPCIONAL (NINGUNO = sin categorías predefinidas).
+ * <p><b>OCP:</b> agregar un tipo de negocio nuevo consiste en declarar una
+ * constante más; ni los servicios ni la vista necesitan cambiar porque
+ * consumen la información a través de {@link #describir()}.</p>
  */
 public enum PerfilNegocio {
 
     BOUTIQUE("Boutique",
-            new String[]{"Camisas", "Vestidos", "Pantalones", "Zapatos", "Accesorios"},
+            List.of("Camisas", "Vestidos", "Pantalones", "Zapatos", "Accesorios"),
             true,
-            new String[]{"Blusa Casual Mujer", "Ropa", "Moda Fashion"}),
+            new Sugerencias("Blusa Casual Mujer", "Ropa", "Moda Fashion")),
 
     FARMACIA("Farmacia",
-            new String[]{"Medicamentos", "Vitaminas", "Higiene", "Cosmeticos", "Primeros Auxilios"},
+            List.of("Medicamentos", "Vitaminas", "Higiene", "Cosmeticos", "Primeros Auxilios"),
             true,
-            new String[]{"Acetaminofen 500 mg", "Medicamentos", "Laboratorios XYZ"}),
+            new Sugerencias("Acetaminofen 500 mg", "Medicamentos", "Laboratorios XYZ")),
 
     FERRETERIA("Ferreteria",
-            new String[]{"Herramientas", "Pinturas", "Electricidad", "Plomeria", "Tornilleria"},
+            List.of("Herramientas", "Pinturas", "Electricidad", "Plomeria", "Tornilleria"),
             true,
-            new String[]{"Martillo de acero", "Herramientas", "FerreDistribuciones"}),
+            new Sugerencias("Martillo de acero", "Herramientas", "FerreDistribuciones")),
 
     SUPERMERCADO("Supermercado",
-            new String[]{"Frutas", "Verduras", "Carnes", "Lacteos", "Bebidas", "Aseo"},
+            List.of("Frutas", "Verduras", "Carnes", "Lacteos", "Bebidas", "Aseo"),
             true,
-            new String[]{"Leche Entera 1L", "Lacteos", "Alimentos Nacionales"}),
+            new Sugerencias("Leche Entera 1L", "Lacteos", "Alimentos Nacionales")),
 
     TIENDA_BARRIO("Tienda de barrio",
-            new String[]{"Bebidas", "Lacteos", "Snacks", "Dulces", "Aseo"},
+            List.of("Bebidas", "Lacteos", "Snacks", "Dulces", "Aseo"),
             true,
-            new String[]{"Arroz Diana 500g", "Abarrotes", "Distribuidora Local"}),
+            new Sugerencias("Arroz Diana 500g", "Abarrotes", "Distribuidora Local")),
 
     TECNOLOGIA("Tecnologia",
-            new String[]{"Computadores", "Celulares", "Accesorios", "Audio", "Gaming"},
+            List.of("Computadores", "Celulares", "Accesorios", "Audio", "Gaming"),
             true,
-            new String[]{"Portatil HP 15", "Laptops", "Distribuidora Tecnologica"}),
+            new Sugerencias("Portatil HP 15", "Laptops", "Distribuidora Tecnologica")),
 
     NINGUNO("Personalizado (sin categorías predefinidas)",
-            new String[0],
+            List.of(),
             true,
-            new String[]{"", "", ""});
+            new Sugerencias("", "", ""));
 
     private final String etiqueta;
     private final List<String> categoriasPredefinidas;
     private final boolean requiereVencimiento;
-    private final String[] sugerencias;
+    private final Sugerencias sugerencias;
 
-    PerfilNegocio(String etiqueta, String[] categorias, boolean requiereVencimiento, String[] sugerencias) {
+    PerfilNegocio(String etiqueta, List<String> categorias, boolean requiereVencimiento, Sugerencias sugerencias) {
         this.etiqueta = etiqueta;
-        this.categoriasPredefinidas = Collections.unmodifiableList(Arrays.asList(categorias));
-        this.requiereVencimiento    = requiereVencimiento;
-        this.sugerencias            = sugerencias;
+        this.categoriasPredefinidas = Collections.unmodifiableList(categorias);
+        this.requiereVencimiento = requiereVencimiento;
+        this.sugerencias = sugerencias;
     }
 
-    public String getEtiqueta() { return etiqueta; }
+    /**
+     * Busca un tipo por su nombre de constante o por su etiqueta.
+     *
+     * @param clave por ejemplo {@code "FARMACIA"} o {@code "Farmacia"}
+     * @return el tipo encontrado, o {@link #NINGUNO} si no existe
+     */
+    public static PerfilNegocio desdeClave(String clave) {
+        if (clave == null || clave.isBlank()) {
+            return NINGUNO;
+        }
+        return Arrays.stream(values())
+                .filter(tipo -> tipo.name().equalsIgnoreCase(clave) || tipo.etiqueta.equalsIgnoreCase(clave))
+                .findFirst()
+                .orElse(NINGUNO);
+    }
+
+    public String getEtiqueta() {
+        return etiqueta;
+    }
 
     public List<String> getCategoriasPredefinidas() {
         return categoriasPredefinidas;
@@ -78,32 +93,39 @@ public enum PerfilNegocio {
         return !categoriasPredefinidas.isEmpty();
     }
 
-    /**
-     * Indica si para este tipo de negocio el sistema debe gestionar
-     * fechas de vencimiento en los productos.
-     */
+    /** @return {@code true} si los productos de este negocio manejan fecha de vencimiento */
     public boolean requiereControlVencimiento() {
         return requiereVencimiento;
     }
 
-    /**
-     * Devuelve un mapa con sugerencias de placeholders para los formularios
-     * según el tipo de negocio. Las claves son: producto, categoria, proveedor.
-     */
+    /** @return mapa con las claves {@code producto}, {@code categoria} y {@code proveedor} */
     public Map<String, String> getSugerencias() {
-        Map<String, String> map = new LinkedHashMap<>();
-        map.put("producto",  sugerencias.length > 0 ? sugerencias[0] : "");
-        map.put("categoria", sugerencias.length > 1 ? sugerencias[1] : "");
-        map.put("proveedor", sugerencias.length > 2 ? sugerencias[2] : "");
-        return map;
+        return sugerencias.comoMapa();
     }
 
-    public static PerfilNegocio desdeClave(String clave) {
-        if (clave == null || clave.isBlank()) return NINGUNO;
-        for (PerfilNegocio p : values()) {
-            if (p.name().equalsIgnoreCase(clave) || p.etiqueta.equalsIgnoreCase(clave))
-                return p;
+    /**
+     * <b>GRASP Experto:</b> el tipo de negocio sabe describirse para la vista.
+     *
+     * @return mapa con clave, etiqueta, categorías y si exige vencimiento
+     */
+    public Map<String, Object> describir() {
+        Map<String, Object> descripcion = new LinkedHashMap<>();
+        descripcion.put("clave", name());
+        descripcion.put("etiqueta", etiqueta);
+        descripcion.put("categorias", categoriasPredefinidas);
+        descripcion.put("vencimiento", requiereVencimiento);
+        return descripcion;
+    }
+
+    /** Textos de ejemplo (placeholders) para los formularios de la vista. */
+    private record Sugerencias(String producto, String categoria, String proveedor) {
+
+        Map<String, String> comoMapa() {
+            Map<String, String> mapa = new LinkedHashMap<>();
+            mapa.put("producto", producto);
+            mapa.put("categoria", categoria);
+            mapa.put("proveedor", proveedor);
+            return mapa;
         }
-        return NINGUNO;
     }
 }

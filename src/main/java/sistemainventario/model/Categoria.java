@@ -1,25 +1,57 @@
 package sistemainventario.model;
 
+import sistemainventario.exception.ValidacionException;
+import sistemainventario.util.TextoUtil;
+
+/**
+ * Agrupación lógica de productos dentro de un perfil (por ejemplo
+ * "Medicamentos" o "Herramientas").
+ */
 public class Categoria extends EntidadConId {
 
     private String nombre;
     private String descripcion;
 
-    public Categoria() { super(); }
+    /** Constructor vacío requerido por Gson. */
+    public Categoria() {
+        super();
+    }
 
     public Categoria(String id, String nombre, String descripcion) {
         super(id);
-        this.nombre      = nombre;
+        this.nombre = nombre;
         this.descripcion = descripcion;
+    }
+
+    /**
+     * <b>GRASP Experto:</b> la categoría valida sus propios datos.
+     *
+     * @throws ValidacionException si el nombre está vacío
+     */
+    public void validar() {
+        if (TextoUtil.esVacio(nombre)) {
+            throw new ValidacionException("El nombre de la categoria es obligatorio");
+        }
     }
 
     @Override
     public String getEtiqueta() {
-        return nombre != null ? nombre : id;
+        return nombre != null ? nombre : super.getEtiqueta();
     }
 
-    public String getNombre()                 { return nombre; }
-    public void   setNombre(String n)         { this.nombre = n; }
-    public String getDescripcion()            { return descripcion; }
-    public void   setDescripcion(String d)    { this.descripcion = d; }
+    public String getNombre() {
+        return nombre;
+    }
+
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
+    }
+
+    public String getDescripcion() {
+        return descripcion;
+    }
+
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
+    }
 }
