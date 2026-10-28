@@ -1,114 +1,102 @@
 package sistemainventario;
 
-import sistemainventario.repository.*;
-import sistemainventario.service.*;
+import sistemainventario.exception.ValidacionException;
+import sistemainventario.repository.ConfiguracionGlobalRepository;
+import sistemainventario.repository.DirectorioPerfiles;
+import sistemainventario.repository.JsonFileStore;
+import sistemainventario.repository.PerfilRepository;
+import sistemainventario.service.FabricaServiciosPerfil;
+import sistemainventario.service.GestorConfiguracionGlobal;
+import sistemainventario.service.GestorPerfiles;
+import sistemainventario.service.ServiciosPerfil;
 
-import java.nio.file.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Optional;
 
 /**
- * Contexto central de la aplicación (Singleton).
+ * Contexto de la aplicación (Singleton) y raíz de composición.
  *
- * Encargado de inicializar y mantener todos los repositorios y servicios.
+ * <p>Es el único lugar donde se conectan las implementaciones concretas
+ * (repositorios JSON) con los servicios. Mantiene los servicios del perfil
+ * activo y los reemplaza al cambiar de perfil.</p>
  *
- * Como cada perfil posee su propio espacio de datos, los repositorios de
- * negocio (productos, categorías, etc.) se reconstruyen cada vez que
- * se activa un perfil distinto. Esto se hace en {@link #cargarServiciosDePerfil(String)}.
- *
- * Aplica SRP: solo se ocupa del cableado (wiring) y el cambio dinámico
- * de perfil. La lógica de negocio reside en los Gestor* correspondientes.
+ * <p>Cambios respecto a P2: los campos dejaron de ser públicos y mutables
+ * (encapsulamiento) y ya no se crean repositorios duplicados para el mismo
+ * archivo.</p>
  */
-public class AppContext {
+public final class AppContext {
 
-    private static AppContext INSTANCE;
+    private static final Path DIRECTORIO_DATOS =
+            Paths.get(System.getProperty("user.home"), ".inventariopro", "data");
 
-    private final Path dirBase;
+    private static AppContext instancia;
 
-    // ── Repos GLOBALES (no asociados a un perfil) ─────────────────
-    public final ConfiguracionGlobalRepository configuracionGlobalRepo;
-    public final PerfilRepository              perfilRepo;
+    private final GestorPerfiles gestorPerfiles;
+    private ServiciosPerfil serviciosActivos;
 
-    // ── Servicios GLOBALES ────────────────────────────────────────
-    public final GestorConfiguracionGlobal gestorConfiguracionGlobal;
-    public final GestorPerfiles            gestorPerfiles;
+    private AppContext(Path directorioDatos) {
+        JsonFileStore.crearDirectorio(directorioDatos);
+        DirectorioPerfiles directorios = new DirectorioPerfiles(directorioDatos);
+        this.gestorPerfiles = new GestorPerfiles(
+                new PerfilRepository(directorioDatos),
+                new GestorConfiguracionGlobal(new ConfiguracionGlobalRepository(directorioDatos)),
+                directorios,
+                new FabricaServiciosPerfil(directorios));
+        this.serviciosActivos = gestorPerfiles.resolverPerfilInicial()
+                .map(gestorPerfiles::crearServicios)
+                .orElse(null);
+    }
 
-    // ── Repos y servicios del PERFIL ACTIVO (recreados al cambiar) ──
-    public ProductoRepository    productoRepo;
-    public CategoriaRepository   categoriaRepo;
-    public ProveedorRepository   proveedorRepo;
-    public EntradaRepository     entradaRepo;
-    public SalidaRepository      salidaRepo;
-    public VentaRepository       ventaRepo;
-
-    public GestorInventario   gestorInventario;
-    public GestorCategorias   gestorCategorias;
-    public GestorProveedores  gestorProveedores;
-    public GestorMovimientos  gestorMovimientos;
-    public GestorVentas       gestorVentas;
-
-    private String perfilActivoId;
-
-    private AppContext() {
-        this.dirBase = Paths.get(System.getProperty("user.home"), ".inventariopro", "data");
-        try { Files.createDirectories(dirBase); } catch (Exception ignored) {}
-
-        this.configuracionGlobalRepo = new ConfiguracionGlobalRepository(dirBase);
-        this.perfilRepo               = new PerfilRepository(dirBase);
-
-        this.gestorConfiguracionGlobal = new GestorConfiguracionGlobal(configuracionGlobalRepo);
-        this.gestorPerfiles            = new GestorPerfiles(dirBase, configuracionGlobalRepo, perfilRepo);
-
-        // Determinar perfil activo
-        var cfg = configuracionGlobalRepo.cargar();
-        String idActivo = cfg != null ? cfg.getPerfilActivoId() : null;
-
-        // Si no hay activo pero sí hay perfiles, usar el primero
-        if (idActivo == null && !perfilRepo.listarTodos().isEmpty()) {
-            idActivo = perfilRepo.listarTodos().get(0).getId();
-            if (cfg == null) cfg = new sistemainventario.model.ConfiguracionGlobal();
-            cfg.setPerfilActivoId(idActivo);
-            configuracionGlobalRepo.guardar(cfg);
+    /** @return la instancia única, creada la primera vez que se solicita */
+    public static synchronized AppContext get() {
+        if (instancia == null) {
+            instancia = new AppContext(DIRECTORIO_DATOS);
         }
+        return instancia;
+    }
 
-        this.perfilActivoId = idActivo;
+    public GestorPerfiles getGestorPerfiles() {
+        return gestorPerfiles;
+    }
 
-        if (idActivo != null) {
-            cargarServiciosDePerfil(idActivo);
-        }
+    /** @return servicios del perfil activo, si lo hay */
+    public Optional<ServiciosPerfil> getServiciosActivos() {
+        return Optional.ofNullable(serviciosActivos);
     }
 
     /**
-     * Recrea los repos y servicios del perfil activo.
-     * Se invoca al cambiar de perfil para garantizar aislamiento total.
+     * @return servicios del perfil activo
+     * @throws ValidacionException si no hay perfil activo
      */
-    public void cargarServiciosDePerfil(String perfilId) {
-        this.perfilActivoId = perfilId;
-        Path dirPerfil = dirBase.resolve("perfiles").resolve(perfilId);
-        try { Files.createDirectories(dirPerfil); } catch (Exception ignored) {}
-
-        productoRepo   = new ProductoRepository(dirPerfil);
-        categoriaRepo  = new CategoriaRepository(dirPerfil);
-        proveedorRepo  = new ProveedorRepository(dirPerfil);
-        entradaRepo    = new EntradaRepository(dirPerfil);
-        salidaRepo     = new SalidaRepository(dirPerfil);
-        ventaRepo      = new VentaRepository(dirPerfil);
-
-        gestorInventario  = new GestorInventario(productoRepo);
-        gestorCategorias  = new GestorCategorias(categoriaRepo);
-        gestorProveedores = new GestorProveedores(proveedorRepo);
-        gestorMovimientos = new GestorMovimientos(gestorInventario, dirPerfil);
-        gestorVentas      = new GestorVentas(gestorInventario, gestorMovimientos, dirPerfil);
+    public ServiciosPerfil requerirServiciosActivos() {
+        return getServiciosActivos()
+                .orElseThrow(() -> new ValidacionException("No hay un perfil activo"));
     }
 
-    public String getPerfilActivoId() { return perfilActivoId; }
+    /**
+     * Activa un perfil y reconstruye sus servicios (aislamiento de datos).
+     *
+     * @param perfilId ID del perfil, o vacío para no dejar ninguno activo
+     */
+    public void activarPerfil(String perfilId) {
+        serviciosActivos = gestorPerfiles.seleccionar(perfilId).orElse(null);
+    }
 
-    public Path getDirBase() { return dirBase; }
+    /**
+     * Elimina un perfil y libera sus servicios si era el activo.
+     *
+     * @param perfilId ID del perfil a eliminar
+     */
+    public void eliminarPerfil(String perfilId) {
+        gestorPerfiles.eliminar(perfilId);
+        if (gestorPerfiles.getPerfilActivo().isEmpty()) {
+            serviciosActivos = null;
+        }
+    }
 
+    /** @return {@code true} si todavía no existe ningún perfil */
     public boolean esPrimerArranque() {
-        return gestorConfiguracionGlobal.esPrimerArranque();
-    }
-
-    public static AppContext get() {
-        if (INSTANCE == null) INSTANCE = new AppContext();
-        return INSTANCE;
+        return gestorPerfiles.esPrimerArranque();
     }
 }
