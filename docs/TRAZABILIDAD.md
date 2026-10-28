@@ -25,6 +25,11 @@ Cada fila indica dónde se aplica el principio en el código y por qué.
 | **Controller** | `RespaldoController` | Controlador del caso de uso "copias de seguridad"; `JavaBridge` le delega crear, listar, restaurar y eliminar. |
 | **Experto** | `RespaldoRepository.listar()`, `describir(Path)` | Conoce la carpeta de respaldos y los archivos que contiene; construye cada `Respaldo` con su nombre, fecha y tamaño. |
 | **Bajo acoplamiento** | `GestorRespaldo(Path, RespaldoRepository, ArchivadorZip)` | Recibe sus dependencias por constructor; no sabe cómo se comprime ni cómo se recargan los servicios (`AppContext.restaurarRespaldo`). |
+| **Experto** | `Producto.contenidoEtiquetaQR()`, `idDesdeEtiquetaQR(String)` | El producto define el texto de su QR (`TBalance`, ID y precio) y, como conoce ese formato, también es quien lo interpreta al escanear. |
+| **Creator** | `AppContext` → `GestorEtiquetas(new GeneradorQR(), new EtiquetaRepository(...))` | La raíz de composición crea el servicio de etiquetas con sus colaboradores. |
+| **Controller** | `EtiquetaController`, `EscaneoController` | Controladores de los casos de uso "etiquetas QR" y "venta por QR"; `JavaBridge` les delega generar etiquetas y encender o apagar la cámara. |
+| **Bajo acoplamiento** | `GeneradorQR` / `LectorQR`, `Camara` | Solo esas dos clases importan ZXing y solo `WebcamCamara` importa *webcam-capture*. `EscaneoController` recibe la cámara como `Supplier<Camara>`, por eso se prueba con una cámara simulada. |
+| **Alta cohesión** | `EscanerVentaQR` | Coordina leer el QR (`LectorQR`), interpretar el texto (`Producto`) y buscar el producto (`GestorInventario`), sin hacer ninguna de esas tareas. |
 
 ## Principios SOLID
 
@@ -34,13 +39,15 @@ Cada fila indica dónde se aplica el principio en el código y por qué.
 | **SRP** | `DirectorioPerfiles` (extraída de `GestorPerfiles`) | Las operaciones de sistema de archivos salieron del servicio de perfiles. |
 | **SRP** | `GestorConfiguracionGlobal` | Es el único que lee/escribe `configuracion-global.json`; en P2 `GestorPerfiles` también lo hacía. |
 | **SRP** | `ArchivadorZip` / `RespaldoRepository` / `GestorRespaldo` | Comprimir y extraer archivos, administrar la carpeta de respaldos y coordinar el caso de uso son tres responsabilidades separadas. |
+| **SRP** | `GeneradorQR` / `GestorEtiquetas` / `EtiquetaRepository` | Generar el código, dibujar la etiqueta y guardar la imagen son tres razones de cambio separadas. |
+| **SRP** | `WebcamCamara` / `LectorQR` / `EscanerVentaQR` / `EscaneoController` | Manejar la cámara, decodificar, decidir qué producto es y comunicarse con la vista en un hilo propio están separados. |
 | **SRP** | `RespuestaBridge.ejecutar(Supplier<String>)` | Centraliza la traducción de excepciones a `"ERROR: ..."`; en P2 cada método del bridge repetía su `try/catch`. |
 | **OCP** | `JsonRepository<T>` y sus subclases (`ProductoRepository`, ...) | Para una entidad nueva se crea una subclase de pocas líneas; la clase base no se modifica. |
 | **OCP** | `Repository<T>` | Permitirá agregar en fases futuras una implementación DAO con base de datos relacional sin tocar la capa de servicios. |
 | **OCP** | `GestorEntidad<T>.guardar(T)` (método `final`, Template Method) | El algoritmo crear/actualizar es cerrado; cada gestor lo extiende con `validar()` y `generarId()`. |
 | **OCP** | `MovimientoInventario.aplicarA(Producto)` | `GestorMovimientos.registrar(...)` trabaja con el tipo abstracto; un nuevo movimiento (devolución, ajuste) se añade como subclase sin modificar el servicio. |
 | **OCP** | `PerfilNegocio` | Un tipo de negocio nuevo es una constante más; la vista lo recibe mediante `describir()`. |
-| **DIP** (complementario) | `service` → `Repository<T>`; `bridge` → `NotificadorVista` | Los módulos de alto nivel dependen de abstracciones. |
+| **DIP** (complementario) | `service` → `Repository<T>`; `bridge` → `NotificadorVista`, `AbridorArchivos`, `Camara` | Los módulos de alto nivel dependen de abstracciones. |
 
 ## Código limpio
 
@@ -51,6 +58,6 @@ Cada fila indica dónde se aplica el principio en el código y por qué.
 | Eliminación de código muerto | Se eliminaron `Usuario`, `UsuarioRepository` y `GestorUsuarios` (nunca se usaban), `GestorInventario.hoy()`, `diasParaVencer()`, `Venta.addItem()` e `IdGenerator.generar()`. |
 | Constantes en vez de valores mágicos | `Venta.ESTADO_COMPLETADA`, `Entrada.PREFIJO_ID`, `Perfil.COLOR_POR_DEFECTO`, dimensiones de ventana en `WebViewMain`. |
 | Manejo de excepciones | `ValidacionException` (reglas) y `PersistenciaException` (E/S) en lugar de `System.err` silencioso o códigos `"OK"` internos. |
-| Validación de datos de entrada | `RespaldoRepository.rutaNueva()` solo acepta nombres `.zip` válidos; `ArchivadorZip.extraer()` rechaza rutas fuera de la carpeta destino (*zip slip*); `GestorRespaldo` verifica que el zip sea de TBalance antes de reemplazar datos. |
+| Validación de datos de entrada | `RespaldoRepository.rutaNueva()` solo acepta nombres `.zip` válidos; `ArchivadorZip.extraer()` rechaza rutas fuera de la carpeta destino (*zip slip*); `GestorRespaldo` verifica que el zip sea de TBalance antes de reemplazar datos; `EtiquetaRepository` solo acepta nombres `.png` válidos y `GeneradorQR` rechaza contenido vacío; un QR ajeno o de un producto borrado muestra un aviso en lugar de agregarse a la venta, y la vista no deja vender más unidades que el stock. |
 | Javadoc | Todas las clases y los métodos públicos relevantes están documentados. |
 | Convenciones Java | `PascalCase` para clases, `camelCase` para métodos y atributos, `UPPER_SNAKE_CASE` para constantes. |
