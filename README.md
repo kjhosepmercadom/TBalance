@@ -19,6 +19,7 @@ Aplicación de escritorio en **Java 17 + JavaFX (WebView)** para gestionar el in
 | `service` | Casos de uso y reglas de negocio (`Gestor*`). |
 | `bridge` | Controladores GRASP que atienden los eventos de la vista web. |
 | `view` | Ventana JavaFX con el `WebView`. |
+| `dispositivo` | Acceso a la cámara del computador detrás de la interfaz `Camara`. |
 | `util` | Utilidades sin estado (fechas, IDs, texto, JSON). |
 
 Detalle en [`docs/ARQUITECTURA.md`](docs/ARQUITECTURA.md) y trazabilidad de principios en [`docs/TRAZABILIDAD.md`](docs/TRAZABILIDAD.md).
@@ -33,7 +34,7 @@ Detalle en [`docs/ARQUITECTURA.md`](docs/ARQUITECTURA.md) y trazabilidad de prin
 mvn clean javafx:run
 ```
 
-Requisitos: JDK 17 o superior. JavaFX y Gson se descargan automáticamente con Maven.
+Requisitos: JDK 17 o superior (se recomienda **JDK 21**; con JDK 26 JavaFX 21 se cierra al iniciar). JavaFX, Gson, ZXing y webcam-capture se descargan automáticamente con Maven.
 
 ## Datos
 
@@ -55,6 +56,17 @@ Sección **Respaldos** del menú lateral:
 - **Eliminar:** borra el archivo de la copia.
 
 Clases involucradas: `ArchivadorZip` y `RespaldoRepository` (persistencia), `GestorRespaldo` (servicio), `AppContext.recargar()` y `RespaldoController` (bridge).
+
+## Venta por QR
+
+Cada producto tiene su etiqueta con código QR; se imprime, se pega en el producto y al vender basta con mostrarla a la webcam.
+
+1. **Generar etiquetas (Productos):** el icono QR de cada fila muestra la etiqueta y permite **Guardar imagen** (`~/.inventariopro/etiquetas/etiqueta_<id>_<fecha>.png`). El botón **Etiquetas QR** genera hojas tamaño carta de 18 etiquetas (3 × 6) con todos los productos, listas para imprimir.
+2. **Vender (Ventas → Venta por QR):** se enciende la cámara del computador. Cada vez que una etiqueta aparece frente a ella, el producto se agrega a la venta con 1 unidad (si ya estaba, suma una más). Luego se ajustan las cantidades con − / + y se pulsa **Registrar Venta**. También se puede agregar un producto sin escanear desde la lista.
+
+El QR contiene un texto corto (`TBalance`, el ID y el precio) para que la webcam lo lea con facilidad; el nombre va impreso al lado. Una etiqueta que se queda quieta frente a la cámara cuenta una sola vez; para sumar otra unidad se retira unos 2 segundos y se vuelve a mostrar, o se usa el botón +.
+
+Librerías (se descargan con Maven y funcionan sin internet): **ZXing** para crear y leer los códigos QR y **webcam-capture** para la cámara. Clases involucradas: `GeneradorQR` y `LectorQR` (util), `Camara` y `WebcamCamara` (dispositivo), `EtiquetaRepository`, `Producto.contenidoEtiquetaQR()` / `idDesdeEtiquetaQR()`, `GestorEtiquetas` y `EscanerVentaQR` (servicio), `EtiquetaController` y `EscaneoController` (bridge).
 
 ## Gestión con Git
 

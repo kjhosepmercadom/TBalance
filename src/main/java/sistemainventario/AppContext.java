@@ -5,14 +5,17 @@ import sistemainventario.model.Respaldo;
 import sistemainventario.repository.ArchivadorZip;
 import sistemainventario.repository.ConfiguracionGlobalRepository;
 import sistemainventario.repository.DirectorioPerfiles;
+import sistemainventario.repository.EtiquetaRepository;
 import sistemainventario.repository.JsonFileStore;
 import sistemainventario.repository.PerfilRepository;
 import sistemainventario.repository.RespaldoRepository;
 import sistemainventario.service.FabricaServiciosPerfil;
 import sistemainventario.service.GestorConfiguracionGlobal;
+import sistemainventario.service.GestorEtiquetas;
 import sistemainventario.service.GestorPerfiles;
 import sistemainventario.service.GestorRespaldo;
 import sistemainventario.service.ServiciosPerfil;
+import sistemainventario.util.GeneradorQR;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -36,11 +39,13 @@ public final class AppContext {
             Paths.get(System.getProperty("user.home"), ".inventariopro", "data");
 
     private static final String CARPETA_RESPALDOS = "respaldos";
+    private static final String CARPETA_ETIQUETAS = "etiquetas";
 
     private static AppContext instancia;
 
     private final Path directorioDatos;
     private final GestorRespaldo gestorRespaldo;
+    private final GestorEtiquetas gestorEtiquetas;
     private GestorPerfiles gestorPerfiles;
     private ServiciosPerfil serviciosActivos;
 
@@ -50,6 +55,8 @@ public final class AppContext {
         Path carpetaRespaldos = directorioDatos.resolveSibling(CARPETA_RESPALDOS);
         this.gestorRespaldo = new GestorRespaldo(directorioDatos,
                 new RespaldoRepository(carpetaRespaldos), new ArchivadorZip());
+        this.gestorEtiquetas = new GestorEtiquetas(new GeneradorQR(),
+                new EtiquetaRepository(directorioDatos.resolveSibling(CARPETA_ETIQUETAS)));
         recargar();
     }
 
@@ -84,6 +91,10 @@ public final class AppContext {
 
     public GestorRespaldo getGestorRespaldo() {
         return gestorRespaldo;
+    }
+
+    public GestorEtiquetas getGestorEtiquetas() {
+        return gestorEtiquetas;
     }
 
     /** @return la instancia única, creada la primera vez que se solicita */

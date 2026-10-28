@@ -9,18 +9,21 @@ flowchart TB
     subgraph Presentacion["Presentación"]
         HTML["SistemaInventario.html<br/>(HTML/CSS/JS)"]
         VIEW["view<br/>WebViewMain"]
-        BRIDGE["bridge<br/>JavaBridge (fachada) · PerfilController · InventarioController<br/>CatalogoController · TransaccionController · RespaldoController · RespuestaBridge"]
+        BRIDGE["bridge<br/>JavaBridge (fachada) · PerfilController · InventarioController<br/>CatalogoController · TransaccionController · RespaldoController · EtiquetaController<br/>EscaneoController · RespuestaBridge"]
     end
     subgraph Negocio["Lógica de negocio"]
-        SERVICE["service<br/>GestorEntidad&lt;T&gt; · GestorInventario · GestorCategorias · GestorProveedores<br/>GestorMovimientos · GestorVentas · GestorPerfiles · GestorConfiguracionGlobal<br/>FabricaServiciosPerfil · ServiciosPerfil · GestorRespaldo"]
+        SERVICE["service<br/>GestorEntidad&lt;T&gt; · GestorInventario · GestorCategorias · GestorProveedores<br/>GestorMovimientos · GestorVentas · GestorPerfiles · GestorConfiguracionGlobal<br/>FabricaServiciosPerfil · ServiciosPerfil · GestorRespaldo · GestorEtiquetas · EscanerVentaQR"]
         MODEL["model<br/>EntidadConId · Producto · Categoria · Proveedor · Perfil · PerfilNegocio<br/>MovimientoInventario · Entrada · Salida · Venta · ItemVenta · ConfiguracionGlobal · Respaldo"]
     end
     subgraph Datos["Acceso a datos"]
-        REPO["repository<br/>Repository&lt;T&gt; · JsonRepository&lt;T&gt; · *Repository<br/>ConfiguracionGlobalRepository · JsonFileStore · DirectorioPerfiles<br/>ArchivadorZip · RespaldoRepository"]
+        REPO["repository<br/>Repository&lt;T&gt; · JsonRepository&lt;T&gt; · *Repository<br/>ConfiguracionGlobalRepository · JsonFileStore · DirectorioPerfiles<br/>ArchivadorZip · RespaldoRepository · EtiquetaRepository"]
         JSON[("Archivos JSON<br/>~/.inventariopro/data")]
         ZIP[("Copias de seguridad .zip<br/>~/.inventariopro/respaldos")]
+        PNG[("Etiquetas QR .png<br/>~/.inventariopro/etiquetas")]
     end
-    UTIL["util · exception"]
+    UTIL["util · exception<br/>GeneradorQR · LectorQR (ZXing)"]
+    DISP["dispositivo<br/>Camara · WebcamCamara"]
+    CAM(("Webcam"))
 
     HTML -- "window.javaBridge" --> BRIDGE
     VIEW --> BRIDGE
@@ -30,6 +33,10 @@ flowchart TB
     REPO --> MODEL
     REPO --> JSON
     REPO --> ZIP
+    REPO --> PNG
+    SERVICE --> UTIL
+    BRIDGE --> DISP
+    DISP --> CAM
     MODEL --> UTIL
 ```
 
@@ -55,6 +62,41 @@ flowchart TB
 | `service` | `GestorRespaldo` | Crear, listar, restaurar (con copia automática previa) y eliminar copias. |
 | raíz | `AppContext.recargar()` | Volver a leer todos los datos desde disco después de restaurar. |
 | `bridge` | `RespaldoController` | Atender desde la vista las acciones de la sección **Respaldos**. |
+
+## Venta por QR (versión 3.2.0)
+
+| Capa | Clase | Responsabilidad |
+|---|---|---|
+| `util` | `GeneradorQR` | Convertir un texto en la imagen de un código QR (ZXing, corrección de errores L). |
+| `util` | `LectorQR` | Leer el texto de un QR que aparece en un cuadro de la cámara (ZXing). |
+| `util` | `CodificadorImagen` | Convertir un cuadro de la cámara en JPEG liviano para mostrarlo en la vista. |
+| `model` | `Producto.contenidoEtiquetaQR()` / `idDesdeEtiquetaQR()` | El producto define el texto de su QR (`TBalance`, ID y precio) y sabe interpretarlo de vuelta. |
+| `dispositivo` | `Camara` / `WebcamCamara` | Encender la webcam, entregar cuadros y apagarla; solo `WebcamCamara` conoce la librería *webcam-capture*. |
+| `repository` | `EtiquetaRepository` | Guardar las etiquetas PNG en `~/.inventariopro/etiquetas`. |
+| `service` | `GestorEtiquetas` | Dibujar la etiqueta (QR + nombre + precio) y armar hojas carta de 3 × 6. |
+| `service` | `EscanerVentaQR` | Pasar de un cuadro de la cámara al producto, sin contar dos veces la misma etiqueta quieta. |
+| `bridge` | `EtiquetaController` | Vista previa, guardar una etiqueta y generar la hoja de todos los productos. |
+| `bridge` | `EscaneoController` | Encender y apagar la cámara en un hilo propio y avisar a la vista cada producto leído. |
+
+```mermaid
+sequenceDiagram
+    participant V as Vista (Venta por QR)
+    participant C as EscaneoController
+    participant K as WebcamCamara
+    participant E as EscanerVentaQR
+    participant P as Producto / GestorInventario
+    V->>C: iniciarEscaneoQR()
+    C->>K: abrir()
+    loop unas 10 veces por segundo
+        C->>K: capturar()
+        C-->>V: tbCuadroCamara(jpeg)
+        C->>E: procesar(cuadro)
+        E->>P: idDesdeEtiquetaQR(texto) y buscarPorId(id)
+        E-->>C: producto (si hay una etiqueta nueva)
+        C-->>V: tbProductoEscaneado(producto)
+    end
+    V->>C: crearVenta(items) al pulsar Registrar Venta
+```
 
 ## Persistencia (sin cambios de formato)
 

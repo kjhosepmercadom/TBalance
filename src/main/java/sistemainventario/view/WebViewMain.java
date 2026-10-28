@@ -57,6 +57,7 @@ public class WebViewMain {
         ventana.setScene(new Scene(webView, ANCHO_INICIAL, ALTO_INICIAL));
         ventana.setMinWidth(ANCHO_MINIMO);
         ventana.setMinHeight(ALTO_MINIMO);
+        ventana.setOnHidden(evento -> apagarCamara());
         actualizarTitulo(ventana);
         ventana.show();
     }
@@ -77,6 +78,13 @@ public class WebViewMain {
             throw new IllegalStateException("No se encontro " + RECURSO_HTML + " en resources");
         }
         return url.toExternalForm();
+    }
+
+    /** Apaga la cámara si la ventana se cierra con el escáner de ventas abierto. */
+    private void apagarCamara() {
+        if (bridge != null) {
+            bridge.detenerEscaneoQR();
+        }
     }
 
     private void registrarBridge() {
