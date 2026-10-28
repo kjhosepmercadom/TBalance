@@ -8,64 +8,87 @@ import javafx.stage.Stage;
 import netscape.javascript.JSObject;
 import sistemainventario.AppContext;
 import sistemainventario.bridge.JavaBridge;
+import sistemainventario.bridge.WebViewNotificador;
 import sistemainventario.model.Perfil;
 
 import java.net.URL;
 
+/**
+ * Ventana principal: carga la interfaz HTML en un {@link WebView} y registra
+ * el {@link JavaBridge} como {@code window.javaBridge}.
+ *
+ * <p><b>SRP:</b> solo construye la ventana y conecta la vista con el bridge;
+ * no contiene lógica de negocio.</p>
+ */
 public class WebViewMain {
 
-    private final AppContext ctx;
-    private WebEngine engine;
+    private static final String RECURSO_HTML = "/html/SistemaInventario.html";
+    private static final double ANCHO_INICIAL = 1300;
+    private static final double ALTO_INICIAL = 800;
+    private static final double ANCHO_MINIMO = 1000;
+    private static final double ALTO_MINIMO = 650;
+
+    private final AppContext contexto;
+    private WebEngine motor;
+    /** Se conserva como atributo para que el recolector de basura no lo elimine. */
     private JavaBridge bridge;
 
-    public WebViewMain(AppContext ctx) {
-        this.ctx = ctx;
+    public WebViewMain(AppContext contexto) {
+        this.contexto = contexto;
     }
 
-    public void show(Stage stage) {
+    /**
+     * Construye y muestra la ventana principal.
+     *
+     * @param ventana escenario principal de JavaFX
+     */
+    public void show(Stage ventana) {
         WebView webView = new WebView();
-        engine  = webView.getEngine();
-
-        engine.setOnAlert(e -> System.out.println("[HTML Alert] " + e.getData()));
-
-        engine.getLoadWorker().stateProperty().addListener((obs, oldState, newState) -> {
-            if (newState == Worker.State.SUCCEEDED) {
+        motor = webView.getEngine();
+        motor.setOnAlert(evento -> System.out.println("[HTML Alert] " + evento.getData()));
+        motor.getLoadWorker().stateProperty().addListener((obs, anterior, nuevo) -> {
+            if (nuevo == Worker.State.SUCCEEDED) {
                 registrarBridge();
-                inicializarEstadoHTML();
+                inicializarEstadoHtml();
             }
         });
+        motor.load(localizarHtml());
 
-        URL htmlUrl = getClass().getResource("/html/SistemaInventario.html");
-        if (htmlUrl == null) {
-            throw new RuntimeException("No se encontro /html/SistemaInventario.html en resources");
-        }
-        engine.load(htmlUrl.toExternalForm());
-
-        Scene scene = new Scene(webView, 1300, 800);
-        stage.setScene(scene);
-        actualizarTitulo(stage);
-        stage.setMinWidth(1000);
-        stage.setMinHeight(650);
-        stage.show();
+        ventana.setScene(new Scene(webView, ANCHO_INICIAL, ALTO_INICIAL));
+        ventana.setMinWidth(ANCHO_MINIMO);
+        ventana.setMinHeight(ALTO_MINIMO);
+        actualizarTitulo(ventana);
+        ventana.show();
     }
 
-    public void actualizarTitulo(Stage stage) {
-        Perfil activo = ctx.gestorPerfiles.getPerfilActivo();
-        String nombre = activo != null ? activo.getNombre() : "Sin perfil activo";
-        stage.setTitle("Tbalance \u2014 " + nombre);
+    /**
+     * @param ventana ventana cuyo título se actualiza con el perfil activo
+     */
+    public void actualizarTitulo(Stage ventana) {
+        String nombre = contexto.getGestorPerfiles().getPerfilActivo()
+                .map(Perfil::getNombre)
+                .orElse("Sin perfil activo");
+        ventana.setTitle("TBalance — " + nombre);
+    }
+
+    private String localizarHtml() {
+        URL url = getClass().getResource(RECURSO_HTML);
+        if (url == null) {
+            throw new IllegalStateException("No se encontro " + RECURSO_HTML + " en resources");
+        }
+        return url.toExternalForm();
     }
 
     private void registrarBridge() {
-        bridge = new JavaBridge(engine, ctx);
-        JSObject window = (JSObject) engine.executeScript("window");
-        window.setMember("javaBridge", bridge);
-        System.out.println("[WebViewMain] Bridge registrado correctamente.");
+        bridge = new JavaBridge(contexto, new WebViewNotificador(motor));
+        JSObject ventanaJs = (JSObject) motor.executeScript("window");
+        ventanaJs.setMember("javaBridge", bridge);
     }
 
-    private void inicializarEstadoHTML() {
+    private void inicializarEstadoHtml() {
         try {
-            engine.executeScript("if(typeof cargarEstadoDesdeJava === 'function') cargarEstadoDesdeJava();");
-        } catch (Exception e) {
+            motor.executeScript("if (typeof cargarEstadoDesdeJava === 'function') cargarEstadoDesdeJava();");
+        } catch (RuntimeException e) {
             System.err.println("[WebViewMain] Error en inicializacion: " + e.getMessage());
         }
     }
