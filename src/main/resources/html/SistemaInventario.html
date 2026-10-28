@@ -504,11 +504,18 @@
             <h1 class="text-xl font-bold text-gray-900 dark:text-white">Ventas</h1>
             <p class="text-xs text-gray-400 mt-0.5">Registro de ventas realizadas</p>
           </div>
+          <div class="flex items-center gap-2">
+          <button id="btn-venta-qr" onclick="openModalVentaQR()" title="Abre la camara y agrega los productos escaneando su etiqueta QR"
+            class="flex items-center gap-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 text-sm font-semibold px-4 py-2.5 rounded-xl shadow-sm transition-all duration-150">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h2v2h-2v-2zm4 0h2v2h-2v-2zm-4 4h2v2h-2v-2zm4 0h2v2h-2v-2z"/></svg>
+            Venta por QR
+          </button>
           <button onclick="openModalVenta()"
             class="flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-md hover:shadow-lg transition-all duration-150">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
             Nueva Venta
           </button>
+          </div>
         </div>
         <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
           <div class="overflow-x-auto">
@@ -865,6 +872,59 @@
   </div>
 </div>
 
+<!-- MODAL: Venta por QR -->
+<div id="modal-venta-qr" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+  <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-4xl border border-gray-100 dark:border-gray-700 animate-slide-up">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+      <div>
+        <h3 class="text-base font-bold text-gray-900 dark:text-white">Venta por QR</h3>
+        <p class="text-xs text-gray-400 mt-0.5">Pon la etiqueta frente a la camara; cada lectura agrega una unidad.</p>
+      </div>
+      <button onclick="closeModal('modal-venta-qr')" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition rounded-lg p-1 hover:bg-gray-100 dark:hover:bg-gray-700">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="grid grid-cols-2 gap-6 px-6 py-5">
+      <div>
+        <div class="relative bg-gray-900 rounded-xl overflow-hidden" style="padding-bottom:75%">
+          <img id="vqr-camara" alt="Vista de la camara" class="absolute inset-0 w-full h-full object-cover hidden"/>
+          <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div class="w-1/2 h-2/3 border-2 border-white/60 rounded-2xl"></div>
+          </div>
+          <div id="vqr-estado" class="absolute inset-0 flex flex-col items-center justify-center gap-2 text-center px-6 text-gray-300">
+            <svg class="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            <p id="vqr-estado-texto" class="text-sm font-medium">Encendiendo camara...</p>
+          </div>
+          <div id="vqr-flash" class="absolute left-1/2 -translate-x-1/2 bottom-3 hidden px-3 py-1.5 rounded-full text-xs font-semibold shadow-lg whitespace-nowrap"></div>
+        </div>
+        <div class="flex items-center justify-between mt-3">
+          <p class="text-xs text-gray-500 dark:text-gray-400">Distancia ideal: 15 a 25 cm, con buena luz.</p>
+          <button id="vqr-btn-camara" onclick="alternarCamaraQR()" class="text-xs font-semibold text-brand-600 dark:text-brand-400 hover:underline">Apagar camara</button>
+        </div>
+        <div class="flex items-center gap-2 mt-4">
+          <select id="vqr-manual" class="flex-1 min-w-0 px-3 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-400 transition">
+            <option value="">Agregar sin escanear...</option>
+          </select>
+          <button onclick="agregarManualQR()" class="px-3 py-2 text-sm font-semibold text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition">Agregar</button>
+        </div>
+      </div>
+      <div class="flex flex-col min-h-0">
+        <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Productos de la venta</p>
+        <div id="vqr-items" class="flex-1 overflow-y-auto space-y-2 pr-1" style="max-height:300px"></div>
+        <div class="bg-brand-50 dark:bg-brand-900/20 rounded-xl px-4 py-3 flex items-center justify-between mt-3">
+          <span class="text-sm font-semibold text-gray-600 dark:text-gray-300">Total <span id="vqr-unidades" class="font-normal text-gray-400"></span></span>
+          <span id="vqr-total" class="text-lg font-extrabold text-brand-600 dark:text-brand-400">$0.00</span>
+        </div>
+        <p id="vqr-error" class="text-red-500 text-xs font-medium hidden mt-2"></p>
+      </div>
+    </div>
+    <div class="flex justify-end gap-2.5 px-6 py-4 border-t border-gray-100 dark:border-gray-700">
+      <button onclick="closeModal('modal-venta-qr')" class="px-4 py-2 text-sm font-semibold text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition">Cancelar</button>
+      <button id="vqr-registrar" onclick="submitVentaQR()" class="px-5 py-2 text-sm font-semibold text-white bg-brand-500 hover:bg-brand-600 rounded-xl shadow-sm transition disabled:opacity-40 disabled:cursor-not-allowed">Registrar Venta</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: Confirmar eliminacion -->
 <div id="modal-confirm" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] hidden items-center justify-center p-4">
   <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-sm border border-gray-100 dark:border-gray-700 animate-slide-up">
@@ -893,7 +953,7 @@
     </div>
     <div class="px-6 py-5">
       <img id="qr-imagen" alt="Etiqueta QR del producto" class="w-full rounded-xl border border-gray-100 dark:border-gray-700 bg-white"/>
-      <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-4 mb-1.5">Al escanearla con el celular se ve:</p>
+      <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-4 mb-1.5">Contenido del codigo (lo lee la camara o un celular):</p>
       <pre id="qr-contenido" class="text-xs text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-gray-700/50 rounded-xl px-4 py-3 whitespace-pre-wrap font-mono"></pre>
     </div>
     <div class="flex justify-end gap-2.5 px-6 pb-5">
@@ -1654,6 +1714,7 @@ function openModal(id) {
   m.classList.add('flex');
 }
 function closeModal(id) {
+  if (id === 'modal-venta-qr') apagarCamaraQR();
   const m = document.getElementById(id);
   m.classList.add('hidden');
   m.classList.remove('flex');
@@ -2294,17 +2355,17 @@ function renderTablaVentas() {
     return;
   }
   tbody.innerHTML = state.ventas.map(function(v) {
-    // For now, show first item in venta
     const items = v.items || [];
     const first = items[0] || {};
-    const prodName = first.nombreProducto || getNombreProd(first.productoId) || '—';
-    const cant = first.cantidad || 0;
+    const nombreFirst = first.nombreProducto || getNombreProd(first.productoId) || '—';
+    const prodName = items.length > 1 ? nombreFirst + ' y ' + (items.length - 1) + ' más' : nombreFirst;
+    const cant = items.reduce(function(t, it) { return t + (it.cantidad || 0); }, 0);
     const pu = first.precioUnitario || 0;
     return '<tr class="fade-row hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors">\
       <td class="px-6 py-3.5 text-xs font-semibold text-gray-400">#' + v.id + '</td>\
       <td class="px-4 py-3.5 text-sm font-semibold text-gray-800 dark:text-white">' + esc(prodName) + '</td>\
       <td class="px-4 py-3.5 text-sm text-gray-600 dark:text-gray-300">' + cant + '</td>\
-      <td class="px-4 py-3.5 text-sm text-gray-600 dark:text-gray-300">$' + fmt(pu) + '</td>\
+      <td class="px-4 py-3.5 text-sm text-gray-600 dark:text-gray-300">' + (items.length > 1 ? 'Varios' : '$' + fmt(pu)) + '</td>\
       <td class="px-4 py-3.5 text-sm font-bold text-brand-600 dark:text-brand-400">$' + fmt(v.total || 0) + '</td>\
       <td class="px-4 py-3.5 text-xs text-gray-400">' + esc(fmtFecha(v.fecha)) + '</td>\
       <td class="px-4 py-3.5 text-center">\
@@ -2372,6 +2433,172 @@ function submitVenta() {
     cargarEstadoDesdeJava();
     showToast('Venta registrada por $' + fmt(cant * precio) + '.');
   }
+}
+
+// ── VENTA POR QR ───────────────────────────────────────────
+// Java (EscaneoController) llama a las funciones tb* desde el hilo de la camara.
+const ventaQR = { items: [], camara: 'apagada', ultimo: null, flashTimer: null, errorCamara: null };
+
+function openModalVentaQR() {
+  if (!state.perfilActivo) { showToast('Primero selecciona un perfil.', 'error'); return; }
+  ventaQR.items = [];
+  ventaQR.ultimo = null;
+  document.getElementById('vqr-manual').innerHTML = '<option value="">Agregar sin escanear...</option>' +
+    state.productos.map(function(p) { return '<option value="' + p.id + '">' + esc(p.nombre) + ' (stock: ' + p.stock + ')</option>'; }).join('');
+  document.getElementById('vqr-error').classList.add('hidden');
+  renderVentaQR();
+  openModal('modal-venta-qr');
+  encenderCamaraQR();
+}
+
+function encenderCamaraQR() {
+  estadoCamaraQR('encendiendo');
+  const r = window.javaBridge.iniciarEscaneoQR();
+  if (typeof r === 'string' && r.startsWith('ERROR')) estadoCamaraQR('apagada', r.replace(/^ERROR:\s*/, ''));
+}
+
+function apagarCamaraQR() {
+  if (window.javaBridge && window.javaBridge.detenerEscaneoQR) window.javaBridge.detenerEscaneoQR();
+}
+
+function alternarCamaraQR() {
+  if (ventaQR.camara === 'apagada') encenderCamaraQR(); else apagarCamaraQR();
+}
+
+function estadoCamaraQR(estado, mensaje) {
+  ventaQR.camara = estado;
+  const img = document.getElementById('vqr-camara');
+  const capa = document.getElementById('vqr-estado');
+  const texto = { encendiendo: 'Encendiendo camara...', apagada: 'Camara apagada' }[estado];
+  if (estado === 'encendida') {
+    capa.classList.add('hidden');
+  } else {
+    img.classList.add('hidden');
+    img.removeAttribute('src');
+    capa.classList.remove('hidden');
+    document.getElementById('vqr-estado-texto').textContent = mensaje || texto;
+  }
+  document.getElementById('vqr-btn-camara').textContent = estado === 'apagada' ? 'Encender camara' : 'Apagar camara';
+}
+
+function tbCamaraLista()        { estadoCamaraQR('encendida'); }
+function tbCamaraDetenida()     { estadoCamaraQR('apagada', ventaQR.errorCamara); ventaQR.errorCamara = null; }
+function tbErrorCamara(mensaje) { ventaQR.errorCamara = mensaje; estadoCamaraQR('apagada', mensaje); }
+function tbAvisoEscaneo(mensaje){ mostrarFlashQR(mensaje, false); }
+function tbProductoEscaneado(p) { agregarItemVentaQR(p.id); }
+function tbCuadroCamara(src) {
+  if (ventaQR.camara !== 'encendida') return;
+  const img = document.getElementById('vqr-camara');
+  img.src = src;
+  img.classList.remove('hidden');
+}
+
+function agregarManualQR() {
+  const sel = document.getElementById('vqr-manual');
+  if (sel.value) agregarItemVentaQR(sel.value);
+  sel.value = '';
+}
+
+function agregarItemVentaQR(id) {
+  const prod = state.productos.find(function(p) { return p.id === id; });
+  if (!prod) { mostrarFlashQR('Producto no encontrado', false); return; }
+  const item = ventaQR.items.find(function(i) { return i.id === id; });
+  if (item) {
+    if (item.cantidad >= item.stock) { mostrarFlashQR('No hay mas stock de ' + prod.nombre, false); return; }
+    item.cantidad++;
+  } else {
+    if ((prod.stock || 0) < 1) { mostrarFlashQR(prod.nombre + ' esta agotado', false); return; }
+    ventaQR.items.unshift({ id: id, nombre: prod.nombre, precio: prod.precioVenta || prod.precio || 0, stock: prod.stock, cantidad: 1 });
+  }
+  ventaQR.ultimo = id;
+  renderVentaQR();
+  mostrarFlashQR(prod.nombre + (item ? ' x' + item.cantidad : '') + ' agregado', true);
+}
+
+function cambiarCantidadQR(id, delta) {
+  const item = ventaQR.items.find(function(i) { return i.id === id; });
+  if (!item) return;
+  item.cantidad = Math.min(item.stock, Math.max(1, item.cantidad + delta));
+  renderVentaQR();
+}
+
+function fijarCantidadQR(id, valor) {
+  const item = ventaQR.items.find(function(i) { return i.id === id; });
+  if (!item) return;
+  const n = parseInt(valor, 10);
+  item.cantidad = isNaN(n) ? 1 : Math.min(item.stock, Math.max(1, n));
+  renderVentaQR();
+}
+
+function quitarItemQR(id) {
+  ventaQR.items = ventaQR.items.filter(function(i) { return i.id !== id; });
+  renderVentaQR();
+}
+
+function renderVentaQR() {
+  const cont = document.getElementById('vqr-items');
+  if (ventaQR.items.length === 0) {
+    cont.innerHTML = '<div class="h-full min-h-[160px] flex flex-col items-center justify-center text-center text-sm text-gray-400 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl px-6 py-10">Escanea la etiqueta de un producto para agregarlo.</div>';
+  } else {
+    cont.innerHTML = ventaQR.items.map(function(i) {
+      const resaltado = i.id === ventaQR.ultimo ? ' ring-2 ring-brand-400' : '';
+      return '<div class="flex items-center gap-3 border border-gray-100 dark:border-gray-700 rounded-xl px-3 py-2.5' + resaltado + '">\
+        <div class="flex-1 min-w-0">\
+          <p class="text-sm font-semibold text-gray-800 dark:text-white truncate">' + esc(i.nombre) + '</p>\
+          <p class="text-xs text-gray-400">$' + fmt(i.precio) + ' c/u &middot; stock ' + i.stock + '</p>\
+        </div>\
+        <div class="flex items-center border border-gray-200 dark:border-gray-600 rounded-lg">\
+          <button onclick="cambiarCantidadQR(\'' + i.id + '\', -1)" class="w-7 h-7 text-gray-500 hover:text-brand-600" title="Quitar una">&minus;</button>\
+          <input type="number" min="1" max="' + i.stock + '" value="' + i.cantidad + '" onchange="fijarCantidadQR(\'' + i.id + '\', this.value)" class="w-10 text-center text-sm bg-transparent text-gray-800 dark:text-white focus:outline-none"/>\
+          <button onclick="cambiarCantidadQR(\'' + i.id + '\', 1)" class="w-7 h-7 text-gray-500 hover:text-brand-600" title="Agregar una">+</button>\
+        </div>\
+        <p class="w-24 text-right text-sm font-bold text-gray-800 dark:text-white">$' + fmt(i.precio * i.cantidad) + '</p>\
+        <button onclick="quitarItemQR(\'' + i.id + '\')" class="p-1 text-gray-400 hover:text-red-500" title="Quitar de la venta">\
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>\
+        </button>\
+      </div>';
+    }).join('');
+  }
+  const total = ventaQR.items.reduce(function(t, i) { return t + i.precio * i.cantidad; }, 0);
+  const unidades = ventaQR.items.reduce(function(t, i) { return t + i.cantidad; }, 0);
+  document.getElementById('vqr-total').textContent = '$' + fmt(total);
+  document.getElementById('vqr-unidades').textContent = unidades ? '(' + unidades + (unidades === 1 ? ' unidad)' : ' unidades)') : '';
+  document.getElementById('vqr-registrar').disabled = ventaQR.items.length === 0;
+}
+
+function mostrarFlashQR(texto, ok) {
+  const el = document.getElementById('vqr-flash');
+  el.textContent = texto;
+  el.className = 'absolute left-1/2 -translate-x-1/2 bottom-3 px-3 py-1.5 rounded-full text-xs font-semibold shadow-lg whitespace-nowrap ' +
+    (ok ? 'bg-green-500 text-white' : 'bg-red-500 text-white');
+  clearTimeout(ventaQR.flashTimer);
+  ventaQR.flashTimer = setTimeout(function() { el.classList.add('hidden'); }, 1800);
+}
+
+function submitVentaQR() {
+  const errEl = document.getElementById('vqr-error');
+  if (ventaQR.items.length === 0) { errEl.textContent = 'Escanea al menos un producto.'; errEl.classList.remove('hidden'); return; }
+  const sinStock = ventaQR.items.find(function(i) { return i.cantidad > i.stock; });
+  if (sinStock) { errEl.textContent = 'Stock insuficiente de ' + sinStock.nombre + '. Disponible: ' + sinStock.stock; errEl.classList.remove('hidden'); return; }
+  errEl.classList.add('hidden');
+  const venta = {
+    cliente: 'Cliente',
+    metodoPago: 'Efectivo',
+    observacion: 'Venta por QR',
+    items: ventaQR.items.map(function(i) {
+      return { productoId: i.id, nombreProducto: i.nombre, cantidad: i.cantidad, precioUnitario: i.precio };
+    })
+  };
+  const total = ventaQR.items.reduce(function(t, i) { return t + i.precio * i.cantidad; }, 0);
+  const resultado = window.javaBridge.crearVenta(JSON.stringify(venta));
+  if (resultado.startsWith('ERROR')) {
+    errEl.textContent = resultado;
+    errEl.classList.remove('hidden');
+    return;
+  }
+  closeModal('modal-venta-qr');
+  cargarEstadoDesdeJava();
+  showToast('Venta registrada por $' + fmt(total) + '.');
 }
 
 // ── ETIQUETAS QR ───────────────────────────────────────────
