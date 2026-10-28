@@ -9,15 +9,16 @@ flowchart TB
     subgraph Presentacion["Presentación"]
         HTML["SistemaInventario.html<br/>(HTML/CSS/JS)"]
         VIEW["view<br/>WebViewMain"]
-        BRIDGE["bridge<br/>JavaBridge (fachada) · PerfilController · InventarioController<br/>CatalogoController · TransaccionController · RespuestaBridge"]
+        BRIDGE["bridge<br/>JavaBridge (fachada) · PerfilController · InventarioController<br/>CatalogoController · TransaccionController · RespaldoController · RespuestaBridge"]
     end
     subgraph Negocio["Lógica de negocio"]
-        SERVICE["service<br/>GestorEntidad&lt;T&gt; · GestorInventario · GestorCategorias · GestorProveedores<br/>GestorMovimientos · GestorVentas · GestorPerfiles · GestorConfiguracionGlobal<br/>FabricaServiciosPerfil · ServiciosPerfil"]
-        MODEL["model<br/>EntidadConId · Producto · Categoria · Proveedor · Perfil · PerfilNegocio<br/>MovimientoInventario · Entrada · Salida · Venta · ItemVenta · ConfiguracionGlobal"]
+        SERVICE["service<br/>GestorEntidad&lt;T&gt; · GestorInventario · GestorCategorias · GestorProveedores<br/>GestorMovimientos · GestorVentas · GestorPerfiles · GestorConfiguracionGlobal<br/>FabricaServiciosPerfil · ServiciosPerfil · GestorRespaldo"]
+        MODEL["model<br/>EntidadConId · Producto · Categoria · Proveedor · Perfil · PerfilNegocio<br/>MovimientoInventario · Entrada · Salida · Venta · ItemVenta · ConfiguracionGlobal · Respaldo"]
     end
     subgraph Datos["Acceso a datos"]
-        REPO["repository<br/>Repository&lt;T&gt; · JsonRepository&lt;T&gt; · *Repository<br/>ConfiguracionGlobalRepository · JsonFileStore · DirectorioPerfiles"]
+        REPO["repository<br/>Repository&lt;T&gt; · JsonRepository&lt;T&gt; · *Repository<br/>ConfiguracionGlobalRepository · JsonFileStore · DirectorioPerfiles<br/>ArchivadorZip · RespaldoRepository"]
         JSON[("Archivos JSON<br/>~/.inventariopro/data")]
+        ZIP[("Copias de seguridad .zip<br/>~/.inventariopro/respaldos")]
     end
     UTIL["util · exception"]
 
@@ -28,6 +29,7 @@ flowchart TB
     SERVICE --> MODEL
     REPO --> MODEL
     REPO --> JSON
+    REPO --> ZIP
     MODEL --> UTIL
 ```
 
@@ -42,6 +44,17 @@ flowchart TB
 | `service` | Casos de uso. | `GestorEntidad<T>` (Template Method) elimina el CRUD duplicado; dependencias inyectadas por `FabricaServiciosPerfil`. |
 | `bridge` | Traducir eventos de la vista a casos de uso. | `JavaBridge` (338 líneas en P2) se convierte en fachada que delega en 4 controladores; manejo de errores centralizado en `RespuestaBridge`. |
 | `view` | Ventana JavaFX. | Solo construye la ventana y registra el bridge. `Launcher` permite ejecutar desde IntelliJ. |
+
+## Copias de seguridad (versión 3.1.0)
+
+| Capa | Clase | Responsabilidad |
+|---|---|---|
+| `repository` | `ArchivadorZip` | Comprimir la carpeta de datos en un `.zip` y extraerlo, rechazando rutas inseguras (*zip slip*). |
+| `repository` | `RespaldoRepository` | Listar, ubicar y eliminar los archivos de `~/.inventariopro/respaldos`, validando los nombres recibidos. |
+| `model` | `Respaldo` | Datos de solo lectura de una copia: nombre, fecha y tamaño. |
+| `service` | `GestorRespaldo` | Crear, listar, restaurar (con copia automática previa) y eliminar copias. |
+| raíz | `AppContext.recargar()` | Volver a leer todos los datos desde disco después de restaurar. |
+| `bridge` | `RespaldoController` | Atender desde la vista las acciones de la sección **Respaldos**. |
 
 ## Persistencia (sin cambios de formato)
 
