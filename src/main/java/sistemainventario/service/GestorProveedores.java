@@ -1,54 +1,42 @@
 package sistemainventario.service;
 
 import sistemainventario.model.Proveedor;
-import sistemainventario.repository.ProveedorRepository;
-import sistemainventario.util.IdGenerator;
+import sistemainventario.repository.Repository;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
-public class GestorProveedores {
+/**
+ * Casos de uso de los proveedores de un perfil.
+ */
+public class GestorProveedores extends GestorEntidad<Proveedor> {
 
-    private final ProveedorRepository repo;
-
-    public GestorProveedores(ProveedorRepository repo) {
-        this.repo = repo;
+    public GestorProveedores(Repository<Proveedor> repositorio) {
+        super(repositorio);
     }
 
-    public List<Proveedor> listarTodos() {
-        return repo.listarTodos();
+    @Override
+    protected void validar(Proveedor proveedor) {
+        proveedor.validar();
     }
 
-    public Proveedor buscarPorId(String id) {
-        return repo.buscarPorId(id).orElse(null);
+    @Override
+    protected String generarId() {
+        return repositorio.siguienteIdNumerico();
     }
 
-    public boolean agregar(Proveedor p) {
-        if (p == null || repo.existe(p.getId())) return false;
-        if (p.getId() == null || p.getId().isBlank())
-            p.setId(IdGenerator.siguienteNumerico(
-                    repo.listarTodos().stream().map(Proveedor::getId).collect(Collectors.toList())));
-        repo.agregar(p);
-        return true;
+    @Override
+    protected String nombreEntidad() {
+        return "Proveedor";
     }
 
-    public boolean actualizar(Proveedor p) {
-        return repo.actualizar(p);
-    }
-
-    public boolean eliminar(String id) {
-        return repo.eliminar(id);
-    }
-
+    /**
+     * @param texto texto buscado en nombre o contacto
+     * @return proveedores que coinciden
+     */
     public List<Proveedor> buscar(String texto) {
-        String q = texto.toLowerCase().trim();
-        return repo.filtrar(p ->
-                p.getNombre().toLowerCase().contains(q) ||
-                (p.getContacto() != null && p.getContacto().toLowerCase().contains(q)));
-    }
-
-    public String generarNuevoId() {
-        return IdGenerator.siguienteNumerico(
-                repo.listarTodos().stream().map(Proveedor::getId).collect(Collectors.toList()));
+        if (texto == null || texto.isBlank()) {
+            return listarTodos();
+        }
+        return repositorio.filtrar(proveedor -> proveedor.coincideCon(texto));
     }
 }
