@@ -5,6 +5,7 @@ import sistemainventario.util.FechaUtil;
 import sistemainventario.util.TextoUtil;
 
 import java.time.LocalDate;
+import java.util.Locale;
 import java.util.Optional;
 
 /**
@@ -210,6 +211,52 @@ public class Producto extends EntidadConId {
      */
     public boolean perteneceACategoria(String nombreCategoria) {
         return nombreCategoria != null && nombreCategoria.equals(categoria);
+    }
+
+    // ── Etiqueta QR (Experto) ───────────────────────────────────────────
+
+    /** Primera línea de toda etiqueta QR de TBalance. */
+    public static final String ENCABEZADO_QR = "TBalance";
+    /** Prefijo de la línea que lleva el ID dentro de la etiqueta QR. */
+    private static final String PREFIJO_ID_QR = "ID: ";
+
+    /**
+     * <b>GRASP Experto:</b> el producto conoce sus datos, por eso arma el texto
+     * que se codifica en su etiqueta QR. El texto es corto a propósito: un QR
+     * con pocos datos tiene módulos más grandes y la webcam lo lee mejor. El
+     * nombre no va en el código porque ya está impreso al lado.
+     *
+     * @return texto de tres líneas: {@code TBalance}, el ID y el precio de venta
+     */
+    public String contenidoEtiquetaQR() {
+        return ENCABEZADO_QR + '\n'
+                + PREFIJO_ID_QR + getId() + '\n'
+                + getPrecioVentaFormateado();
+    }
+
+    /**
+     * Operación inversa de {@link #contenidoEtiquetaQR()}: obtiene el ID del
+     * producto a partir del texto leído de una etiqueta. Como el formato lo
+     * define esta clase, también es la <b>Experta</b> en interpretarlo.
+     *
+     * @param contenido texto leído del código QR
+     * @return el ID, o vacío si el texto no es una etiqueta de TBalance
+     */
+    public static Optional<String> idDesdeEtiquetaQR(String contenido) {
+        if (contenido == null || !contenido.strip().startsWith(ENCABEZADO_QR)) {
+            return Optional.empty();
+        }
+        return contenido.lines()
+                .map(String::strip)
+                .filter(linea -> linea.startsWith(PREFIJO_ID_QR))
+                .map(linea -> linea.substring(PREFIJO_ID_QR.length()).strip())
+                .filter(id -> !id.isEmpty())
+                .findFirst();
+    }
+
+    /** @return precio de venta con separador de miles, por ejemplo {@code $ 2.500} */
+    public String getPrecioVentaFormateado() {
+        return "$ " + String.format(Locale.ROOT, "%,.0f", precioVenta).replace(',', '.');
     }
 
     @Override

@@ -1,6 +1,7 @@
 package sistemainventario.bridge;
 
 import sistemainventario.AppContext;
+import sistemainventario.dispositivo.WebcamCamara;
 
 /**
  * Objeto expuesto a JavaScript como {@code window.javaBridge}.
@@ -11,7 +12,8 @@ import sistemainventario.AppContext;
  * errores. Ahora solo delega en controladores por caso de uso
  * ({@link PerfilController}, {@link InventarioController},
  * {@link CatalogoController}, {@link TransaccionController},
- * {@link RespaldoController}), cada uno con
+ * {@link RespaldoController}, {@link EtiquetaController},
+ * {@link EscaneoController}), cada uno con
  * <b>alta cohesión</b>.</p>
  *
  * <p>Los nombres y firmas de los métodos públicos se mantienen idénticos a
@@ -24,6 +26,8 @@ public class JavaBridge {
     private final CatalogoController catalogo;
     private final TransaccionController transacciones;
     private final RespaldoController respaldos;
+    private final EtiquetaController etiquetas;
+    private final EscaneoController escaneo;
     private final NotificadorVista notificador;
 
     public JavaBridge(AppContext contexto, NotificadorVista notificador) {
@@ -33,6 +37,8 @@ public class JavaBridge {
         this.catalogo = new CatalogoController(contexto);
         this.transacciones = new TransaccionController(contexto);
         this.respaldos = new RespaldoController(contexto, notificador);
+        this.etiquetas = new EtiquetaController(contexto, new EscritorioAbridor());
+        this.escaneo = new EscaneoController(contexto, WebcamCamara::new, notificador);
     }
 
     // ── Perfiles ────────────────────────────────────────────────────────
@@ -181,6 +187,30 @@ public class JavaBridge {
 
     public String obtenerCarpetaRespaldos() {
         return respaldos.obtenerCarpetaRespaldos();
+    }
+
+    // ── Etiquetas con código QR ─────────────────────────────────────────
+
+    public String obtenerEtiquetaQR(String productoId) {
+        return etiquetas.obtenerEtiquetaQR(productoId);
+    }
+
+    public String guardarEtiquetaQR(String productoId) {
+        return etiquetas.guardarEtiquetaQR(productoId);
+    }
+
+    public String generarHojaEtiquetas() {
+        return etiquetas.generarHojaEtiquetas();
+    }
+
+    // ── Venta por QR ────────────────────────────────────────────────────
+
+    public String iniciarEscaneoQR() {
+        return escaneo.iniciarEscaneoQR();
+    }
+
+    public String detenerEscaneoQR() {
+        return escaneo.detenerEscaneoQR();
     }
 
     // ── Utilidades de la vista ──────────────────────────────────────────
