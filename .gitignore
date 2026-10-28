@@ -41,5 +41,3 @@ nbactions.xml
 .DS_Store
 Thumbs.db
 
-# Carpetas de trabajo de cada integrante (scripts de commits del avance)
-P3_*/
