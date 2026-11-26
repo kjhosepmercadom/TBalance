@@ -1074,6 +1074,11 @@
     </div>
     <div class="px-6 py-5 space-y-4">
       <p class="al-ayuda">Copie las filas de Excel y péguelas aquí. Un producto por fila, con estas columnas: <b>Nombre, Costo, Precio, Cantidad</b> (y si quiere, Código y Categoría). Si deja el precio vacío, TBalance lo calcula con su margen.</p>
+      <div class="al-archivo">
+        <input type="file" id="lote-archivo" accept=".xlsx,.csv,.txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv" class="hidden" onchange="alArchivoLote(this)">
+        <button type="button" class="al-btn" onclick="document.getElementById('lote-archivo').click()">Elegir archivo de Excel…</button>
+        <span id="lote-archivo-nombre" class="al-ayuda">o pegue las filas abajo (.xlsx o .csv)</span>
+      </div>
       <label for="lote-texto" class="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Productos</label>
       <textarea id="lote-texto" class="al-lote-texto" spellcheck="false" oninput="alLoteCambio()"
         placeholder="Arroz 500 g	2.100	2.900	24

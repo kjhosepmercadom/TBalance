@@ -257,6 +257,8 @@
     $('lote-resultado').innerHTML = '';
     $('lote-error').classList.add('hidden');
     $('lote-cargar').disabled = true;
+    $('lote-archivo').value = '';
+    $('lote-archivo-nombre').textContent = 'o pegue las filas abajo (.xlsx o .csv)';
     ultimoLote = null;
     openModal('modal-lote');
     setTimeout(function () { $('lote-texto').focus(); }, 80);
@@ -266,6 +268,38 @@
   window.alLoteCambio = function () {
     $('lote-cargar').disabled = true;
     ultimoLote = null;
+  };
+
+  // Archivo de Excel: Java lo convierte en filas y pasa por la misma revisión que un texto pegado.
+  window.alArchivoLote = function (input) {
+    var f = input.files && input.files[0];
+    if (!f) { return; }
+    var err = $('lote-error');
+    err.classList.add('hidden');
+    if (f.size > 5 * 1024 * 1024) {
+      err.textContent = 'El archivo es muy grande (máximo 5 MB).';
+      err.classList.remove('hidden');
+      return;
+    }
+    var lector = new FileReader();
+    lector.onload = function () {
+      var base64 = String(lector.result).split(',')[1] || '';
+      var r = leer(puente('leerArchivoLista', f.name, base64));
+      if (!r || r.error) {
+        err.textContent = (r && r.error) || 'No se pudo leer el archivo.';
+        err.classList.remove('hidden');
+        return;
+      }
+      $('lote-texto').value = r.texto;
+      $('lote-archivo-nombre').textContent = f.name;
+      window.alLoteCambio();
+      window.alRevisarLote();
+    };
+    lector.onerror = function () {
+      err.textContent = 'No se pudo abrir el archivo.';
+      err.classList.remove('hidden');
+    };
+    lector.readAsDataURL(f);
   };
 
   function mostrarLote(r, final) {
