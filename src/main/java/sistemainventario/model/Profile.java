@@ -211,6 +211,34 @@ public class Profile extends IdentifiedEntity implements Deshabilitable {
         }
     }
 
+    /** Margen de ganancia (sobre el precio) con que el negocio fija sus precios. */
+    public static final String CLAVE_MARGEN_ALTA = "alta.margen";
+    /** Cómo terminan los precios sugeridos: nombre de {@link RedondeoPrecio}. */
+    public static final String CLAVE_REDONDEO_ALTA = "alta.redondeo";
+
+    /** @return el margen y el redondeo del negocio; los de fábrica si nunca los eligió */
+    public PoliticaPrecio getPoliticaPrecio() {
+        double margen = PoliticaPrecio.POR_DEFECTO.margenPct();
+        try {
+            margen = Double.parseDouble(getConfig(CLAVE_MARGEN_ALTA, "").trim().replace(',', '.'));
+        } catch (NumberFormatException e) {
+            margen = PoliticaPrecio.POR_DEFECTO.margenPct();
+        }
+        if (margen < PoliticaPrecio.MARGEN_MINIMO || margen > PoliticaPrecio.MARGEN_MAXIMO) {
+            margen = PoliticaPrecio.POR_DEFECTO.margenPct();
+        }
+        return new PoliticaPrecio(margen, RedondeoPrecio.desde(
+                getConfig(CLAVE_REDONDEO_ALTA, ""), PoliticaPrecio.POR_DEFECTO.redondeo()));
+    }
+
+    /**
+     * @param politica margen y redondeo elegidos por el dueño
+     */
+    public void setPoliticaPrecio(PoliticaPrecio politica) {
+        setConfig(CLAVE_MARGEN_ALTA, String.valueOf(politica.margenPct()));
+        setConfig(CLAVE_REDONDEO_ALTA, politica.redondeo().name());
+    }
+
     /** Clave de configuración con los medios de pago que acepta el negocio. */
     public static final String CLAVE_MEDIOS_PAGO = "mediosPago";
 
