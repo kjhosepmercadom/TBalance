@@ -6,8 +6,11 @@
  *  - "Guardar y agregar otro" (Ctrl + Enter) deja el formulario listo con la misma categoría y proveedor.
  *  - "Copiar uno parecido" y "Varios desde Excel" (pegar filas) completan el registro de uno en uno.
  *
+ *  - v3.9.0: foto opcional del producto (boutique y tecnología) y vista previa "así lo verá el cajero".
+ *    La foto se reduce aquí a ~400 px (WebP, o JPG si el navegador no hace WebP) y pesa unos 30 KB.
+ *
  * Se carga después de tbalance-gastos.js: envuelve openModalProducto, editarProducto,
- * closeModal y submitProducto sin reescribirlos. Todo el cálculo y el guardado están en Java.
+ * closeModal y actualizarUtilidadForm sin reescribirlos. Todo el cálculo y el guardado están en Java.
  */
 (function () {
   'use strict';
@@ -76,6 +79,7 @@
     if (!(o.precio > 0)) { return; }
     $('prod-precio').value = o.precio;
     precioAutomatico = true;
+    alLlenoSet('precio', 'Precio de venta con su margen del ' + Math.round(o.margenPct) + ' %');
     actualizarUtilidadForm();
     marcarChips(margen == null ? 'negocio' : margen);
     var nota = $('al-margen-nota');
@@ -206,6 +210,8 @@
     $('al-tab-uno').setAttribute('aria-pressed', 'false');
     $('al-tab-copiar').setAttribute('aria-pressed', 'true');
     $('modal-prod-title').textContent = 'Agregar producto (copia de ' + origen + ')';
+    alLlenoSet('copia', 'Categoría, precios' + (p.manejo === 'VARIANTES' ? ', tallas y colores' : '') + ' de «' + origen + '»');
+    alPintarRail();
     var nombre = $('prod-nombre');
     nombre.focus();
     nombre.select();
@@ -235,6 +241,11 @@
     pintarMargenes(null);
     $('al-margen-nota').textContent = 'Escriba el precio de compra y TBalance calcula el de venta con su margen.';
     actualizarUtilidadForm();
+    reiniciarFoto();
+    lleno = {};
+    alLlenoSet('ultimo', 'Categoría' + (($('prod-proveedor') || {}).value ? ' y proveedor' : '') + ' del producto anterior');
+    if (tbVariantes.length) { alLlenoSet('tallas', 'Tallas y colores del producto anterior, con el stock en cero'); }
+    alPintarRail();
     $('al-contador').textContent = guardadosEnSesion + (guardadosEnSesion === 1 ? ' guardado' : ' guardados') + ' en esta tanda';
     $('prod-nombre').focus();
   }
@@ -306,6 +317,231 @@
     }
   };
 
+
+  // ── Foto del producto (v3.9.0) ──────────────────────────────────────
+
+  var LADO_FOTO = 400;           // px del lado más largo
+  var PESO_OBJETIVO = 45 * 1024; // el servicio rechaza más de 60 KB
+  var fotos = { habilitada: false, ids: {}, nueva: null, tenia: false, quitar: false, productoId: '' };
+
+  function cargarEstadoFotos() {
+    var r = leer(puente('obtenerEstadoFotos'));
+    fotos.habilitada = !!(r && !r.error && r.habilitadas);
+    fotos.ids = {};
+    if (r && r.ids) { r.ids.forEach(function (id) { fotos.ids[id] = true; }); }
+    // Si el negocio no usa fotos (o el puente no las conoce) no se muestra nada
+    var caja = $('al-foto');
+    if (caja) { caja.hidden = !fotos.habilitada; }
+    var activar = $('al-foto-activar'), apagar = $('al-foto-apagar');
+    if (activar) { activar.hidden = fotos.habilitada || !r || !!r.error; }
+    if (apagar) { apagar.hidden = !fotos.habilitada; }
+  }
+  window.tbFotoTiene = function (id) { return !!(fotos.habilitada && fotos.ids[id]); };
+
+  function mensajeFoto(texto) {
+    var m = $('al-foto-msg');
+    if (!m) { return; }
+    m.textContent = texto || '';
+    m.hidden = !texto;
+  }
+
+  function pintarFoto() {
+    var url = fotos.nueva;
+    var img = $('al-foto-img');
+    var hay = !!url;
+    img.hidden = !hay;
+    if (hay) { img.src = url; } else { img.removeAttribute('src'); }
+    $('al-foto-vacia').hidden = hay;
+    $('al-foto-acciones').hidden = !hay;
+  }
+
+  function reiniciarFoto() {
+    fotos.nueva = null; fotos.guardada = null; fotos.tenia = false; fotos.quitar = false; fotos.productoId = '';
+    mensajeFoto('');
+    if ($('al-foto-img')) { pintarFoto(); }
+  }
+
+  function cargarFotoGuardada(id) {
+    fotos.productoId = id;
+    if (!fotos.habilitada || !fotos.ids[id]) { return; }
+    fotos.tenia = true;
+    var url = puente('obtenerFotoProducto', id);
+    if (url && String(url).indexOf('data:image/') === 0) { fotos.nueva = url; fotos.guardada = url; pintarFoto(); }
+  }
+
+  window.alElegirFoto = function () { $('al-foto-input').click(); };
+
+  window.alQuitarFoto = function () {
+    fotos.nueva = null;
+    fotos.quitar = fotos.tenia;
+    mensajeFoto('');
+    pintarFoto();
+  };
+
+  function pesoDe(dataUrl) { return Math.round((dataUrl.length - dataUrl.indexOf(',') - 1) * 0.75); }
+
+  // Reduce la imagen: lado largo 400 px y, si hace falta, menos calidad hasta pesar ≤ 45 KB.
+  function reducirFoto(archivo) {
+    return new Promise(function (ok, fallo) {
+      var visor = new Image();
+      var origen = URL.createObjectURL(archivo);
+      visor.onload = function () {
+        URL.revokeObjectURL(origen);
+        var lado = LADO_FOTO;
+        for (var vuelta = 0; vuelta < 5; vuelta++) {
+          var escala = Math.min(1, lado / Math.max(visor.naturalWidth, visor.naturalHeight));
+          var ancho = Math.max(1, Math.round(visor.naturalWidth * escala));
+          var alto = Math.max(1, Math.round(visor.naturalHeight * escala));
+          var lienzo = document.createElement('canvas');
+          lienzo.width = ancho; lienzo.height = alto;
+          var c = lienzo.getContext('2d');
+          c.fillStyle = '#fff';                // los PNG con fondo transparente quedan sobre blanco
+          c.fillRect(0, 0, ancho, alto);
+          c.drawImage(visor, 0, 0, ancho, alto);
+          var tipo = 'image/webp';
+          var probe = lienzo.toDataURL(tipo, 0.8);
+          if (probe.indexOf('data:image/webp') !== 0) { tipo = 'image/jpeg'; }
+          for (var q = 0.85; q >= 0.4; q -= 0.15) {
+            var url = lienzo.toDataURL(tipo, q);
+            if (pesoDe(url) <= PESO_OBJETIVO) { ok(url); return; }
+          }
+          lado = Math.round(lado * 0.8);
+        }
+        fallo(new Error('No se pudo reducir esa foto. Pruebe con otra.'));
+      };
+      visor.onerror = function () { URL.revokeObjectURL(origen); fallo(new Error('Ese archivo no se puede leer como foto. Elija un JPG, PNG o WebP.')); };
+      visor.src = origen;
+    });
+  }
+
+  function tomarArchivoFoto(archivo) {
+    if (!archivo) { return; }
+    if (!/^image\//.test(archivo.type || '')) { mensajeFoto('Elija una foto en JPG, PNG o WebP.'); return; }
+    mensajeFoto('Reduciendo la foto…');
+    reducirFoto(archivo).then(function (url) {
+      fotos.nueva = url;
+      fotos.quitar = false;
+      pintarFoto();
+      mensajeFoto('Lista: pesa ' + Math.max(1, Math.round(pesoDe(url) / 1024)) + ' KB.');
+    }, function (e) { mensajeFoto(e.message); });
+  }
+
+  // Cambia la foto solo si la persona la cambió o la quitó; si no, el guardado es el de siempre.
+  window.alGuardarConFoto = function (producto) {
+    var json = JSON.stringify(producto);
+    var cambio = fotos.habilitada && (fotos.quitar || (fotos.nueva && fotos.nueva !== fotos.guardada));
+    if (!cambio) { return window.javaBridge.guardarProducto(json); }
+    var r = window.javaBridge.guardarProductoConFoto(json, fotos.quitar ? 'QUITAR' : fotos.nueva);
+    if (producto.id) { delete miniaturas[producto.id]; }
+    if (typeof r === 'string' && r.indexOf('OK_SIN_FOTO: ') === 0) {
+      showToast('El producto se guardó, pero la foto no: ' + r.substring(13), 'error');
+      return 'OK';
+    }
+    return r;
+  };
+
+  window.alUsarFotos = function (usar) {
+    var r = puente('usarFotosProducto', usar ? 'true' : 'false');
+    if (r === 'OK') {
+      cargarEstadoFotos();
+      showToast(usar ? 'Ya puede poner foto a sus productos.' : 'Las fotos quedaron apagadas. Las que ya subió se conservan.');
+    } else {
+      showToast(r || 'No se pudo cambiar.', 'error');
+    }
+  };
+
+
+  // ── Miniaturas en la lista de productos ─────────────────────────────
+
+  var miniaturas = {};   // id → data URL ya traída (la foto se pide una vez y solo si el producto está en pantalla)
+
+  function ponerMiniaturas() {
+    cargarEstadoFotos();
+    if (!fotos.habilitada) { return; }
+    Array.prototype.forEach.call(document.querySelectorAll('#tabla-productos tr'), function (fila, i) {
+      var celdaId = fila.children[0], celdaNombre = fila.children[2];
+      if (!celdaId || !celdaNombre || celdaNombre.querySelector('.al-mini-fila')) { return; }
+      var id = (celdaId.textContent || '').trim().replace(/^#/, '');
+      if (!fotos.ids[id]) { return; }
+      var caja = document.createElement('div');
+      caja.className = 'al-mini-fila';
+      var img = document.createElement('img');
+      img.className = 'al-mini';
+      img.alt = '';
+      var textos = document.createElement('div');
+      while (celdaNombre.firstChild) { textos.appendChild(celdaNombre.firstChild); }
+      caja.appendChild(img);
+      caja.appendChild(textos);
+      celdaNombre.appendChild(caja);
+      setTimeout(function () {
+        if (!miniaturas[id]) {
+          var url = puente('obtenerFotoProducto', id);
+          if (url && String(url).indexOf('data:image/') === 0) { miniaturas[id] = url; }
+        }
+        if (miniaturas[id]) { img.src = miniaturas[id]; } else { img.remove(); }
+      }, 20 * i);
+    });
+  }
+
+  var tablaOriginal = window.renderTablaProductos;
+  if (typeof tablaOriginal === 'function') {
+    window.renderTablaProductos = function () {
+      var r = tablaOriginal.apply(this, arguments);
+      try { ponerMiniaturas(); } catch (e) { /* la lista nunca debe quedar vacía por una miniatura */ }
+      return r;
+    };
+  }
+
+  // ── Vista previa "así lo verá el cajero" ────────────────────────────
+
+  var lleno = {};   // lo que TBalance completó solo, en orden
+
+  window.alLlenoSet = function (clave, texto) {
+    if (texto) { lleno[clave] = texto; } else { delete lleno[clave]; }
+    var claves = Object.keys(lleno);
+    $('al-lleno').hidden = claves.length === 0;
+    $('al-lleno-lista').innerHTML = claves.map(function (k) { return '<li><i aria-hidden="true">✓</i><span>' + texto_(lleno[k]) + '</span></li>'; }).join('');
+  };
+  function texto_(t) { return texto(t); }
+
+  function numero(id) { var n = parseFloat(($(id) || {}).value); return isFinite(n) ? n : 0; }
+
+  window.alPintarRail = function () {
+    var nombre = ($('prod-nombre').value || '').trim();
+    var precio = numero('prod-precio'), costo = numero('prod-precio-compra') + numero('prod-costo-oculto');
+    $('al-pv-nombre').textContent = nombre || 'Nombre del producto';
+    $('al-pv-nombre').classList.toggle('vacio', !nombre);
+    $('al-pv-precio').textContent = pesos(precio);
+    var cat = $('prod-categoria');
+    var partes = [];
+    if (cat && cat.value) { partes.push(cat.options[cat.selectedIndex].text.replace(/ \(deshabilitada\)$/, '')); }
+    if ($('prod-manejo').value === 'VARIANTES') {
+      var vs = (typeof tbVariantes !== 'undefined' ? tbVariantes : []).filter(function (v) { return v.talla || v.color; });
+      var tallas = {}, colores = {};
+      vs.forEach(function (v) { if (v.talla) { tallas[v.talla] = 1; } if (v.color) { colores[v.color] = 1; } });
+      var nc = Object.keys(colores).length, nt = Object.keys(tallas).length;
+      if (nc) { partes.push(nc + (nc === 1 ? ' color' : ' colores')); }
+      if (nt) { partes.push(nt + (nt === 1 ? ' talla' : ' tallas')); }
+    }
+    $('al-pv-pista').textContent = partes.join(' · ');
+    var ring = $('al-ring');
+    if (precio > 0 && costo > 0) {
+      var gan = precio - costo;
+      var pct = Math.max(0, Math.min(100, gan / precio * 100));
+      ring.style.setProperty('--v', pct.toFixed(1));
+      ring.classList.toggle('neg', gan < 0);
+      $('al-ring-txt').textContent = Math.round(gan / precio * 100) + ' %';
+      $('al-ring-gan').textContent = (gan < 0 ? '−' : '') + pesos(Math.abs(gan));
+      $('al-ring-nota').textContent = gan < 0 ? 'de pérdida por unidad: cobra menos de lo que le cuesta' : 'de ganancia por unidad';
+    } else {
+      ring.style.setProperty('--v', 0);
+      ring.classList.remove('neg');
+      $('al-ring-txt').textContent = '—';
+      $('al-ring-gan').textContent = '$ 0';
+      $('al-ring-nota').textContent = 'Escriba el costo y el precio para ver la ganancia';
+    }
+  };
+
   // ── Enganche con el modal de siempre ────────────────────────────────
 
   function modoEdicion(si) {
@@ -333,6 +569,11 @@
     cargarPolitica();
     pintarMargenes(null);
     $('al-margen-nota').textContent = 'Escriba el precio de compra y TBalance calcula el de venta con su margen.';
+    lleno = {};
+    alLlenoSet();
+    reiniciarFoto();
+    cargarEstadoFotos();
+    alPintarRail();
   };
 
   var editarOriginal = window.editarProducto;
@@ -345,6 +586,20 @@
     pintarMargenes(null);
     $('al-margen-nota').textContent = 'Toque un margen para recalcular el precio de venta.';
     alProgramarSugerencia();
+    lleno = {};
+    alLlenoSet();
+    reiniciarFoto();
+    cargarEstadoFotos();
+    cargarFotoGuardada($('prod-id').value);
+    alPintarRail();
+  };
+
+  // La vista previa sigue cada cambio de precio, costo, nombre, categoría o tallas.
+  var utilidadOriginal = window.actualizarUtilidadForm;
+  window.actualizarUtilidadForm = function () {
+    var r = utilidadOriginal.apply(this, arguments);
+    alPintarRail();
+    return r;
   };
 
   var cerrarOriginal = window.closeModal;
@@ -365,6 +620,20 @@
         if (!revisarCodigo()) { $('prod-precio-compra').focus(); }
       });
       codigo.addEventListener('change', revisarCodigo);
+    }
+    ['prod-nombre', 'prod-categoria', 'prod-manejo'].forEach(function (id) {
+      var el = $(id);
+      if (el) { el.addEventListener('input', alPintarRail); el.addEventListener('change', alPintarRail); }
+    });
+    var entrada = $('al-foto-input');
+    if (entrada) {
+      entrada.addEventListener('change', function () { tomarArchivoFoto(entrada.files && entrada.files[0]); entrada.value = ''; });
+    }
+    var zona = $('al-foto');
+    if (zona) {
+      ['dragenter', 'dragover'].forEach(function (n) { zona.addEventListener(n, function (e) { e.preventDefault(); zona.classList.add('suelta'); }); });
+      ['dragleave', 'drop'].forEach(function (n) { zona.addEventListener(n, function (e) { e.preventDefault(); zona.classList.remove('suelta'); }); });
+      zona.addEventListener('drop', function (e) { tomarArchivoFoto(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]); });
     }
     var modal = $('modal-producto');
     if (modal) {

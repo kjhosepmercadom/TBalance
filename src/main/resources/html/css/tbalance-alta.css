@@ -1,4 +1,4 @@
-/* TBalance v3.8.0: registro ágil de productos. Usa los tokens de tbalance-vistas.css, así sirve en claro y oscuro. */
+/* TBalance v3.8.0 y v3.9.0: registro ágil de productos y foto opcional.  Usa los tokens de tbalance-vistas.css, así sirve en claro y oscuro. */
 .al-tabs { display: flex; gap: 6px; padding: 12px 24px 0; flex-wrap: wrap; }
 .al-tab { min-height: 40px; padding: 0 16px; border-radius: 12px; border: 1px solid var(--c-line); background: transparent; color: var(--c-muted);
   font-size: 13px; font-weight: 600; cursor: pointer; transition: background-color .15s, color .15s, transform .15s; }
@@ -53,5 +53,60 @@
 #modal-producto > div > div:last-child { position: sticky; bottom: 0; z-index: 2; border-radius: 0 0 24px 24px;
   background: color-mix(in srgb, var(--c-card) 88%, transparent); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
 #modal-lote > div { max-width: 760px; }
-html body div#modal-producto > div { max-width: 660px; }
+html body div#modal-producto > div { max-width: 980px; }
 #modal-producto > div > div:last-child .al-btn, #modal-producto > div > div:last-child button { white-space: nowrap; }
+
+/* ── v3.9.0: panel de producto en dos columnas, con "así lo verá el cajero" ───────────────── */
+.al-cuerpo { display: grid; grid-template-columns: minmax(0, 1fr) 312px; align-items: start; }
+.al-rail { display: flex; flex-direction: column; gap: 18px; padding: 20px 24px 20px 4px; position: sticky; top: 0; }
+.al-rail h4 { margin: 0 0 -8px; font-size: 11.5px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--c-muted); }
+.al-pcard { border-radius: 22px; overflow: hidden; background: var(--c-surface); border: 1px solid var(--c-line); }
+.al-pv { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 6px; }
+.al-pv .nm { font-size: 18px; font-weight: 500; line-height: 1.25; color: var(--c-ink); overflow-wrap: anywhere; }
+.al-pv .nm.vacio { color: var(--c-muted); font-weight: 400; }
+.al-pv .pr { font-size: 30px; font-weight: 500; line-height: 1.1; letter-spacing: -.02em; color: var(--ok); font-variant-numeric: tabular-nums; }
+.al-pv .hint { font-size: 12.5px; color: var(--c-muted); min-height: 1.2em; }
+.al-foto { position: relative; height: 176px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--acc) 26%, transparent), color-mix(in srgb, var(--acc) 8%, transparent)); border-bottom: 1px solid var(--c-line); transition: box-shadow .15s; }
+.al-foto[hidden], .al-foto-vacia[hidden], .al-foto-acciones[hidden], .al-foto-msg[hidden], #al-lleno[hidden], #al-foto-activar[hidden], #al-foto-apagar[hidden] { display: none; }
+.al-foto.suelta { box-shadow: inset 0 0 0 2px var(--acc); }
+.al-foto img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.al-foto-vacia { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.al-foto-vacia small { color: var(--c-muted); font-size: 12px; }
+.al-cam { width: 48px; height: 48px; border-radius: 15px; display: grid; place-items: center; background: var(--c-card); border: 1px solid var(--c-line); color: var(--c-ink); }
+.al-foto-btn { min-height: 40px; padding: 0 16px; border-radius: 12px; border: 1px solid var(--c-field); background: var(--c-card); color: var(--c-ink); font-size: 13px; font-weight: 600; cursor: pointer;
+  transition: background-color .15s, transform .15s; }
+.al-foto-btn:hover { background: var(--c-surface); }
+.al-foto-btn:active { transform: scale(.97); }
+.al-foto-btn:focus-visible { outline: 2px solid var(--c-ink); outline-offset: 2px; }
+.al-foto-acciones { position: absolute; right: 10px; bottom: 10px; display: flex; gap: 8px; }
+.al-foto-msg { position: absolute; left: 10px; right: 10px; top: 8px; margin: 0; padding: 4px 10px; border-radius: 10px; font-size: 12px; background: var(--c-card); color: var(--c-ink); border: 1px solid var(--c-line); }
+.al-ring { display: flex; align-items: center; gap: 16px; }
+.al-ring i { width: 76px; height: 76px; border-radius: 50%; flex: none; display: grid; place-items: center; font-style: normal; font-size: 19px; font-weight: 500; color: var(--c-ink);
+  background: conic-gradient(var(--ok) calc(var(--v, 0) * 1%), var(--c-surface) 0); position: relative; font-variant-numeric: tabular-nums; }
+.al-ring i::before { content: ""; position: absolute; inset: 8px; border-radius: 50%; background: var(--c-card); }
+.al-ring i span { position: relative; }
+.al-ring i.neg { background: conic-gradient(var(--error) 100%, var(--c-surface) 0); }
+.al-ring p { margin: 0; font-size: 13px; color: var(--c-muted); }
+.al-ring p b { display: block; color: var(--c-ink); font-size: 21px; font-weight: 500; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+.al-lleno { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 8px; }
+.al-lleno li { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; color: var(--c-text); }
+.al-lleno i { flex: none; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-size: 12px; background: color-mix(in srgb, var(--ok) 18%, transparent); color: var(--ok); }
+
+/* Los tres datos que se escriben en cada producto, grandes: costo, precio y cantidad */
+.al-tres { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.al-tres #prod-precio-compra, .al-tres #prod-precio, .al-tres #prod-stock { min-height: 56px; font-size: 20px; font-weight: 500; font-variant-numeric: tabular-nums; }
+#modal-producto #prod-nombre { min-height: 60px; font-size: 22px; font-weight: 500; letter-spacing: -.01em; border-radius: 16px; border-color: color-mix(in srgb, var(--acc) 70%, transparent); }
+#modal-producto #prod-utilidad { display: none; }   /* la ganancia ahora se ve en el círculo de la derecha */
+
+.al-tres input::placeholder { font-size: 14px; font-weight: 400; }
+
+@media (max-width: 860px) {
+  .al-cuerpo { grid-template-columns: minmax(0, 1fr); }
+  .al-rail { position: static; padding: 0 24px 20px; }
+  .al-tres { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (prefers-reduced-motion: reduce) { .al-foto, .al-foto-btn { transition: none; } }
+
+.al-mini-fila { display: flex; align-items: center; gap: 12px; }
+.al-mini { width: 40px; height: 40px; flex: none; border-radius: 10px; object-fit: cover; border: 1px solid var(--c-line); background: var(--c-surface); }
