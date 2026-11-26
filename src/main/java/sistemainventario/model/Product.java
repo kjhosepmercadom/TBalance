@@ -4,7 +4,12 @@ import sistemainventario.exception.ValidationException;
 import sistemainventario.util.DateUtil;
 import sistemainventario.util.TextUtil;
 
+import sistemainventario.util.QuantityUtil;
+
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -19,6 +24,12 @@ import java.util.Optional;
  *
  * <p>Los nombres de los atributos no cambian respecto a P2 para mantener la
  * compatibilidad con {@code productos.json}.</p>
+ *
+ * <p><b>v3.6.0:</b> el stock es {@link BigDecimal} (se puede vender 1,5 metros),
+ * cada producto dice cómo se controla ({@link ManejoProducto}) y en qué unidad
+ * se cuenta ({@link UnidadMedida}). Si maneja tallas, {@link #stock} es siempre
+ * la suma de sus {@link ProductVariant variantes}: así los informes, Hoy, Costos
+ * y el Excel siguen leyendo un solo número por producto.</p>
  */
 public class Product extends IdentifiedEntity implements Deshabilitable {
 
@@ -34,8 +45,11 @@ public class Product extends IdentifiedEntity implements Deshabilitable {
     private String proveedorId;
     private double precioCompra;
     private double precioVenta;
-    private int stock;
-    private int stockMin;
+    private BigDecimal stock;
+    private BigDecimal stockMin;
+    private ManejoProducto manejo;
+    private UnidadMedida unidadMedida;
+    private List<ProductVariant> variantes = new ArrayList<>();
     private String tipo;
     private boolean requiereVencimiento;
     private String fechaVencimiento;
@@ -51,7 +65,7 @@ public class Product extends IdentifiedEntity implements Deshabilitable {
     public Product(String id, String nombre, String descripcion,
                     String categoria, String categoriaId, String proveedorId,
                     double precioCompra, double precioVenta,
-                    int stock, int stockMin, String tipo) {
+                    BigDecimal stock, BigDecimal stockMin, String tipo) {
         super(id);
         this.nombre = nombre;
         this.descripcion = descripcion;
@@ -60,8 +74,8 @@ public class Product extends IdentifiedEntity implements Deshabilitable {
         this.proveedorId = proveedorId;
         this.precioCompra = precioCompra;
         this.precioVenta = precioVenta;
-        this.stock = stock;
-        this.stockMin = stockMin;
+        setStock(stock);
+        setStockMin(stockMin);
         this.tipo = tipo;
     }
 
@@ -80,7 +94,7 @@ public class Product extends IdentifiedEntity implements Deshabilitable {
         if (precioCompra < 0 || precioVenta < 0) {
             throw new ValidationException("Los precios no pueden ser negativos");
         }
-        if (stock < 0 || stockMin < 0) {
+        if (QuantityUtil.esNegativa(getStock()) || QuantityUtil.esNegativa(getStockMin())) {
             throw new ValidationException("El stock no puede ser negativo");
         }
         validarFechaVencimiento(hoy);
@@ -112,20 +126,23 @@ public class Product extends IdentifiedEntity implements Deshabilitable {
 
     /** @return {@code true} si no quedan unidades */
     public boolean estaAgotado() {
-        return stock <= 0;
+        return getStock().signum() <= 0;
     }
 
     /** @return {@code true} si quedan unidades pero en el mínimo o por debajo */
     public boolean estaBajoStock() {
-        return stock > 0 && stock <= stockMin;
+        if (tieneVariantes()) {
+            return !estaAgotado() && variantesActivas().stream().anyMatch(ProductVariant::estaBajoStock);
+        }
+        return getStock().signum() > 0 && getStock().compareTo(getStockMin()) <= 0;
     }
 
     /**
      * @param cantidad unidades requeridas
      * @return {@code true} si el stock cubre la cantidad
      */
-    public boolean tieneStockPara(int cantidad) {
-        return stock >= cantidad;
+    public boolean tieneStockPara(BigDecimal cantidad) {
+        return getStock().compareTo(cantidad) >= 0;
     }
 
     /**
@@ -134,9 +151,9 @@ public class Product extends IdentifiedEntity implements Deshabilitable {
      * @param cantidad unidades a sumar, debe ser mayor que cero
      * @throws ValidationException si la cantidad no es positiva
      */
-    public void aumentarStock(int cantidad) {
+    public void aumentarStock(BigDecimal cantidad) {
         validarCantidadPositiva(cantidad);
-        stock += cantidad;
+        stock = QuantityUtil.normal(getStock().add(cantidad));
     }
 
     /**
@@ -145,27 +162,81 @@ public class Product extends IdentifiedEntity implements Deshabilitable {
      * @param cantidad unidades a descontar, debe ser mayor que cero
      * @throws ValidationException si la cantidad no es positiva o el stock es insuficiente
      */
-    public void disminuirStock(int cantidad) {
+    public void disminuirStock(BigDecimal cantidad) {
         validarCantidadPositiva(cantidad);
         verificarStockDisponible(cantidad);
-        stock -= cantidad;
+        stock = QuantityUtil.normal(getStock().subtract(cantidad));
     }
 
     /**
      * @param cantidad unidades requeridas
      * @throws ValidationException si el stock no alcanza
      */
-    public void verificarStockDisponible(int cantidad) {
+    public void verificarStockDisponible(BigDecimal cantidad) {
         if (!tieneStockPara(cantidad)) {
             throw new ValidationException("Stock insuficiente para " + getEtiqueta()
-                    + ". Disponible: " + stock);
+                    + ". Disponible: " + QuantityUtil.texto(getStock()));
         }
     }
 
-    private static void validarCantidadPositiva(int cantidad) {
-        if (cantidad <= 0) {
+    private static void validarCantidadPositiva(BigDecimal cantidad) {
+        if (!QuantityUtil.esPositiva(cantidad)) {
             throw new ValidationException("La cantidad debe ser mayor que cero");
         }
+    }
+
+    // ── Tallas y colores (Experto) ──────────────────────────────────────
+
+    /** @return {@code true} si el producto reparte su stock por tallas o colores */
+    public boolean tieneVariantes() {
+        return getManejo() == ManejoProducto.VARIANTES;
+    }
+
+    /** @return las variantes habilitadas */
+    public List<ProductVariant> variantesActivas() {
+        return getVariantes().stream().filter(ProductVariant::isActivo).toList();
+    }
+
+    /**
+     * @param varianteId ID de la variante
+     * @return la variante, si es de este producto
+     */
+    public Optional<ProductVariant> buscarVariante(String varianteId) {
+        if (varianteId == null) {
+            return Optional.empty();
+        }
+        return getVariantes().stream().filter(v -> varianteId.equals(v.getId())).findFirst();
+    }
+
+    /**
+     * @param codigoLeido código escaneado o escrito
+     * @return la variante que tiene ese código
+     */
+    public Optional<ProductVariant> buscarVariantePorCodigo(String codigoLeido) {
+        if (TextUtil.esVacio(codigoLeido)) {
+            return Optional.empty();
+        }
+        return variantesActivas().stream()
+                .filter(v -> v.getCodigo() != null && v.getCodigo().equalsIgnoreCase(codigoLeido.trim()))
+                .findFirst();
+    }
+
+    /** Deja en {@link #stock} y {@link #stockMin} la suma de las variantes habilitadas. */
+    public void sincronizarStockConVariantes() {
+        if (!tieneVariantes()) {
+            return;
+        }
+        List<ProductVariant> activas = variantesActivas();
+        stock = QuantityUtil.normal(activas.stream().map(ProductVariant::getStock).reduce(BigDecimal.ZERO, BigDecimal::add));
+        stockMin = QuantityUtil.normal(activas.stream().map(ProductVariant::getStockMin).reduce(BigDecimal.ZERO, BigDecimal::add));
+    }
+
+    /**
+     * @param varianteId variante vendida, o {@code null}
+     * @return el precio de venta de esa variante (o el del producto)
+     */
+    public double precioVentaDe(String varianteId) {
+        return buscarVariante(varianteId).map(v -> v.precioVentaCon(precioVenta)).orElse(precioVenta);
     }
 
     // ── Utilidad (Experto) ──────────────────────────────────────────────
@@ -187,7 +258,7 @@ public class Product extends IdentifiedEntity implements Deshabilitable {
 
     /** @return utilidad que dejaría vender todo el stock actual a los precios registrados */
     public double getUtilidadEstimadaStock() {
-        return getUtilidadUnitaria() * Math.max(stock, 0);
+        return getUtilidadUnitaria() * Math.max(getStock().doubleValue(), 0);
     }
 
     // ── Vencimiento (Experto) ───────────────────────────────────────────
@@ -227,6 +298,7 @@ public class Product extends IdentifiedEntity implements Deshabilitable {
         return TextUtil.contieneIgnorandoMayusculas(nombre, texto)
                 || TextUtil.contieneIgnorandoMayusculas(descripcion, texto)
                 || TextUtil.contieneIgnorandoMayusculas(codigo, texto)
+                || getVariantes().stream().anyMatch(v -> TextUtil.contieneIgnorandoMayusculas(v.getCodigo(), texto))
                 || TextUtil.contieneIgnorandoMayusculas(getId(), texto);
     }
 
@@ -342,20 +414,51 @@ public class Product extends IdentifiedEntity implements Deshabilitable {
         this.precioVenta = precioVenta;
     }
 
-    public int getStock() {
-        return stock;
+    /** @return unidades disponibles (en un producto con tallas, la suma de todas) */
+    public BigDecimal getStock() {
+        return stock == null ? BigDecimal.ZERO : stock;
     }
 
-    public void setStock(int stock) {
-        this.stock = stock;
+    public void setStock(BigDecimal stock) {
+        this.stock = QuantityUtil.normal(stock);
     }
 
-    public int getStockMin() {
-        return stockMin;
+    public BigDecimal getStockMin() {
+        return stockMin == null ? BigDecimal.ZERO : stockMin;
     }
 
-    public void setStockMin(int stockMin) {
-        this.stockMin = stockMin;
+    public void setStockMin(BigDecimal stockMin) {
+        this.stockMin = QuantityUtil.normal(stockMin);
+    }
+
+    /** @return cómo se controla el inventario ({@link ManejoProducto#SIMPLE} en datos viejos) */
+    public ManejoProducto getManejo() {
+        return manejo == null ? ManejoProducto.SIMPLE : manejo;
+    }
+
+    public void setManejo(ManejoProducto manejo) {
+        this.manejo = manejo;
+    }
+
+    /** @return unidad en que se cuenta ({@link UnidadMedida#UNIDAD} en datos viejos) */
+    public UnidadMedida getUnidadMedida() {
+        return unidadMedida == null ? UnidadMedida.UNIDAD : unidadMedida;
+    }
+
+    public void setUnidadMedida(UnidadMedida unidadMedida) {
+        this.unidadMedida = unidadMedida;
+    }
+
+    /** @return todas las variantes, también las deshabilitadas (vacía en un producto simple) */
+    public List<ProductVariant> getVariantes() {
+        if (variantes == null) {
+            variantes = new ArrayList<>();
+        }
+        return variantes;
+    }
+
+    public void setVariantes(List<ProductVariant> variantes) {
+        this.variantes = variantes == null ? new ArrayList<>() : new ArrayList<>(variantes);
     }
 
     public String getTipo() {

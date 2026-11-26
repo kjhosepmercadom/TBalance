@@ -1,5 +1,8 @@
 package sistemainventario.service;
 
+import sistemainventario.manejo.InventoryHandling;
+import sistemainventario.manejo.InventoryHandlingFactory;
+import sistemainventario.manejo.StockLine;
 import sistemainventario.exception.ValidationException;
 import sistemainventario.model.StockEntry;
 import sistemainventario.model.InventoryMovement;
@@ -8,6 +11,7 @@ import sistemainventario.model.StockExit;
 import sistemainventario.repository.Repository;
 import sistemainventario.util.DateUtil;
 import sistemainventario.util.IdGenerator;
+import sistemainventario.util.QuantityUtil;
 
 import java.util.List;
 import java.util.Objects;
@@ -80,13 +84,15 @@ public class MovementService {
     public StockEntry anularEntrada(String id, String motivo, String quien) {
         StockEntry entrada = entradas.buscarPorId(id).orElseThrow(() -> new ValidationException("Entrada no encontrada"));
         Product producto = inventario.obtener(entrada.getProductoId());
-        if (!entrada.isAnulada() && producto.getStock() < entrada.getCantidad()) {
+        if (!entrada.isAnulada() && producto.getStock().compareTo(entrada.getCantidad()) < 0) {
             throw new ValidationException("No se puede anular: ya salieron unidades de esa entrada (stock actual "
-                    + producto.getStock() + ", la entrada sumó " + entrada.getCantidad() + ")");
+                    + QuantityUtil.texto(producto.getStock()) + ", la entrada sumó "
+                    + QuantityUtil.texto(entrada.getCantidad()) + ")");
         }
         entrada.anular(DateUtil.ahora(), motivo);
         entrada.setAnuladaPor(quien);
-        producto.disminuirStock(entrada.getCantidad());
+        InventoryHandling estrategia = InventoryHandlingFactory.para(producto);
+        estrategia.descontar(producto, estrategia.reservar(producto, entrada.getVarianteId(), entrada.getCantidad()));
         inventario.registrarCambioDeStock(producto);
         entradas.actualizar(entrada);
         return entrada;
@@ -116,7 +122,8 @@ public class MovementService {
         salida.anular(DateUtil.ahora(), motivo);
         salida.setAnuladaPor(quien);
         Product producto = inventario.obtener(salida.getProductoId());
-        producto.aumentarStock(salida.getCantidad());
+        InventoryHandlingFactory.para(producto).reponer(producto,
+                StockLine.de(producto.getId(), salida.getVarianteId(), salida.getCantidad()));
         inventario.registrarCambioDeStock(producto);
         salidas.actualizar(salida);
         return salida;

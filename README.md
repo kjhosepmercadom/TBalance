@@ -4,7 +4,7 @@ Programa de escritorio en **Java** para llevar el inventario y las ventas de neg
 
 La interfaz se abre en una ventana de **Microsoft Edge** (o de JavaFX si no hay Edge). Los datos se guardan en **PostgreSQL**, **Oracle** o archivos **JSON**, según se elija en el programa. Todo funciona sin internet excepto el asistente.
 
-Proyecto de aula de **Programación de Computadores III (SS462)** — Universidad Popular del Cesar. Docente: Ing. Esp. Alfredo Bautista. Parte del sistema TBalance de Programación II. Versión actual: **v3.5.0**.
+Proyecto de aula de **Programación de Computadores III (SS462)** — Universidad Popular del Cesar. Docente: Ing. Esp. Alfredo Bautista. Parte del sistema TBalance de Programación II. Versión actual: **v3.6.0**.
 
 ## Equipo
 

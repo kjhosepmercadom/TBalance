@@ -1,0 +1,126 @@
+-- =====================================================================
+-- TBalance - PostgreSQL
+-- Cambio v8 (v3.6.0): cada tipo de negocio maneja su inventario a su manera.
+--
+--  1. Las cantidades pasan de INTEGER a NUMERIC(13,3): la ferretería vende
+--     1,5 metros de cable. Los 10 dígitos enteros de antes se conservan.
+--  2. Cada producto dice cómo se controla (MANEJO: SIMPLE o VARIANTES) y en
+--     qué unidad se cuenta (UNIDAD_MEDIDA: UND, M, KG, L o CAJA).
+--  3. Tabla nueva PRODUCTO_VARIANTE: tallas y colores, cada una con su stock.
+--     PRODUCTO.STOCK sigue siendo el total (la suma de las variantes), así los
+--     informes y las vistas no cambian.
+--  4. La venta, la entrada y la salida recuerdan la variante.
+--
+-- Las capacidades de cada negocio (tallas, vencimiento, fracción...) no
+-- necesitan tabla: se guardan en PERFIL_CONFIGURACION con claves "cap.*".
+-- Los datos que ya había quedan como productos simples por unidad.
+-- =====================================================================
+
+-- Las vistas del cambio v3 usan las columnas que cambian de tipo:
+-- PostgreSQL no deja cambiarlas mientras existan, así que se quitan y se
+-- vuelven a crear al final, iguales.
+DROP VIEW IF EXISTS V_UTILIDAD_POR_PRODUCTO;
+DROP VIEW IF EXISTS V_VALOR_INVENTARIO;
+DROP VIEW IF EXISTS V_COMPRAS_POR_MES;
+
+-- 1. Cantidades con decimales
+ALTER TABLE PRODUCTO      ALTER COLUMN STOCK     TYPE NUMERIC(13,3);
+ALTER TABLE PRODUCTO      ALTER COLUMN STOCK_MIN TYPE NUMERIC(13,3);
+ALTER TABLE ENTRADA       ALTER COLUMN CANTIDAD  TYPE NUMERIC(13,3);
+ALTER TABLE SALIDA        ALTER COLUMN CANTIDAD  TYPE NUMERIC(13,3);
+ALTER TABLE DETALLE_VENTA ALTER COLUMN CANTIDAD  TYPE NUMERIC(13,3);
+
+-- 2. Cómo se controla cada producto
+ALTER TABLE PRODUCTO ADD COLUMN MANEJO        VARCHAR(12) DEFAULT 'SIMPLE' NOT NULL;
+ALTER TABLE PRODUCTO ADD COLUMN UNIDAD_MEDIDA VARCHAR(10) DEFAULT 'UND'    NOT NULL;
+ALTER TABLE PRODUCTO ADD CONSTRAINT CK_PRODUCTO_MANEJO CHECK (MANEJO IN ('SIMPLE', 'VARIANTES'));
+ALTER TABLE PRODUCTO ADD CONSTRAINT CK_PRODUCTO_UNIDAD CHECK (UNIDAD_MEDIDA IN ('UND', 'M', 'KG', 'L', 'CAJA'));
+
+-- 3. Tallas y colores
+--    TALLA y COLOR nunca son NULL: sin color se guarda '' (cadena vacía).
+--    Con NULL, PostgreSQL no consideraría repetidas dos filas "M sin color"
+--    y la restricción UQ_VARIANTE no serviría.
+CREATE TABLE PRODUCTO_VARIANTE (
+  PERFIL_ID    VARCHAR(20)   NOT NULL,
+  ID           VARCHAR(30)   NOT NULL,
+  PRODUCTO_ID  VARCHAR(30)   NOT NULL,
+  TALLA        VARCHAR(10)   DEFAULT '' NOT NULL,
+  COLOR        VARCHAR(30)   DEFAULT '' NOT NULL,
+  CODIGO       VARCHAR(60),
+  STOCK        NUMERIC(13,3) DEFAULT 0 NOT NULL,
+  STOCK_MIN    NUMERIC(13,3) DEFAULT 0 NOT NULL,
+  PRECIO_VENTA NUMERIC(14,2),                    -- NULL: usa el precio del producto
+  ACTIVO       SMALLINT      DEFAULT 1 NOT NULL,
+  ORDEN        SMALLINT      DEFAULT 0 NOT NULL, -- orden en que se muestran (S, M, L...)
+  CONSTRAINT PK_PRODUCTO_VARIANTE PRIMARY KEY (PERFIL_ID, ID),
+  CONSTRAINT FK_VARIANTE_PRODUCTO FOREIGN KEY (PERFIL_ID, PRODUCTO_ID)
+    REFERENCES PRODUCTO (PERFIL_ID, ID) ON DELETE CASCADE,
+  CONSTRAINT UQ_VARIANTE UNIQUE (PERFIL_ID, PRODUCTO_ID, TALLA, COLOR),
+  CONSTRAINT CK_VARIANTE_TALLA_COLOR CHECK (TALLA <> '' OR COLOR <> ''),
+  CONSTRAINT CK_VARIANTE_STOCK CHECK (STOCK >= 0 AND STOCK_MIN >= 0),
+  CONSTRAINT CK_VARIANTE_PRECIO CHECK (PRECIO_VENTA IS NULL OR PRECIO_VENTA >= 0),
+  CONSTRAINT CK_VARIANTE_ACTIVO CHECK (ACTIVO IN (0, 1))
+);
+
+CREATE INDEX IX_VARIANTE_PRODUCTO ON PRODUCTO_VARIANTE (PERFIL_ID, PRODUCTO_ID);
+
+-- 4. La venta, la entrada y la salida recuerdan la variante
+ALTER TABLE DETALLE_VENTA ADD COLUMN VARIANTE_ID          VARCHAR(30);
+ALTER TABLE DETALLE_VENTA ADD COLUMN DESCRIPCION_VARIANTE VARCHAR(60);
+ALTER TABLE ENTRADA       ADD COLUMN VARIANTE_ID          VARCHAR(30);
+ALTER TABLE SALIDA        ADD COLUMN VARIANTE_ID          VARCHAR(30);
+
+ALTER TABLE DETALLE_VENTA ADD CONSTRAINT FK_DETALLE_VARIANTE FOREIGN KEY (PERFIL_ID, VARIANTE_ID)
+  REFERENCES PRODUCTO_VARIANTE (PERFIL_ID, ID);
+ALTER TABLE ENTRADA ADD CONSTRAINT FK_ENTRADA_VARIANTE FOREIGN KEY (PERFIL_ID, VARIANTE_ID)
+  REFERENCES PRODUCTO_VARIANTE (PERFIL_ID, ID);
+ALTER TABLE SALIDA ADD CONSTRAINT FK_SALIDA_VARIANTE FOREIGN KEY (PERFIL_ID, VARIANTE_ID)
+  REFERENCES PRODUCTO_VARIANTE (PERFIL_ID, ID);
+
+-- Las vistas del cambio v3, iguales que antes
+CREATE OR REPLACE VIEW V_UTILIDAD_POR_PRODUCTO AS
+SELECT D.PERFIL_ID,
+       D.PRODUCTO_ID,
+       MAX(D.NOMBRE_PRODUCTO)                                   AS PRODUCTO,
+       SUM(D.CANTIDAD)                                          AS UNIDADES,
+       SUM(D.SUBTOTAL)                                          AS VENDIDO,
+       SUM(D.CANTIDAD * D.COSTO_UNITARIO)                       AS COSTO,
+       SUM(D.SUBTOTAL) - SUM(D.CANTIDAD * D.COSTO_UNITARIO)     AS UTILIDAD
+FROM DETALLE_VENTA D
+JOIN VENTA V ON V.PERFIL_ID = D.PERFIL_ID AND V.ID = D.VENTA_ID
+WHERE COALESCE(V.ESTADO, 'COMPLETADA') <> 'ANULADA'
+GROUP BY D.PERFIL_ID, D.PRODUCTO_ID;
+
+CREATE OR REPLACE VIEW V_VALOR_INVENTARIO AS
+SELECT P.PERFIL_ID,
+       COUNT(*)                          AS PRODUCTOS,
+       SUM(P.STOCK)                      AS UNIDADES,
+       SUM(P.STOCK * P.PRECIO_COMPRA)    AS COSTO_INVENTARIO,
+       SUM(P.STOCK * P.PRECIO_VENTA)     AS VALOR_A_PRECIO_VENTA
+FROM PRODUCTO P
+WHERE P.ACTIVO = 1
+GROUP BY P.PERFIL_ID;
+
+CREATE OR REPLACE VIEW V_COMPRAS_POR_MES AS
+SELECT E.PERFIL_ID,
+       TO_CHAR(E.FECHA, 'YYYY-MM')               AS MES,
+       COUNT(*)                                  AS ENTRADAS,
+       SUM(E.CANTIDAD * E.PRECIO_UNITARIO)       AS TOTAL
+FROM ENTRADA E
+WHERE E.ESTADO <> 'ANULADA' AND E.PRECIO_UNITARIO > 0
+GROUP BY E.PERFIL_ID, TO_CHAR(E.FECHA, 'YYYY-MM');
+
+-- Stock por talla, para consultar desde pgAdmin
+CREATE OR REPLACE VIEW V_STOCK_POR_VARIANTE AS
+SELECT V.PERFIL_ID,
+       P.ID                               AS PRODUCTO_ID,
+       P.NOMBRE                           AS PRODUCTO,
+       V.TALLA,
+       V.COLOR,
+       V.CODIGO,
+       V.STOCK,
+       V.STOCK_MIN,
+       COALESCE(V.PRECIO_VENTA, P.PRECIO_VENTA) AS PRECIO_VENTA
+FROM PRODUCTO_VARIANTE V
+JOIN PRODUCTO P ON P.PERFIL_ID = V.PERFIL_ID AND P.ID = V.PRODUCTO_ID
+WHERE V.ACTIVO = 1 AND P.ACTIVO = 1;

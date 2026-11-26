@@ -38,7 +38,7 @@ public class CostService {
      * @param costoStock       costo de las unidades disponibles (stock × costo)
      * @param gananciaEsperada ganancia si se venden todas a su precio actual
      */
-    public record ProductCost(String id, String nombre, String categoria, double costoUnidad, int stock,
+    public record ProductCost(String id, String nombre, String categoria, double costoUnidad, java.math.BigDecimal stock,
                               double costoStock, double gananciaEsperada) {
     }
 
@@ -52,7 +52,7 @@ public class CostService {
      * @param costoUnidad costo por unidad (0 si no se registró)
      * @param total       cantidad × costo
      */
-    public record Purchase(String fecha, String producto, String proveedor, int cantidad, double costoUnidad,
+    public record Purchase(String fecha, String producto, String proveedor, java.math.BigDecimal cantidad, double costoUnidad,
                            double total) {
     }
 
@@ -95,8 +95,9 @@ public class CostService {
         double ganancia = 0;
         int sinCosto = 0;
         for (Product p : inventario.listarTodos()) {
-            double costoStock = p.getStock() * p.getPrecioCompra();
-            double esperada = p.getPrecioCompra() > 0 ? p.getStock() * (p.getPrecioVenta() - p.getPrecioCompra()) : 0;
+            double unidades = p.getStock().doubleValue();
+            double costoStock = unidades * p.getPrecioCompra();
+            double esperada = p.getPrecioCompra() > 0 ? unidades * (p.getPrecioVenta() - p.getPrecioCompra()) : 0;
             productos.add(new ProductCost(p.getId(), p.getNombre(), p.getCategoria(), p.getPrecioCompra(),
                     p.getStock(), costoStock, esperada));
             valor += costoStock;
@@ -119,7 +120,7 @@ public class CostService {
             String producto = inventario.buscarPorId(e.getProductoId()).map(Product::getNombre).orElse(e.getProductoId());
             String proveedor = e.getProveedorId() == null ? ""
                     : proveedores.buscarPorId(e.getProveedorId()).map(Supplier::getNombre).orElse("");
-            double total = e.getCantidad() * e.getPrecioUnitario();
+            double total = e.getCantidad().doubleValue() * e.getPrecioUnitario();
             compras.add(new Purchase(dia.toString(), producto, proveedor, e.getCantidad(), e.getPrecioUnitario(), total));
             if (e.getPrecioUnitario() <= 0) {
                 entradasSinCosto++;

@@ -1,8 +1,10 @@
 package sistemainventario.model;
 
 import sistemainventario.exception.ValidationException;
+import sistemainventario.util.QuantityUtil;
 import sistemainventario.util.TextUtil;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 
@@ -21,7 +23,9 @@ import java.time.format.DateTimeParseException;
 public abstract class InventoryMovement extends IdentifiedEntity implements Anulable {
 
     private String productoId;
-    private int cantidad;
+    /** Talla o color al que entra o del que sale (v3.6.0); {@code null} en un producto simple. */
+    private String varianteId;
+    private BigDecimal cantidad;
     private String fecha;
     private String fechaRegistro;
     /** {@code null} en los datos anteriores, que cuentan como vigentes. */
@@ -34,10 +38,10 @@ public abstract class InventoryMovement extends IdentifiedEntity implements Anul
         super();
     }
 
-    protected InventoryMovement(String id, String productoId, int cantidad, String fecha) {
+    protected InventoryMovement(String id, String productoId, BigDecimal cantidad, String fecha) {
         super(id);
         this.productoId = productoId;
-        this.cantidad = cantidad;
+        this.cantidad = QuantityUtil.normal(cantidad);
         this.fecha = fecha;
     }
 
@@ -61,7 +65,7 @@ public abstract class InventoryMovement extends IdentifiedEntity implements Anul
         if (TextUtil.esVacio(productoId)) {
             throw new ValidationException("Debe seleccionar un producto");
         }
-        if (cantidad <= 0) {
+        if (!QuantityUtil.esPositiva(cantidad)) {
             throw new ValidationException("La cantidad debe ser mayor que cero");
         }
         validarFecha(LocalDate.now());
@@ -122,12 +126,21 @@ public abstract class InventoryMovement extends IdentifiedEntity implements Anul
         this.productoId = productoId;
     }
 
-    public int getCantidad() {
-        return cantidad;
+    public BigDecimal getCantidad() {
+        return cantidad == null ? BigDecimal.ZERO : cantidad;
     }
 
-    public void setCantidad(int cantidad) {
-        this.cantidad = cantidad;
+    public void setCantidad(BigDecimal cantidad) {
+        this.cantidad = QuantityUtil.normal(cantidad);
+    }
+
+    /** @return la variante (talla/color) del movimiento, o {@code null} */
+    public String getVarianteId() {
+        return TextUtil.esVacio(varianteId) ? null : varianteId;
+    }
+
+    public void setVarianteId(String varianteId) {
+        this.varianteId = varianteId;
     }
 
     public String getFecha() {

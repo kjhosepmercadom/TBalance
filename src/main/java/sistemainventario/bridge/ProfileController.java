@@ -2,6 +2,10 @@ package sistemainventario.bridge;
 
 import sistemainventario.exception.ValidationException;
 import sistemainventario.AppContext;
+import sistemainventario.manejo.InventoryHandlingFactory;
+import sistemainventario.model.BusinessCapabilities;
+import sistemainventario.model.ControlVencimiento;
+import sistemainventario.model.ManejoProducto;
 import sistemainventario.model.Profile;
 import sistemainventario.model.BusinessType;
 import sistemainventario.service.ProfileService;
@@ -43,6 +47,25 @@ public class ProfileController {
 
     public boolean requiereControlVencimiento() {
         return perfiles().getPerfilActivo().map(Profile::requiereControlVencimiento).orElse(false);
+    }
+
+    /** @return lo que maneja el negocio activo (tallas, vencimiento, fracción...), para pintar los interruptores */
+    public String capacidadesNegocio() {
+        return BridgeResponse.ejecutar(() -> BridgeResponse.json(capacidadesActivas()));
+    }
+
+    /**
+     * @param manejo "SIMPLE" o "VARIANTES"
+     * @return qué campos muestra el formulario de producto para ese manejo
+     */
+    public String formularioProducto(String manejo) {
+        return BridgeResponse.ejecutar(() -> BridgeResponse.json(
+                InventoryHandlingFactory.para(ManejoProducto.desdeCodigo(manejo)).formulario(capacidadesActivas())));
+    }
+
+    private BusinessCapabilities capacidadesActivas() {
+        return perfiles().getPerfilActivo().map(Profile::getCapacidades)
+                .orElse(BusinessCapabilities.desde(null, new BusinessCapabilities(true, ControlVencimiento.OPCIONAL, true, false, true)));
     }
 
     public String obtenerTiposNegocio() {

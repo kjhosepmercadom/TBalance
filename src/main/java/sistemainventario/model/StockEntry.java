@@ -1,5 +1,10 @@
 package sistemainventario.model;
 
+import sistemainventario.manejo.InventoryHandling;
+import sistemainventario.manejo.InventoryHandlingFactory;
+import sistemainventario.manejo.StockLine;
+import java.math.BigDecimal;
+
 /**
  * Ingreso de mercancía al inventario: incrementa el stock del producto.
  */
@@ -17,7 +22,7 @@ public class StockEntry extends InventoryMovement {
     }
 
     public StockEntry(String id, String productoId, String proveedorId,
-                   int cantidad, double precioUnitario,
+                   BigDecimal cantidad, double precioUnitario,
                    String fecha, String observacion) {
         super(id, productoId, cantidad, fecha);
         this.proveedorId = proveedorId;
@@ -31,7 +36,8 @@ public class StockEntry extends InventoryMovement {
      */
     @Override
     public void aplicarA(Product producto) {
-        producto.aumentarStock(getCantidad());
+        InventoryHandlingFactory.para(producto).reponer(producto,
+                StockLine.de(getProductoId(), getVarianteId(), getCantidad()));
         if (precioUnitario > 0 && precioUnitario != producto.getPrecioCompra()) {
             producto.setPrecioCompra(precioUnitario);
         }

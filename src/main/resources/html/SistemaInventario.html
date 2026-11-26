@@ -863,15 +863,39 @@
           <div class="tb-utilidad-barra"><i id="prod-utilidad-barra"></i></div>
           <p id="prod-utilidad-nota" class="tb-utilidad-nota">Escriba el precio de compra y el de venta para ver cuánto gana por unidad.</p>
         </div>
-        <div>
+        <div id="prod-manejo-wrap" class="col-span-2 hidden">
+          <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">¿Cómo se controla este producto?</label>
+          <select id="prod-manejo" onchange="tbProdAplicarFormulario()" class="w-full px-3.5 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-400 transition placeholder-gray-400">
+            <option value="SIMPLE">Simple (un solo stock)</option>
+            <option value="VARIANTES">Con tallas y colores</option>
+          </select>
+        </div>
+        <div id="prod-unidad-wrap" class="col-span-2 hidden">
+          <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Unidad de medida</label>
+          <select id="prod-unidad" class="w-full px-3.5 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-400 transition placeholder-gray-400">
+            <option value="UNIDAD">Unidad</option>
+            <option value="METRO">Metro</option>
+            <option value="KILO">Kilo</option>
+            <option value="LITRO">Litro</option>
+            <option value="CAJA">Caja</option>
+          </select>
+        </div>
+        <div id="prod-stock-wrap">
           <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Stock *</label>
-          <input id="prod-stock" type="number" min="0" placeholder="0"
+          <input id="prod-stock" type="number" min="0" step="any" placeholder="0"
             class="w-full px-3.5 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-400 transition placeholder-gray-400"/>
         </div>
-        <div>
+        <div id="prod-stock-min-wrap">
           <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Stock mínimo</label>
-          <input id="prod-stock-min" type="number" min="0" placeholder="10"
+          <input id="prod-stock-min" type="number" min="0" step="any" placeholder="10"
             class="w-full px-3.5 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-400 transition placeholder-gray-400"/>
+        </div>
+        <div id="prod-variantes-block" class="col-span-2 hidden">
+          <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Tallas y colores *</label>
+          <div id="prod-atajos-tallas" class="flex flex-wrap gap-2 mb-2"></div>
+          <div id="prod-variantes-tabla" class="space-y-2"></div>
+          <button type="button" onclick="tbVarAgregar('', '')" class="mt-2 text-sm font-semibold text-brand-600 dark:text-brand-400">+ Agregar talla o color</button>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Cada fila tiene su propio stock. El stock del producto es la suma de todas. El precio es opcional: si lo deja vacío se usa el del producto.</p>
         </div>
         <div class="col-span-2">
           <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Categoría *</label>
@@ -1029,7 +1053,7 @@
       </div>
       <div>
         <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Cantidad *</label>
-        <input id="ent-cantidad" type="number" min="1" placeholder="0"
+        <input id="ent-cantidad" type="number" min="0" step="any" placeholder="0"
           class="w-full px-3.5 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-400 transition placeholder-gray-400"/>
       </div>
       <div class="grid grid-cols-2 gap-4">
@@ -1074,7 +1098,7 @@
       </div>
       <div>
         <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Cantidad *</label>
-        <input id="sal-cantidad" type="number" min="1" placeholder="0"
+        <input id="sal-cantidad" type="number" min="0" step="any" placeholder="0"
           class="w-full px-3.5 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-400 transition placeholder-gray-400"/>
       </div>
       <div>
@@ -1121,7 +1145,7 @@
       <div class="grid grid-cols-2 gap-4">
         <div>
           <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Cantidad *</label>
-          <input id="ven-cantidad" type="number" min="1" placeholder="0" oninput="calcularTotalVenta()"
+          <input id="ven-cantidad" type="number" min="0" step="any" placeholder="0" oninput="calcularTotalVenta()"
             class="w-full px-3.5 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-400 transition placeholder-gray-400"/>
         </div>
         <div>
@@ -1389,6 +1413,20 @@
           <button type="button" data-color="#f59e0b" class="color-opt w-9 h-9 rounded-xl ring-0" style="background:#f59e0b"></button>
           <button type="button" data-color="#06b6d4" class="color-opt w-9 h-9 rounded-xl ring-0" style="background:#06b6d4"></button>
         </div>
+      </div>
+      <div id="perfil-capacidades">
+        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Qué maneja este negocio</label>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Se preparan según el tipo de negocio y puede cambiarlos. No se puede quitar algo que sus productos ya usan.</p>
+        <div class="tb-medios">
+          <label class="tb-medio-chip"><input type="checkbox" id="cap-variantes" /><span>Tallas y colores</span></label>
+          <label class="tb-medio-chip"><input type="checkbox" id="cap-fraccion" /><span>Venta por metro, kilo o litro</span></label>
+        </div>
+        <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mt-3 mb-1.5" for="cap-vencimiento">Fecha de vencimiento</label>
+        <select id="cap-vencimiento" class="w-full px-3.5 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-400 transition">
+          <option value="NINGUNO">No maneja vencimiento</option>
+          <option value="OPCIONAL">Opcional por producto</option>
+          <option value="OBLIGATORIO">Obligatorio en todos los productos</option>
+        </select>
       </div>
       <div>
         <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Medios de pago que recibe este negocio</label>
@@ -1872,9 +1910,44 @@ function cargarTiposNegocio() {
   ).join('');
 }
 
+// Interruptores de capacidades (v3.6.0). Seriales y venta rápida llegan en fases siguientes: se conservan tal cual.
+let tbCapExtra = { seriales: 'false', ventaRapida: 'false' };
+
+function tbCapMostrar(caps) {
+  caps = caps || {};
+  document.getElementById('cap-variantes').checked = !!caps.variantes;
+  document.getElementById('cap-fraccion').checked = !!caps.fraccion;
+  document.getElementById('cap-vencimiento').value = caps.vencimiento || 'NINGUNO';
+  tbCapExtra = { seriales: String(!!caps.seriales), ventaRapida: String(!!caps.ventaRapida) };
+}
+
+// Las capacidades guardadas del negocio (claves cap.*) mandan sobre las del tipo
+function tbCapDesdeConfig(cfg, porDefecto) {
+  const base = porDefecto || {};
+  const leer = function(clave, def) { return cfg && cfg[clave] != null && cfg[clave] !== '' ? String(cfg[clave]) : String(def); };
+  return {
+    variantes: leer('cap.variantes', !!base.variantes) === 'true',
+    vencimiento: leer('cap.vencimiento', base.vencimiento || 'NINGUNO'),
+    fraccion: leer('cap.fraccion', !!base.fraccion) === 'true',
+    seriales: leer('cap.seriales', !!base.seriales) === 'true',
+    ventaRapida: leer('cap.ventaRapida', !!base.ventaRapida) === 'true'
+  };
+}
+
+function tbCapComoConfiguracion() {
+  return {
+    'cap.variantes': String(document.getElementById('cap-variantes').checked),
+    'cap.vencimiento': document.getElementById('cap-vencimiento').value,
+    'cap.fraccion': String(document.getElementById('cap-fraccion').checked),
+    'cap.seriales': tbCapExtra.seriales,
+    'cap.ventaRapida': tbCapExtra.ventaRapida
+  };
+}
+
 function onTipoNegocioChange() {
   const clave = document.getElementById('perfil-tipo').value;
   const tipo  = tiposNegocioCache.find(t => t.clave === clave);
+  if (tipo) tbCapMostrar(tipo.capacidades);
   const preview = document.getElementById('perfil-tipo-preview');
   const chips   = document.getElementById('perfil-tipo-chips');
   if (tipo && tipo.categorias && tipo.categorias.length > 0) {
@@ -1910,6 +1983,8 @@ function openModalPerfil(perfil) {
   }
   tbQrPerfilMostrar(qrActual);
   onTipoNegocioChange();
+  const tipoActual = tiposNegocioCache.find(t => t.clave === document.getElementById('perfil-tipo').value);
+  if (perfil) tbCapMostrar(tbCapDesdeConfig(cfg, tipoActual && tipoActual.capacidades));
   openModal('modal-perfil');
 }
 
@@ -1982,6 +2057,7 @@ function submitPerfil() {
   const mediosPago = Array.from(document.querySelectorAll('#perfil-medios input:checked')).map(function(c) { return c.value; }).join(',');
   const configuracion = { mediosPago };
   TB_CAMPOS_CUENTA.forEach(function(x) { configuracion[x[1]] = document.getElementById(x[0]).value.trim(); });
+  Object.assign(configuracion, tbCapComoConfiguracion());
   const perfil = { id: id || null, nombre, descripcion, color: colorSeleccionado, tipoNegocio, configuracion };
   const r = id
     ? window.javaBridge.editarPerfil(JSON.stringify(perfil))
@@ -3491,6 +3567,92 @@ function poblarSelectsProducto() {
     provsList.map(p => '<option value="' + esc(p.id || '') + '">' + esc(p.nombre || '(sin nombre)') + '</option>').join('');
 }
 
+
+// ── Manejo del producto: simple o con tallas y colores (v3.6.0) ──
+let tbProdCaps = { variantes: false, fraccion: false, vencimiento: 'NINGUNO' };
+let tbVariantes = [];
+
+function tbProdCargarCapacidades() {
+  try {
+    const caps = JSON.parse(window.javaBridge.capacidadesNegocio());
+    if (caps && typeof caps === 'object' && !caps.error) tbProdCaps = caps;
+  } catch (e) { /* se queda con lo anterior */ }
+  document.getElementById('prod-manejo-wrap').classList.toggle('hidden', !tbProdCaps.variantes);
+  document.getElementById('prod-unidad-wrap').classList.toggle('hidden', !tbProdCaps.fraccion);
+}
+
+// Pinta el formulario según lo que dice la estrategia del manejo elegido
+function tbProdAplicarFormulario() {
+  let f = { stockUnico: true, matrizVariantes: false, atajosTallas: {} };
+  try {
+    const r = JSON.parse(window.javaBridge.formularioProducto(document.getElementById('prod-manejo').value));
+    if (r && !r.error) f = r;
+  } catch (e) { /* formulario simple */ }
+  document.getElementById('prod-stock-wrap').classList.toggle('hidden', !f.stockUnico);
+  document.getElementById('prod-stock-min-wrap').classList.toggle('hidden', !f.stockUnico);
+  document.getElementById('prod-variantes-block').classList.toggle('hidden', !f.matrizVariantes);
+  const atajos = f.atajosTallas || {};
+  document.getElementById('prod-atajos-tallas').innerHTML = Object.keys(atajos).map(function(g) {
+    return '<button type="button" class="tb-medio-chip" onclick="tbVarAtajo(\'' + g + '\')"><span>' + escapeHtml(g) + ': ' + atajos[g].join(' · ') + '</span></button>';
+  }).join('');
+  window.tbAtajosTallas = atajos;
+  if (f.matrizVariantes && tbVariantes.length === 0) tbVarAgregar('', '');
+  tbVarRender();
+}
+
+function tbVarAtajo(grupo) {
+  (window.tbAtajosTallas[grupo] || []).forEach(function(t) {
+    const yaEsta = tbVariantes.some(function(v) { return v.activo !== false && (v.talla || '').toLowerCase() === t.toLowerCase() && !v.color; });
+    if (!yaEsta) tbVariantes.push({ id: '', talla: t, color: '', codigo: '', stock: 0, stockMin: 0, precioVenta: null, activo: true });
+  });
+  tbVariantes = tbVariantes.filter(function(v) { return v.id || v.talla || v.color; });
+  tbVarRender();
+}
+
+function tbVarAgregar(talla, color) {
+  tbVariantes.push({ id: '', talla: talla, color: color, codigo: '', stock: 0, stockMin: 0, precioVenta: null, activo: true });
+  tbVarRender();
+}
+
+function tbVarCambio(i, campo, valor) {
+  const v = tbVariantes[i]; if (!v) return;
+  if (campo === 'stock' || campo === 'stockMin') v[campo] = parseFloat(valor) || 0;
+  else if (campo === 'precioVenta') v[campo] = parseFloat(valor) > 0 ? parseFloat(valor) : null;
+  else v[campo] = valor;
+}
+
+function tbVarQuitar(i) {
+  const v = tbVariantes[i]; if (!v) return;
+  if (v.id) v.activo = false; else tbVariantes.splice(i, 1);   // las ya guardadas se deshabilitan, no se borran
+  tbVarRender();
+}
+
+function tbVarRender() {
+  const cont = document.getElementById('prod-variantes-tabla');
+  if (!cont) return;
+  const cls = 'w-full px-2.5 py-2 text-sm border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-800 dark:text-white';
+  const filas = tbVariantes.map(function(v, i) {
+    if (v.activo === false) return '';
+    return '<div class="grid grid-cols-12 gap-1.5 items-center">' +
+      '<input class="' + cls + ' col-span-2" placeholder="Talla" value="' + esc(v.talla || '') + '" oninput="tbVarCambio(' + i + ',\'talla\',this.value)"/>' +
+      '<input class="' + cls + ' col-span-3" placeholder="Color" value="' + esc(v.color || '') + '" oninput="tbVarCambio(' + i + ',\'color\',this.value)"/>' +
+      '<input class="' + cls + ' col-span-2" type="number" min="0" step="any" placeholder="Stock" value="' + (v.stock || '') + '" oninput="tbVarCambio(' + i + ',\'stock\',this.value)"/>' +
+      '<input class="' + cls + ' col-span-2" type="number" min="0" step="any" placeholder="Mínimo" value="' + (v.stockMin || '') + '" oninput="tbVarCambio(' + i + ',\'stockMin\',this.value)"/>' +
+      '<input class="' + cls + ' col-span-2" type="number" min="0" step="any" placeholder="Precio" value="' + (v.precioVenta || '') + '" oninput="tbVarCambio(' + i + ',\'precioVenta\',this.value)"/>' +
+      '<button type="button" class="col-span-1 text-red-500 text-lg leading-none" title="Quitar" aria-label="Quitar fila" onclick="tbVarQuitar(' + i + ')">×</button>' +
+      '</div>';
+  }).join('');
+  cont.innerHTML = filas;
+}
+
+function tbProdEstablecer(manejo, unidad, variantes) {
+  tbProdCargarCapacidades();
+  document.getElementById('prod-manejo').value = tbProdCaps.variantes ? (manejo || 'SIMPLE') : 'SIMPLE';
+  document.getElementById('prod-unidad').value = unidad || 'UNIDAD';
+  tbVariantes = (variantes || []).map(function(v) { return Object.assign({}, v); });
+  tbProdAplicarFormulario();
+}
+
 function openModalProducto() {
   state.editMode = { tabla: 'productos', id: null };
   document.getElementById('modal-prod-title').textContent = 'Agregar producto';
@@ -3503,6 +3665,7 @@ function openModalProducto() {
   document.getElementById('prod-error').classList.add('hidden');
   actualizarUtilidadForm();
   poblarSelectsProducto();
+  tbProdEstablecer('SIMPLE', 'UNIDAD', []);
   // Reset mini calendario de vencimiento
   clearVencFecha();
   vencCursor = new Date();
@@ -3576,6 +3739,7 @@ function editarProducto(id) {
   provSelEdit.value = p.proveedorId || '';
   document.getElementById('prod-requiere-venc').value = p.requiereVencimiento ? 'true' : 'false';
   setVencFecha(p.fechaVencimiento || '');
+  tbProdEstablecer(p.manejo, p.unidadMedida, p.variantes);
   document.getElementById('prod-error').classList.add('hidden');
   configurarBloqueVencimiento(!!p.requiereVencimiento);
   aplicarSugerencias();
@@ -3615,8 +3779,10 @@ function submitProducto() {
   const categoria = categoriaId ? catSelect.options[catSelect.selectedIndex].text.replace(/ \(deshabilitada\)$/, '') : '';
   const precioCompra = parseFloat(document.getElementById('prod-precio-compra').value) || 0;
   const precio   = parseFloat(document.getElementById('prod-precio').value) || 0;
-  const stock    = parseInt(document.getElementById('prod-stock').value) || 0;
-  const stockMin = parseInt(document.getElementById('prod-stock-min').value) || 0;
+  const manejo   = document.getElementById('prod-manejo').value;
+  const unidadMedida = document.getElementById('prod-unidad').value;
+  const stock    = parseFloat(document.getElementById('prod-stock').value) || 0;
+  const stockMin = parseFloat(document.getElementById('prod-stock-min').value) || 0;
   const desc     = document.getElementById('prod-desc').value.trim();
   const proveedorId = document.getElementById('prod-proveedor').value;
   const requiereVenc = document.getElementById('prod-requiere-venc').value === 'true';
@@ -3653,8 +3819,11 @@ function submitProducto() {
     proveedorId: proveedorId,
     precioCompra: precioCompra,
     precioVenta: precio,
-    stock: stock,
-    stockMin: stockMin,
+    stock: manejo === 'VARIANTES' ? 0 : stock,
+    stockMin: manejo === 'VARIANTES' ? 0 : stockMin,
+    manejo: manejo,
+    unidadMedida: unidadMedida,
+    variantes: manejo === 'VARIANTES' ? tbVariantes.filter(function(v) { return v.id || v.talla || v.color; }) : [],
     tipo: 'General',
     requiereVencimiento: requiereVenc,
     fechaVencimiento: requiereVenc ? fechaVenc : null
@@ -3923,7 +4092,7 @@ function renderTablaEntradas() {
   tbody.innerHTML = state.entradas.map(function(e) {
     return '<tr class="fade-row hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors">\
       <td class="px-6 py-3.5 text-xs font-semibold text-gray-400">#' + e.id + '</td>\
-      <td class="px-4 py-3.5 text-sm font-semibold text-gray-800 dark:text-white">' + esc(getNombreProd(e.productoId)) + '</td>\
+      <td class="px-4 py-3.5 text-sm font-semibold text-gray-800 dark:text-white">' + esc(tbNombreConVariante(e.productoId, e.varianteId)) + '</td>\
       <td class="px-4 py-3.5"><span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400">+' + e.cantidad + '</span></td>\
       <td class="px-4 py-3.5 text-sm text-gray-600 dark:text-gray-300">' + esc(getNombreProv(e.proveedorId)) + '</td>\
       <td class="px-4 py-3.5 text-xs text-gray-400">' + esc(fmtFecha(e.fecha)) + '</td>\
@@ -3934,6 +4103,57 @@ function renderTablaEntradas() {
       </td>\
     </tr>';
   }).join('');
+}
+
+
+// ── Talla o color en venta, entrada y salida (v3.6.0) ──
+function tbVarSelector(pref) {
+  let wrap = document.getElementById(pref + '-variante-wrap');
+  if (wrap) return wrap;
+  const prodSel = document.getElementById(pref + '-producto');
+  wrap = document.createElement('div');
+  wrap.id = pref + '-variante-wrap';
+  wrap.className = 'hidden';
+  wrap.innerHTML = '<label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Talla o color *</label>' +
+    '<select id="' + pref + '-variante" class="w-full px-3.5 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-400 transition"></select>';
+  prodSel.parentElement.insertAdjacentElement('afterend', wrap);
+  prodSel.addEventListener('change', function() { tbVarActualizar(pref); });
+  wrap.querySelector('select').addEventListener('change', function() { tbVarElegida(pref); });
+  return wrap;
+}
+
+function tbVarActualizar(pref) {
+  const wrap = tbVarSelector(pref);
+  const sel = wrap.querySelector('select');
+  const prod = state.productos.find(function(p) { return p.id === document.getElementById(pref + '-producto').value; });
+  if (!prod || prod.manejo !== 'VARIANTES') { wrap.classList.add('hidden'); sel.innerHTML = ''; return; }
+  const activas = (prod.variantes || []).filter(function(v) { return v.activo !== false; });
+  sel.innerHTML = '<option value="">Elegir talla o color...</option>' + activas.map(function(v) {
+    const desc = [v.talla, v.color].filter(Boolean).join(' / ');
+    const conStock = pref === 'ent' || (v.stock || 0) > 0;
+    return '<option value="' + esc(v.id) + '"' + (conStock ? '' : ' disabled') + '>' + esc(desc) + ' (stock: ' + (v.stock || 0) + ')</option>';
+  }).join('');
+  wrap.classList.remove('hidden');
+}
+
+function tbVarElegida(pref) {
+  if (pref !== 'ven') return;
+  actualizarPrecioVenta();
+}
+
+// Devuelve la talla elegida ('' si el producto no tiene) o null si falta elegirla
+function tbVarLeer(pref, prod) {
+  if (!prod || prod.manejo !== 'VARIANTES') return '';
+  const v = document.getElementById(pref + '-variante');
+  return v && v.value ? v.value : null;
+}
+
+function tbNombreConVariante(productoId, varianteId) {
+  const nombre = getNombreProd(productoId);
+  if (!varianteId) return nombre;
+  const prod = state.productos.find(function(p) { return p.id === productoId; });
+  const v = prod && (prod.variantes || []).find(function(x) { return x.id === varianteId; });
+  return v ? nombre + ' — ' + [v.talla, v.color].filter(Boolean).join(' / ') : nombre;
 }
 
 function openModalEntrada() {
@@ -3953,15 +4173,18 @@ function openModalEntrada() {
     if (prod && prod.proveedorId) document.getElementById('ent-proveedor').value = prod.proveedorId;
   };
   document.getElementById('ent-error').classList.add('hidden');
+  tbVarActualizar('ent');
   tbFiltroProductos('ent', true);
   openModal('modal-entrada');
 }
 
 function submitEntrada() {
   const prodId = document.getElementById('ent-producto').value;
-  const cant   = parseInt(document.getElementById('ent-cantidad').value, 10);
+  const cant   = parseFloat(document.getElementById('ent-cantidad').value);
   const errEl  = document.getElementById('ent-error');
-  if (!prodId || isNaN(cant) || cant < 1) { errEl.textContent='Selecciona producto y cantidad valida.'; errEl.classList.remove('hidden'); return; }
+  if (!prodId || isNaN(cant) || cant <= 0) { errEl.textContent='Selecciona producto y cantidad valida.'; errEl.classList.remove('hidden'); return; }
+  const varianteEnt = tbVarLeer('ent', state.productos.find(function(p) { return p.id === prodId; }));
+  if (varianteEnt === null) { errEl.textContent='Elija la talla o color que llegó.'; errEl.classList.remove('hidden'); return; }
   const fechaLlegada = document.getElementById('ent-fecha').value;
   if (!fechaLlegada) { errEl.textContent = 'Escriba la fecha en que llegó la mercancía.'; errEl.classList.remove('hidden'); return; }
   if (fechaLlegada > _toIsoLocal(_todayLocal())) { errEl.textContent = 'La fecha de llegada no puede ser futura.'; errEl.classList.remove('hidden'); return; }
@@ -3970,6 +4193,7 @@ function submitEntrada() {
 
   var entrada = {
     productoId: prodId,
+    varianteId: varianteEnt || null,
     cantidad: cant,
     fecha: fechaLlegada,
     proveedorId: document.getElementById('ent-proveedor').value || null,
@@ -4001,7 +4225,7 @@ function renderTablaSalidas() {
   tbody.innerHTML = state.salidas.map(function(s) {
     return '<tr class="fade-row hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors">\
       <td class="px-6 py-3.5 text-xs font-semibold text-gray-400">#' + s.id + '</td>\
-      <td class="px-4 py-3.5 text-sm font-semibold text-gray-800 dark:text-white">' + esc(getNombreProd(s.productoId)) + '</td>\
+      <td class="px-4 py-3.5 text-sm font-semibold text-gray-800 dark:text-white">' + esc(tbNombreConVariante(s.productoId, s.varianteId)) + '</td>\
       <td class="px-4 py-3.5"><span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400">-' + s.cantidad + '</span></td>\
       <td class="px-4 py-3.5 text-sm text-gray-600 dark:text-gray-300">' + (TIPOS_SALIDA[s.tipo] ? '<b class="font-semibold">' + TIPOS_SALIDA[s.tipo] + '</b> · ' : '') + esc(s.motivo||'—') + '</td>\
       <td class="px-4 py-3.5 text-xs text-gray-400">' + esc(fmtFecha(s.fecha)) + '</td>\
@@ -4022,15 +4246,18 @@ function openModalSalida() {
   document.getElementById('sal-tipo').value = '';
   document.getElementById('sal-motivo').value = '';
   document.getElementById('sal-error').classList.add('hidden');
+  tbVarActualizar('sal');
   tbFiltroProductos('sal', true);
   openModal('modal-salida');
 }
 
 function submitSalida() {
   const prodId = document.getElementById('sal-producto').value;
-  const cant   = parseInt(document.getElementById('sal-cantidad').value, 10);
+  const cant   = parseFloat(document.getElementById('sal-cantidad').value);
   const errEl  = document.getElementById('sal-error');
-  if (!prodId || isNaN(cant) || cant < 1) { errEl.textContent='Selecciona producto y cantidad valida.'; errEl.classList.remove('hidden'); return; }
+  if (!prodId || isNaN(cant) || cant <= 0) { errEl.textContent='Selecciona producto y cantidad valida.'; errEl.classList.remove('hidden'); return; }
+  const varianteSal = tbVarLeer('sal', state.productos.find(function(p) { return p.id === prodId; }));
+  if (varianteSal === null) { errEl.textContent='Elija la talla o color que sale.'; errEl.classList.remove('hidden'); return; }
   errEl.classList.add('hidden');
 
   const tipoSal = document.getElementById('sal-tipo').value;
@@ -4040,6 +4267,7 @@ function submitSalida() {
 
   var salida = {
     productoId: prodId,
+    varianteId: varianteSal || null,
     cantidad: cant,
     motivo: motivoSal,
     tipo: tipoSal
@@ -4100,6 +4328,7 @@ function openModalVenta() {
   document.getElementById('ven-total-display').textContent = '$ 0';
   tbPagoReiniciar('ven');
   document.getElementById('ven-error').classList.add('hidden');
+  tbVarActualizar('ven');
   tbFiltroProductos('ven', false);
   openModal('modal-venta');
 }
@@ -4107,7 +4336,11 @@ function openModalVenta() {
 function actualizarPrecioVenta() {
   const id   = document.getElementById('ven-producto').value;
   const prod = state.productos.find(function(p) { return p.id === id; });
-  if (prod) document.getElementById('ven-precio').value = prod.precioVenta || prod.precio || 0;
+  if (prod) {
+    const vid = (document.getElementById('ven-variante') || {}).value;
+    const v = vid && (prod.variantes || []).find(function(x) { return x.id === vid; });
+    document.getElementById('ven-precio').value = (v && v.precioVenta) || prod.precioVenta || prod.precio || 0;
+  }
   calcularTotalVenta();
 }
 
@@ -4119,12 +4352,16 @@ function calcularTotalVenta() {
 
 function submitVenta() {
   const prodId = document.getElementById('ven-producto').value;
-  const cant   = parseInt(document.getElementById('ven-cantidad').value, 10);
+  const cant   = parseFloat(document.getElementById('ven-cantidad').value);
   const precio = parseFloat(document.getElementById('ven-precio').value);
   const errEl  = document.getElementById('ven-error');
-  if (!prodId || isNaN(cant) || cant < 1 || isNaN(precio) || precio < 0) { errEl.textContent='Completa todos los campos.'; errEl.classList.remove('hidden'); return; }
+  if (!prodId || isNaN(cant) || cant <= 0 || isNaN(precio) || precio < 0) { errEl.textContent='Completa todos los campos.'; errEl.classList.remove('hidden'); return; }
   const prod = state.productos.find(function(p) { return p.id === prodId; });
-  if (!prod || prod.stock < cant) { errEl.textContent='Stock insuficiente. Disponible: ' + (prod?.stock||0); errEl.classList.remove('hidden'); return; }
+  const varianteId = tbVarLeer('ven', prod);
+  if (varianteId === null) { errEl.textContent='Elija la talla o color.'; errEl.classList.remove('hidden'); return; }
+  const variante = varianteId ? (prod.variantes || []).find(function(x) { return x.id === varianteId; }) : null;
+  const disponible = variante ? variante.stock : (prod ? prod.stock : 0);
+  if (!prod || disponible < cant) { errEl.textContent='Stock insuficiente. Disponible: ' + (disponible || 0); errEl.classList.remove('hidden'); return; }
   errEl.classList.add('hidden');
 
   const pago = tbPagoLeer('ven', errEl);
@@ -4138,6 +4375,7 @@ function submitVenta() {
     items: [{
       productoId: prodId,
       nombreProducto: prod.nombre,
+      varianteId: varianteId || null,
       cantidad: cant,
       precioUnitario: precio
     }]
@@ -4306,6 +4544,7 @@ function agregarManualQR() {
 function agregarItemVentaQR(id) {
   const prod = state.productos.find(function(p) { return p.id === id; });
   if (!prod) { mostrarFlashQR('Producto no encontrado', false); return; }
+  if (prod.manejo === 'VARIANTES') { mostrarFlashQR(prod.nombre + ' tiene tallas: véndalo desde "Nueva venta" para elegir la talla', false); return; }
   const item = ventaQR.items.find(function(i) { return i.id === id; });
   if (item) {
     if (item.cantidad >= item.stock) { mostrarFlashQR('No hay mas stock de ' + prod.nombre, false); return; }

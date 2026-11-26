@@ -1,5 +1,10 @@
 package sistemainventario.model;
 
+import sistemainventario.manejo.InventoryHandling;
+import sistemainventario.manejo.InventoryHandlingFactory;
+import sistemainventario.manejo.StockLine;
+import java.math.BigDecimal;
+
 /**
  * Retiro de mercancía que no es una venta (merma, daño, uso interno):
  * reduce el stock del producto.
@@ -16,7 +21,7 @@ public class StockExit extends InventoryMovement {
         super();
     }
 
-    public StockExit(String id, String productoId, int cantidad,
+    public StockExit(String id, String productoId, BigDecimal cantidad,
                   String motivo, String fecha, String tipo) {
         super(id, productoId, cantidad, fecha);
         this.motivo = motivo;
@@ -26,7 +31,8 @@ public class StockExit extends InventoryMovement {
     /** Polimorfismo: una salida descuenta unidades y valida el stock disponible. */
     @Override
     public void aplicarA(Product producto) {
-        producto.disminuirStock(getCantidad());
+        InventoryHandling estrategia = InventoryHandlingFactory.para(producto);
+        estrategia.descontar(producto, estrategia.reservar(producto, getVarianteId(), getCantidad()));
     }
 
     @Override

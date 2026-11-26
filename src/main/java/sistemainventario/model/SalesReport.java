@@ -39,8 +39,8 @@ public record SalesReport(String desde,
      * @param utilidad          ganancia de lo vendido (precio menos costo)
      * @param unidadesSinCosto  unidades vendidas cuyo producto no tiene precio de compra
      */
-    public record Totals(double ventas, int numeroVentas, int unidades, double ticketPromedio,
-                         double utilidad, int unidadesSinCosto) {
+    public record Totals(double ventas, int numeroVentas, double unidades, double ticketPromedio,
+                         double utilidad, double unidadesSinCosto) {
 
         /** @return margen de utilidad sobre lo vendido, en porcentaje */
         public double margen() {
@@ -66,7 +66,7 @@ public record SalesReport(String desde,
      * @param utilidad   utilidad (0 si no tiene costo)
      * @param conCosto   si se pudo calcular la utilidad
      */
-    public record ProductRanking(String productoId, String nombre, int unidades, double ventas,
+    public record ProductRanking(String productoId, String nombre, double unidades, double ventas,
                                  double utilidad, boolean conCosto) {
     }
 
@@ -92,6 +92,6 @@ public record SalesReport(String desde,
      * @param utilidad   utilidad de la venta (solo de los productos con costo)
      */
     public record SaleLine(String fecha, String id, String cliente, String metodoPago, String referencia,
-                           String productos, int unidades, double total, double utilidad) {
+                           String productos, double unidades, double total, double utilidad) {
     }
 }

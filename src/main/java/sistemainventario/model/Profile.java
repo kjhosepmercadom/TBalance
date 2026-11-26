@@ -85,7 +85,39 @@ public class Profile extends IdentifiedEntity implements Deshabilitable {
 
     /** @return {@code true} si el tipo de negocio exige controlar vencimientos */
     public boolean requiereControlVencimiento() {
-        return getPerfilNegocio().requiereControlVencimiento();
+        return getCapacidades().vencimiento() != ControlVencimiento.NINGUNO;
+    }
+
+    /**
+     * <b>v3.6.0:</b> lo que maneja este negocio. Si nunca se guardaron, son las
+     * del tipo de negocio.
+     *
+     * @return las capacidades del negocio
+     */
+    public BusinessCapabilities getCapacidades() {
+        return BusinessCapabilities.desde(configuracion, getPerfilNegocio().capacidadesPorDefecto());
+    }
+
+    /** @param capacidades lo que maneja el negocio desde ahora */
+    public void setCapacidades(BusinessCapabilities capacidades) {
+        capacidades.comoConfiguracion().forEach(this::setConfig);
+    }
+
+    /** @return {@code true} si las capacidades ya están guardadas en la configuración */
+    public boolean tieneCapacidadesGuardadas() {
+        return BusinessCapabilities.estanGuardadas(configuracion);
+    }
+
+    /**
+     * Toma las capacidades que vienen de la pantalla (claves {@code cap.*}); las
+     * que no vengan quedan como estaban.
+     *
+     * @param datos perfil recibido de la vista
+     * @return las capacidades resultantes
+     */
+    public BusinessCapabilities capacidadesPedidas(Profile datos) {
+        Map<String, String> pedidas = datos == null ? null : datos.getConfiguracion();
+        return BusinessCapabilities.desde(pedidas, getCapacidades());
     }
 
     /**
