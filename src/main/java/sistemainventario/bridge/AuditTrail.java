@@ -38,6 +38,10 @@ public class AuditTrail {
             Map.entry("guardarProducto", "Guardó un producto"),
             Map.entry("importarListaProductos", "Cargó una lista de productos"),
             Map.entry("guardarPoliticaPrecio", "Cambió el margen y el redondeo de precios"),
+            Map.entry("guardarProductoConFoto", "Guardó un producto"),
+            Map.entry("guardarFotoProducto", "Cambió la foto de un producto"),
+            Map.entry("quitarFotoProducto", "Quitó la foto de un producto"),
+            Map.entry("usarFotosProducto", "Cambió el uso de fotos de producto"),
             Map.entry("guardarGasto", "Guardó un gasto del negocio"),
             Map.entry("eliminarGasto", "Quitó un gasto del negocio"),
             Map.entry("cambiarEstadoProducto", "producto"),
@@ -176,6 +180,12 @@ public class AuditTrail {
         if (metodo.startsWith("cambiarEstado") || metodo.equals("restablecerClaveUsuario")
                 || metodo.endsWith("Perfil") && !metodo.equals("editarPerfil") && !metodo.equals("crearPerfil")) {
             return "ID " + argumento(argumentos, 0);
+        }
+        if (metodo.equals("guardarFotoProducto") || metodo.equals("quitarFotoProducto")) {
+            return "ID " + argumento(argumentos, 0);
+        }
+        if (metodo.equals("usarFotosProducto")) {
+            return "true".equalsIgnoreCase(argumento(argumentos, 0)) ? "Activó las fotos" : "Apagó las fotos";
         }
         if (metodo.contains("Respaldo")) {
             return argumento(argumentos, 0);
