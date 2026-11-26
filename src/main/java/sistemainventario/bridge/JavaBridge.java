@@ -48,6 +48,7 @@ public class JavaBridge {
     private final ScanController escaneo;
     private final CostController costos;
     private final ExpenseController gastos;
+    private final AltaController alta;
     private final CreditController fiados;
     private final SessionController sesion;
     private final ViewNotifier notificador;
@@ -76,6 +77,7 @@ public class JavaBridge {
         this.almacenamiento = new StorageController(contexto, notificador);
         this.costos = new CostController(contexto);
         this.gastos = new ExpenseController(contexto);
+        this.alta = new AltaController(contexto);
         this.fiados = new CreditController(contexto);
         this.sesion = new SessionController(contexto);
         this.etiquetas = new LabelController(contexto, new DesktopFileOpener());
@@ -538,6 +540,43 @@ public class JavaBridge {
     /** @return porcentaje de gastos sobre ventas, o null si no hay con qué calcularlo */
     public String obtenerCargaGastos() {
         return gastos.obtenerCargaGastos();
+    }
+
+    // ---- Registro ágil de productos (v3.8.0) ---------------------------------
+
+    /** @return precio sugerido con el margen del negocio y los botones de margen */
+    public String sugerirPrecio(String costo, String costoOculto) {
+        return alta.sugerirPrecio(costo, costoOculto);
+    }
+
+    /** @return el producto que ya tiene ese código, o null si es nuevo */
+    public String buscarProductoPorCodigo(String codigo) {
+        return alta.buscarProductoPorCodigo(codigo);
+    }
+
+    /** @return un producto nuevo copiado de uno parecido (sin guardar) */
+    public String plantillaDesdeProducto(String idProducto) {
+        return alta.plantillaDesdeProducto(idProducto);
+    }
+
+    /** @return qué se cargaría de la lista pegada, sin guardar nada */
+    public String revisarListaProductos(String texto) {
+        return alta.revisarListaProductos(texto);
+    }
+
+    /** @return lo cargado y lo saltado de la lista pegada */
+    public String importarListaProductos(String texto) {
+        return alta.importarListaProductos(texto);
+    }
+
+    /** @return margen y redondeo del negocio activo */
+    public String obtenerPoliticaPrecio() {
+        return alta.obtenerPoliticaPrecio();
+    }
+
+    /** @return OK o el error */
+    public String guardarPoliticaPrecio(String margen, String redondeo) {
+        return alta.guardarPoliticaPrecio(margen, redondeo);
     }
 
     // ---- Varios equipos ------------------------------------------------------
