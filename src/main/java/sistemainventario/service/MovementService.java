@@ -1,5 +1,8 @@
 package sistemainventario.service;
 
+import sistemainventario.manejo.InventoryHandling;
+import sistemainventario.manejo.InventoryHandlingFactory;
+import sistemainventario.manejo.StockLine;
 import sistemainventario.exception.ValidationException;
 import sistemainventario.model.StockEntry;
 import sistemainventario.model.InventoryMovement;
@@ -88,7 +91,8 @@ public class MovementService {
         }
         entrada.anular(DateUtil.ahora(), motivo);
         entrada.setAnuladaPor(quien);
-        producto.disminuirStock(entrada.getCantidad());
+        InventoryHandling estrategia = InventoryHandlingFactory.para(producto);
+        estrategia.descontar(producto, estrategia.reservar(producto, entrada.getVarianteId(), entrada.getCantidad()));
         inventario.registrarCambioDeStock(producto);
         entradas.actualizar(entrada);
         return entrada;
@@ -118,7 +122,8 @@ public class MovementService {
         salida.anular(DateUtil.ahora(), motivo);
         salida.setAnuladaPor(quien);
         Product producto = inventario.obtener(salida.getProductoId());
-        producto.aumentarStock(salida.getCantidad());
+        InventoryHandlingFactory.para(producto).reponer(producto,
+                StockLine.de(producto.getId(), salida.getVarianteId(), salida.getCantidad()));
         inventario.registrarCambioDeStock(producto);
         salidas.actualizar(salida);
         return salida;

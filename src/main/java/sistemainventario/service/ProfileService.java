@@ -1,6 +1,9 @@
 package sistemainventario.service;
 
 import sistemainventario.exception.ValidationException;
+import sistemainventario.model.BusinessCapabilities;
+import sistemainventario.model.ControlVencimiento;
+import sistemainventario.model.Product;
 import sistemainventario.model.Profile;
 import sistemainventario.model.BusinessType;
 import sistemainventario.repository.ProfileDirectory;
@@ -92,6 +95,9 @@ public class ProfileService {
                 datos.getColor(),
                 datos.getTipoNegocio());
         perfil.copiarAjustesDePago(datos);
+        if (BusinessCapabilities.estanGuardadas(datos.getConfiguracion())) {
+            perfil.setCapacidades(perfil.capacidadesPedidas(datos));
+        }
         perfil.validar();
         perfiles.agregar(perfil);
         directorios.crear(perfil.getId());
@@ -116,11 +122,50 @@ public class ProfileService {
      */
     public Profile actualizar(Profile cambios) {
         Profile perfil = obtener(cambios == null ? null : cambios.getId());
+        BusinessCapabilities pedidas = perfil.capacidadesPedidas(cambios);
+        if (BusinessCapabilities.estanGuardadas(cambios.getConfiguracion())) {
+            validarCapacidadesEnUso(perfil, pedidas);
+        }
         perfil.actualizarDatos(cambios.getNombre(), cambios.getDescripcion(), cambios.getColor());
         perfil.copiarAjustesDePago(cambios);
+        if (BusinessCapabilities.estanGuardadas(cambios.getConfiguracion())) {
+            perfil.setCapacidades(pedidas);
+        }
         perfiles.actualizar(perfil);
         sincronizarConfiguracion();
         return perfil;
+    }
+
+    /**
+     * No deja apagar una capacidad que los productos ya usan: primero hay que
+     * cambiar esos productos (por ejemplo, de "Con tallas y colores" a "Simple").
+     */
+    private void validarCapacidadesEnUso(Profile perfil, BusinessCapabilities pedidas) {
+        BusinessCapabilities actuales = perfil.getCapacidades();
+        List<Product> productos = crearServicios(perfil.getId()).inventario().listarTodos();
+        if (actuales.variantes() && !pedidas.variantes()) {
+            long n = productos.stream().filter(Product::tieneVariantes).count();
+            if (n > 0) {
+                throw new ValidationException("No puede quitar tallas y colores: " + n
+                        + " producto(s) las usan. Cámbielos a Simple primero.");
+            }
+        }
+        if (actuales.fraccion() && !pedidas.fraccion()) {
+            long n = productos.stream().filter(p -> p.getUnidadMedida() != null
+                    && p.getUnidadMedida().isFraccionable()).count();
+            if (n > 0) {
+                throw new ValidationException("No puede quitar la venta fraccionada: " + n
+                        + " producto(s) se miden en metros, kilos o litros. Cambie su unidad primero.");
+            }
+        }
+        if (actuales.vencimiento() != ControlVencimiento.NINGUNO
+                && pedidas.vencimiento() == ControlVencimiento.NINGUNO) {
+            long n = productos.stream().filter(Product::isRequiereVencimiento).count();
+            if (n > 0) {
+                throw new ValidationException("No puede quitar el vencimiento: " + n
+                        + " producto(s) tienen fecha de vencimiento. Quítela de esos productos primero.");
+            }
+        }
     }
 
     /**
