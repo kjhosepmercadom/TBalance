@@ -35,6 +35,7 @@ public class Database implements AutoCloseable {
     private static final String[] CAMBIOS = {"cambios/v2_borrado_logico.sql", "cambios/v3_vistas_informes.sql",
             "cambios/v4_usuarios.sql", "cambios/v5_historial.sql", "cambios/v6_abonos.sql", "cambios/v7_varios_equipos.sql",
             "cambios/v8_tipos_de_negocio.sql"};
+    private static final String CAMBIO_TIPOS_DE_NEGOCIO = "cambios/v8_tipos_de_negocio.sql";
     private static final int SEGUNDOS_VALIDACION = 3;
     /** Si la conexión lleva más de esto sin usarse, se revisa antes de usarla (la nube corta las inactivas). */
     private static final long VALIDAR_TRAS_MS = 20_000;
@@ -179,8 +180,30 @@ public class Database implements AutoCloseable {
             transaccion(c -> actualizar(c, "INSERT INTO ESQUEMA_VERSION (VERSION) VALUES (?)", numero));
             aplicados++;
         }
+        aplicados += completarTiposDeNegocio();
         seguimiento = null;
         return aplicados;
+    }
+
+    /**
+     * El cambio de los tipos de negocio se revisa por lo que tiene la base y no solo
+     * por el número de versión: una base que ya anotó otro cambio con ese mismo número
+     * (por ejemplo las funciones de consulta de la prueba 26) se saltaría el script y
+     * después fallaría al leer {@code UNIDAD_MEDIDA}.
+     *
+     * @return 1 si hubo que aplicarlo, 0 si la base ya lo tenía
+     */
+    private int completarTiposDeNegocio() {
+        try {
+            Connection c = conexion();
+            if (!dialecto.tablaExiste(c, "PRODUCTO") || dialecto.columnaExiste(c, "PRODUCTO", "UNIDAD_MEDIDA")) {
+                return 0;
+            }
+        } catch (SQLException e) {
+            throw traducir(e, "revisar las tablas");
+        }
+        ejecutarScript(dialecto.carpetaScripts() + "/" + CAMBIO_TIPOS_DE_NEGOCIO);
+        return 1;
     }
 
     /** @return {@code true} si la tabla PERFIL no tiene filas */

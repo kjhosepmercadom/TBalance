@@ -50,6 +50,19 @@ public class PostgresDialect implements SqlDialect {
     }
 
     @Override
+    public boolean columnaExiste(Connection conexion, String tabla, String columna) throws SQLException {
+        try (PreparedStatement consulta = conexion.prepareStatement(
+                "SELECT COUNT(*) FROM information_schema.columns "
+                        + "WHERE table_schema = current_schema() AND table_name = ? AND column_name = ?")) {
+            consulta.setString(1, tabla.toLowerCase(Locale.ROOT));
+            consulta.setString(2, columna.toLowerCase(Locale.ROOT));
+            try (ResultSet fila = consulta.executeQuery()) {
+                return fila.next() && fila.getInt(1) > 0;
+            }
+        }
+    }
+
+    @Override
     public List<String> separarSentencias(String script) {
         List<String> sentencias = new ArrayList<>();
         StringBuilder actual = new StringBuilder();
