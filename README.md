@@ -4,7 +4,7 @@ Programa de escritorio en **Java** para llevar el inventario y las ventas de neg
 
 La interfaz se abre en una ventana de **Microsoft Edge** (o de JavaFX si no hay Edge). Los datos se guardan en **PostgreSQL**, **Oracle** o archivos **JSON**, según se elija en el programa. Todo funciona sin internet excepto el asistente.
 
-Proyecto de aula de **Programación de Computadores III (SS462)** — Universidad Popular del Cesar. Docente: Ing. Esp. Alfredo Bautista. Parte del sistema TBalance de Programación II. Versión actual: **v3.9.0**.
+Proyecto de aula de **Programación de Computadores III (SS462)** — Universidad Popular del Cesar. Docente: Ing. Esp. Alfredo Bautista. Parte del sistema TBalance de Programación II. Versión actual: **v3.9.1**.
 
 ## Equipo
 
@@ -28,6 +28,7 @@ Proyecto de aula de **Programación de Computadores III (SS462)** — Universida
 | — | [Utilidad neta real, costo oculto y comprobante de venta (v3.7.0)](docs/GASTOS_Y_COMPROBANTES.md) |
 | — | [Registrar productos más rápido: margen, copiar, escanear y pegar desde Excel (v3.8.0)](docs/ALTA_AGIL.md) |
 | — | [Foto opcional del producto en boutique y tecnología (v3.9.0)](docs/FOTOS.md) |
+| — | [Cargar productos desde un archivo de Excel (v3.9.1)](docs/CARGAR_DESDE_EXCEL.md) |
 
 ## Cómo ejecutar
 
