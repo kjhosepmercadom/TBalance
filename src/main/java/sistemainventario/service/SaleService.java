@@ -95,6 +95,7 @@ public class SaleService {
         for (SaleItem item : venta.getItems()) {
             Product producto = inventario.obtener(item.getProductoId());
             item.setCostoUnitario(producto.getPrecioCompra());
+            item.setCostoOculto(producto.getCostoOculto());
             producto.buscarVariante(item.getVarianteId())
                     .ifPresent(variante -> item.setDescripcionVariante(variante.getDescripcion()));
         }

@@ -47,6 +47,7 @@ public class JavaBridge {
     private final AssistantController asistente;
     private final ScanController escaneo;
     private final CostController costos;
+    private final ExpenseController gastos;
     private final CreditController fiados;
     private final SessionController sesion;
     private final ViewNotifier notificador;
@@ -74,6 +75,7 @@ public class JavaBridge {
         this.respaldos = new BackupController(contexto, notificador);
         this.almacenamiento = new StorageController(contexto, notificador);
         this.costos = new CostController(contexto);
+        this.gastos = new ExpenseController(contexto);
         this.fiados = new CreditController(contexto);
         this.sesion = new SessionController(contexto);
         this.etiquetas = new LabelController(contexto, new DesktopFileOpener());
@@ -492,6 +494,50 @@ public class JavaBridge {
      */
     public String obtenerCostos(String desde, String hasta) {
         return costos.obtenerCostos(desde, hasta);
+    }
+
+    // ---- Gastos y utilidad neta ------------------------------------------------
+
+    /**
+     * @param periodo mes, "yyyy-MM"
+     * @return gastos del mes
+     */
+    public String obtenerGastos(String periodo) {
+        return gastos.obtenerGastos(periodo);
+    }
+
+    /** @return gastos fijos que se copian cada mes */
+    public String obtenerGastosRecurrentes() {
+        return gastos.obtenerGastosRecurrentes();
+    }
+
+    /**
+     * @param jsonGasto datos del gasto
+     * @return el gasto guardado
+     */
+    public String guardarGasto(String jsonGasto) {
+        return gastos.guardarGasto(jsonGasto);
+    }
+
+    /**
+     * @param id ID del gasto
+     * @return OK o el error
+     */
+    public String eliminarGasto(String id) {
+        return gastos.eliminarGasto(id);
+    }
+
+    /**
+     * @param periodo mes, "yyyy-MM"
+     * @return utilidad neta real del mes
+     */
+    public String obtenerUtilidadNeta(String periodo) {
+        return gastos.obtenerUtilidadNeta(periodo);
+    }
+
+    /** @return porcentaje de gastos sobre ventas, o null si no hay con qué calcularlo */
+    public String obtenerCargaGastos() {
+        return gastos.obtenerCargaGastos();
     }
 
     // ---- Varios equipos ------------------------------------------------------

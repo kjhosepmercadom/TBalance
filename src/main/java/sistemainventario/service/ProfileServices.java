@@ -11,11 +11,14 @@ package sistemainventario.service;
  * @param proveedores proveedores
  * @param movimientos entradas y salidas
  * @param ventas      ventas
+ * @param fiados      fiados y abonos
+ * @param gastos      gastos operativos y utilidad neta
  */
 public record ProfileServices(InventoryService inventario,
                               CategoryService categorias,
                               SupplierService proveedores,
                               MovementService movimientos,
                               SaleService ventas,
-                              CreditService fiados) {
+                              CreditService fiados,
+                              ExpenseService gastos) {
 }

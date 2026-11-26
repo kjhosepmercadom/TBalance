@@ -96,6 +96,9 @@ public class Product extends IdentifiedEntity implements Deshabilitable {
         if (precioCompra < 0 || precioVenta < 0) {
             throw new ValidationException("Los precios no pueden ser negativos");
         }
+        if (costoOculto < 0 || Double.isNaN(costoOculto)) {
+            throw new ValidationException("El costo oculto no puede ser negativo");
+        }
         if (QuantityUtil.esNegativa(getStock()) || QuantityUtil.esNegativa(getStockMin())) {
             throw new ValidationException("El stock no puede ser negativo");
         }
