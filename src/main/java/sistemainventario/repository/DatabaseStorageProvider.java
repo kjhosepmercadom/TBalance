@@ -52,6 +52,11 @@ public class DatabaseStorageProvider implements StorageProvider {
     }
 
     @Override
+    public FotoStore fotos(String perfilId) {
+        return "PostgreSQL".equals(bd.nombreMotor()) ? new FotoJdbcStore(bd, perfilId) : FotoStore.SIN_SOPORTE;
+    }
+
+    @Override
     public Repository<Category> categorias(String perfilId) {
         return new CategoryJdbcRepository(bd, perfilId);
     }
