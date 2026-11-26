@@ -110,3 +110,5 @@ html body div#modal-producto > div { max-width: 980px; }
 
 .al-mini-fila { display: flex; align-items: center; gap: 12px; }
 .al-mini { width: 40px; height: 40px; flex: none; border-radius: 10px; object-fit: cover; border: 1px solid var(--c-line); background: var(--c-surface); }
+
+.al-archivo { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
