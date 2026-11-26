@@ -271,6 +271,21 @@ public final class AppContext {
         return almacenamiento;
     }
 
+    /**
+     * @return fotos de producto del negocio abierto (v3.9.0)
+     * @throws ValidationException si no hay un negocio abierto
+     */
+    public sistemainventario.service.FotoService getFotos() {
+        String perfilId = getPerfilActivoId();
+        ProfileServices servicios = requerirServiciosActivos();
+        if (perfilId == null) {
+            throw new ValidationException("Elija un negocio primero");
+        }
+        return new sistemainventario.service.FotoService(almacenActual.fotos(perfilId),
+                servicios.inventario()::obtenerHabilitado,
+                () -> gestorPerfiles.getPerfilActivo().map(Profile::usaFotos).orElse(false));
+    }
+
     /** @return nombre del almacenamiento en uso ("Archivos JSON", "PostgreSQL", "Oracle") */
     public String getAlmacenEnUso() {
         return almacenActual.nombre();

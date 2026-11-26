@@ -154,6 +154,22 @@ public class ProfileService {
     }
 
     /**
+     * Enciende o apaga las fotos de producto del negocio (v3.9.0). Apagarlas no borra las
+     * que ya están guardadas.
+     *
+     * @param id  ID del negocio
+     * @param usa {@code true} para usar fotos
+     * @return el negocio actualizado
+     */
+    public Profile guardarUsoDeFotos(String id, boolean usa) {
+        Profile perfil = obtener(id);
+        perfil.setUsaFotos(usa);
+        perfiles.actualizar(perfil);
+        sincronizarConfiguracion();
+        return perfil;
+    }
+
+    /**
      * No deja apagar una capacidad que los productos ya usan: primero hay que
      * cambiar esos productos (por ejemplo, de "Con tallas y colores" a "Simple").
      */
