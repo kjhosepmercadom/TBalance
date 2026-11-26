@@ -34,7 +34,7 @@ public class Database implements AutoCloseable {
     /** Cambios del esquema: la posición 0 lleva a la versión 2, la 1 a la 3, etc. */
     private static final String[] CAMBIOS = {"cambios/v2_borrado_logico.sql", "cambios/v3_vistas_informes.sql",
             "cambios/v4_usuarios.sql", "cambios/v5_historial.sql", "cambios/v6_abonos.sql", "cambios/v7_varios_equipos.sql",
-            "cambios/v8_tipos_de_negocio.sql"};
+            "cambios/v8_tipos_de_negocio.sql", "cambios/v9_gastos_utilidad_comprobantes.sql"};
     private static final String CAMBIO_TIPOS_DE_NEGOCIO = "cambios/v8_tipos_de_negocio.sql";
     private static final int SEGUNDOS_VALIDACION = 3;
     /** Si la conexión lleva más de esto sin usarse, se revisa antes de usarla (la nube corta las inactivas). */
@@ -176,7 +176,12 @@ public class Database implements AutoCloseable {
         int aplicados = 0;
         for (int siguiente = version + 1; siguiente <= versionActual(); siguiente++) {
             int numero = siguiente;
-            ejecutarScript(dialecto.carpetaScripts() + "/" + CAMBIOS[numero - 2]);
+            String cambio = dialecto.carpetaScripts() + "/" + CAMBIOS[numero - 2];
+            if (Database.class.getClassLoader().getResource(cambio) == null) {
+                throw new PersistenceException("Esta versión de TBalance todavía no tiene el cambio " + numero
+                        + " para " + nombreMotor() + ". Use PostgreSQL o los archivos JSON.", null);
+            }
+            ejecutarScript(cambio);
             transaccion(c -> actualizar(c, "INSERT INTO ESQUEMA_VERSION (VERSION) VALUES (?)", numero));
             aplicados++;
         }

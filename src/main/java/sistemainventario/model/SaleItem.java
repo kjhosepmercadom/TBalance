@@ -30,6 +30,8 @@ public class SaleItem {
      * v3.4.0 no lo tienen (vale 0).
      */
     private double costoUnitario;
+    /** Costo oculto por unidad que tenía el producto al venderse (v3.7.0); 0 en ventas anteriores. */
+    private double costoOculto;
 
     /** Constructor vacío requerido por Gson. */
     public SaleItem() {
@@ -73,7 +75,15 @@ public class SaleItem {
      * @return utilidad del ítem: (precio de venta - costo) por cantidad
      */
     public double utilidadCon(double costo) {
-        return (precioUnitario - costo) * getCantidad().doubleValue();
+        return (precioUnitario - costo - costoOculto) * getCantidad().doubleValue();
+    }
+
+    public double getCostoOculto() {
+        return costoOculto;
+    }
+
+    public void setCostoOculto(double costoOculto) {
+        this.costoOculto = Math.max(0, costoOculto);
     }
 
     public double getCostoUnitario() {

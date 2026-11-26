@@ -40,6 +40,8 @@ public class Sale extends IdentifiedEntity implements Anulable {
     private String vendedor;
     /** Fecha y hora exactas en que se registró (la fecha de la venta es solo el día). */
     private String fechaRegistro;
+    /** Número del comprobante, propio de cada negocio y de una en una (v3.7.0); 0 si aún no tiene. */
+    private long numero;
     private List<SaleItem> items = new ArrayList<>();
     private double total;
 
@@ -303,6 +305,15 @@ public class Sale extends IdentifiedEntity implements Anulable {
 
     public void setVendedor(String vendedor) {
         this.vendedor = vendedor;
+    }
+
+    /** @return número del comprobante (0 si la venta todavía no se guardó) */
+    public long getNumero() {
+        return numero;
+    }
+
+    public void setNumero(long numero) {
+        this.numero = Math.max(0, numero);
     }
 
     public String getFechaRegistro() {

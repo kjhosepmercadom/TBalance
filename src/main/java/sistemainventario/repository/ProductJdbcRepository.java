@@ -44,7 +44,7 @@ public class ProductJdbcRepository extends JdbcRepository<Product> {
     protected List<String> columnas() {
         return List.of("NOMBRE", "CODIGO", "DESCRIPCION", "CATEGORIA", "CATEGORIA_ID", "PROVEEDOR_ID",
                 "PRECIO_COMPRA", "PRECIO_VENTA", "STOCK", "STOCK_MIN", "TIPO", "REQUIERE_VENCIMIENTO",
-                "FECHA_VENCIMIENTO", "ACTIVO", "MANEJO", "UNIDAD_MEDIDA");
+                "FECHA_VENCIMIENTO", "ACTIVO", "MANEJO", "UNIDAD_MEDIDA", "COSTO_OCULTO");
     }
 
     @Override
@@ -53,7 +53,7 @@ public class ProductJdbcRepository extends JdbcRepository<Product> {
                 referenciaValida("CATEGORIA", p.getCategoriaId()), referenciaValida("PROVEEDOR", p.getProveedorId()),
                 p.getPrecioCompra(), p.getPrecioVenta(), p.getStock(), p.getStockMin(), texto(p.getTipo()),
                 p.isRequiereVencimiento(), dia(p.getFechaVencimiento()), p.isActivo(),
-                p.getManejo().name(), p.getUnidadMedida().getCodigo()};
+                p.getManejo().name(), p.getUnidadMedida().getCodigo(), p.getCostoOculto()};
     }
 
     @Override
@@ -68,6 +68,7 @@ public class ProductJdbcRepository extends JdbcRepository<Product> {
         p.setProveedorId(fila.getString("PROVEEDOR_ID"));
         p.setPrecioCompra(leerNumero(fila, "PRECIO_COMPRA"));
         p.setPrecioVenta(leerNumero(fila, "PRECIO_VENTA"));
+        p.setCostoOculto(leerNumero(fila, "COSTO_OCULTO"));
         p.setStock(leerCantidad(fila, "STOCK"));
         p.setStockMin(leerCantidad(fila, "STOCK_MIN"));
         p.setTipo(fila.getString("TIPO"));

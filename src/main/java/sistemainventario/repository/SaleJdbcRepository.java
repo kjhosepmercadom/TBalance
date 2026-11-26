@@ -33,7 +33,8 @@ public class SaleJdbcRepository extends JdbcRepository<Sale> {
     @Override
     protected List<String> columnas() {
         return List.of("CLIENTE", "METODO_PAGO", "OBSERVACION", "REFERENCIA_PAGO", "FECHA", "ESTADO", "TOTAL",
-                "FECHA_ANULACION", "MOTIVO_ANULACION", "ANULADA_POR", "USUARIO_ID", "VENDEDOR", "FECHA_REGISTRO", "CLIENTE_DOCUMENTO");
+                "FECHA_ANULACION", "MOTIVO_ANULACION", "ANULADA_POR", "USUARIO_ID", "VENDEDOR", "FECHA_REGISTRO", "CLIENTE_DOCUMENTO",
+                "NUMERO");
     }
 
     @Override
@@ -43,7 +44,7 @@ public class SaleJdbcRepository extends JdbcRepository<Sale> {
                 texto(v.getReferenciaPago()), momento(v.getFecha()), texto(v.getEstado()), v.getTotal(),
                 momento(v.getFechaAnulacion()), texto(v.getMotivoAnulacion()), texto(v.getAnuladaPor()),
                 texto(v.getUsuarioId()), texto(v.getVendedor()), momento(v.getFechaRegistro()),
-                texto(v.getClienteDocumento())};
+                texto(v.getClienteDocumento()), v.getNumero()};
     }
 
     @Override
@@ -62,6 +63,7 @@ public class SaleJdbcRepository extends JdbcRepository<Sale> {
         v.setVendedor(fila.getString("VENDEDOR"));
         v.setFechaRegistro(leerMomento(fila, "FECHA_REGISTRO"));
         v.setClienteDocumento(fila.getString("CLIENTE_DOCUMENTO"));
+        v.setNumero(fila.getLong("NUMERO"));
         return v;
     }
 
@@ -70,7 +72,7 @@ public class SaleJdbcRepository extends JdbcRepository<Sale> {
     protected void completar(List<Sale> ventas) {
         Map<String, List<SaleItem>> porVenta = new LinkedHashMap<>();
         bd.consultar("SELECT VENTA_ID, PRODUCTO_ID, VARIANTE_ID, DESCRIPCION_VARIANTE, NOMBRE_PRODUCTO, CANTIDAD, "
-                        + "PRECIO_UNITARIO, COSTO_UNITARIO FROM DETALLE_VENTA WHERE PERFIL_ID = ? ORDER BY VENTA_ID, LINEA",
+                        + "PRECIO_UNITARIO, COSTO_UNITARIO, COSTO_OCULTO FROM DETALLE_VENTA WHERE PERFIL_ID = ? ORDER BY VENTA_ID, LINEA",
                 fila -> {
                     SaleItem item = new SaleItem();
                     item.setProductoId(fila.getString("PRODUCTO_ID"));
@@ -80,6 +82,7 @@ public class SaleJdbcRepository extends JdbcRepository<Sale> {
                     item.setCantidad(leerCantidad(fila, "CANTIDAD"));
                     item.setPrecioUnitario(leerNumero(fila, "PRECIO_UNITARIO"));
                     item.setCostoUnitario(leerNumero(fila, "COSTO_UNITARIO"));
+                    item.setCostoOculto(leerNumero(fila, "COSTO_OCULTO"));
                     porVenta.computeIfAbsent(fila.getString("VENTA_ID"), k -> new ArrayList<>()).add(item);
                     return item;
                 }, perfilId);
@@ -90,6 +93,33 @@ public class SaleJdbcRepository extends JdbcRepository<Sale> {
     }
 
     /** Reescribe el detalle de la venta (al editar se borra el anterior). */
+    /**
+     * Da el número de comprobante dentro de la misma transacción que guarda la venta: la fila de
+     * CONSECUTIVO queda bloqueada hasta que termina, así dos cajas no repiten ni se saltan números.
+     */
+    @Override
+    protected void antesDeInsertar(Connection conexion, Sale venta) throws SQLException {
+        Database.actualizar(conexion, "INSERT INTO CONSECUTIVO (PERFIL_ID, TIPO, ULTIMO) SELECT ?, 'COMPROBANTE', 0 "
+                + "WHERE NOT EXISTS (SELECT 1 FROM CONSECUTIVO WHERE PERFIL_ID = ? AND TIPO = 'COMPROBANTE')",
+                perfilId, perfilId);
+        if (venta.getNumero() > 0) {
+            // venta que ya trae número (copia desde archivos): el consecutivo no puede quedar atrás
+            Database.actualizar(conexion, "UPDATE CONSECUTIVO SET ULTIMO = ? WHERE PERFIL_ID = ? AND TIPO = 'COMPROBANTE' AND ULTIMO < ?",
+                    venta.getNumero(), perfilId, venta.getNumero());
+            return;
+        }
+        Database.actualizar(conexion, "UPDATE CONSECUTIVO SET ULTIMO = ULTIMO + 1 WHERE PERFIL_ID = ? AND TIPO = 'COMPROBANTE'",
+                perfilId);
+        try (java.sql.PreparedStatement consulta = conexion.prepareStatement(
+                "SELECT ULTIMO FROM CONSECUTIVO WHERE PERFIL_ID = ? AND TIPO = 'COMPROBANTE'")) {
+            consulta.setString(1, perfilId);
+            try (ResultSet fila = consulta.executeQuery()) {
+                fila.next();
+                venta.setNumero(fila.getLong(1));
+            }
+        }
+    }
+
     @Override
     protected void guardarHijos(Connection conexion, Sale venta, boolean nueva) throws SQLException {
         if (!nueva) {
@@ -100,11 +130,12 @@ public class SaleJdbcRepository extends JdbcRepository<Sale> {
         for (SaleItem item : venta.getItems()) {
             Database.actualizar(conexion,
                     "INSERT INTO DETALLE_VENTA (PERFIL_ID, VENTA_ID, LINEA, PRODUCTO_ID, VARIANTE_ID, DESCRIPCION_VARIANTE, "
-                            + "NOMBRE_PRODUCTO, CANTIDAD, PRECIO_UNITARIO, SUBTOTAL, COSTO_UNITARIO) "
-                            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                            + "NOMBRE_PRODUCTO, CANTIDAD, PRECIO_UNITARIO, SUBTOTAL, COSTO_UNITARIO, COSTO_OCULTO) "
+                            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     perfilId, venta.getId(), linea++, item.getProductoId(), texto(item.getVarianteId()),
                     texto(item.getDescripcionVariante()), texto(item.getNombreProducto()),
-                    item.getCantidad(), item.getPrecioUnitario(), item.getSubtotal(), item.getCostoUnitario());
+                    item.getCantidad(), item.getPrecioUnitario(), item.getSubtotal(), item.getCostoUnitario(),
+                    item.getCostoOculto());
         }
     }
 }
