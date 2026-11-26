@@ -69,13 +69,15 @@ public class SaleJdbcRepository extends JdbcRepository<Sale> {
     @Override
     protected void completar(List<Sale> ventas) {
         Map<String, List<SaleItem>> porVenta = new LinkedHashMap<>();
-        bd.consultar("SELECT VENTA_ID, PRODUCTO_ID, NOMBRE_PRODUCTO, CANTIDAD, PRECIO_UNITARIO, COSTO_UNITARIO "
-                        + "FROM DETALLE_VENTA WHERE PERFIL_ID = ? ORDER BY VENTA_ID, LINEA",
+        bd.consultar("SELECT VENTA_ID, PRODUCTO_ID, VARIANTE_ID, DESCRIPCION_VARIANTE, NOMBRE_PRODUCTO, CANTIDAD, "
+                        + "PRECIO_UNITARIO, COSTO_UNITARIO FROM DETALLE_VENTA WHERE PERFIL_ID = ? ORDER BY VENTA_ID, LINEA",
                 fila -> {
                     SaleItem item = new SaleItem();
                     item.setProductoId(fila.getString("PRODUCTO_ID"));
                     item.setNombreProducto(fila.getString("NOMBRE_PRODUCTO"));
-                    item.setCantidad(fila.getInt("CANTIDAD"));
+                    item.setVarianteId(fila.getString("VARIANTE_ID"));
+                    item.setDescripcionVariante(fila.getString("DESCRIPCION_VARIANTE"));
+                    item.setCantidad(leerCantidad(fila, "CANTIDAD"));
                     item.setPrecioUnitario(leerNumero(fila, "PRECIO_UNITARIO"));
                     item.setCostoUnitario(leerNumero(fila, "COSTO_UNITARIO"));
                     porVenta.computeIfAbsent(fila.getString("VENTA_ID"), k -> new ArrayList<>()).add(item);
@@ -97,9 +99,11 @@ public class SaleJdbcRepository extends JdbcRepository<Sale> {
         int linea = 1;
         for (SaleItem item : venta.getItems()) {
             Database.actualizar(conexion,
-                    "INSERT INTO DETALLE_VENTA (PERFIL_ID, VENTA_ID, LINEA, PRODUCTO_ID, NOMBRE_PRODUCTO, CANTIDAD, "
-                            + "PRECIO_UNITARIO, SUBTOTAL, COSTO_UNITARIO) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                    perfilId, venta.getId(), linea++, item.getProductoId(), texto(item.getNombreProducto()),
+                    "INSERT INTO DETALLE_VENTA (PERFIL_ID, VENTA_ID, LINEA, PRODUCTO_ID, VARIANTE_ID, DESCRIPCION_VARIANTE, "
+                            + "NOMBRE_PRODUCTO, CANTIDAD, PRECIO_UNITARIO, SUBTOTAL, COSTO_UNITARIO) "
+                            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    perfilId, venta.getId(), linea++, item.getProductoId(), texto(item.getVarianteId()),
+                    texto(item.getDescripcionVariante()), texto(item.getNombreProducto()),
                     item.getCantidad(), item.getPrecioUnitario(), item.getSubtotal(), item.getCostoUnitario());
         }
     }

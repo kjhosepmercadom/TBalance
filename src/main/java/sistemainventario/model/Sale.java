@@ -2,6 +2,7 @@ package sistemainventario.model;
 
 import sistemainventario.exception.ValidationException;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -12,7 +13,7 @@ import java.util.Map;
  * Transacción comercial compuesta por uno o varios {@link SaleItem}.
  *
  * <p><b>GRASP Creator:</b> la venta contiene y registra sus ítems, por eso es
- * ella quien los crea en {@link #agregarItem(Product, int, double)}.</p>
+ * ella quien los crea en {@link #agregarItem(Product, BigDecimal, double)}.</p>
  *
  * <p><b>GRASP Experto:</b> conoce todos sus ítems, por lo que calcula el
  * total, las unidades y las cantidades agrupadas por producto.</p>
@@ -64,7 +65,7 @@ public class Sale extends IdentifiedEntity implements Anulable {
      * @param precioUnitario precio aplicado en la venta
      * @return el ítem creado
      */
-    public SaleItem agregarItem(Product producto, int cantidad, double precioUnitario) {
+    public SaleItem agregarItem(Product producto, BigDecimal cantidad, double precioUnitario) {
         SaleItem item = new SaleItem(producto.getId(), producto.getNombre(), cantidad, precioUnitario);
         item.setCostoUnitario(producto.getPrecioCompra());
         item.validar();
@@ -113,8 +114,8 @@ public class Sale extends IdentifiedEntity implements Anulable {
     }
 
     /** @return número total de unidades vendidas */
-    public int getTotalUnidades() {
-        return itemsSeguros().stream().mapToInt(SaleItem::getCantidad).sum();
+    public BigDecimal getTotalUnidades() {
+        return itemsSeguros().stream().map(SaleItem::getCantidad).reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     /**
@@ -123,10 +124,10 @@ public class Sale extends IdentifiedEntity implements Anulable {
      *
      * @return mapa productoId → unidades totales
      */
-    public Map<String, Integer> cantidadesPorProducto() {
-        Map<String, Integer> cantidades = new LinkedHashMap<>();
+    public Map<StockKey, BigDecimal> cantidadesPorProducto() {
+        Map<StockKey, BigDecimal> cantidades = new LinkedHashMap<>();
         for (SaleItem item : itemsSeguros()) {
-            cantidades.merge(item.getProductoId(), item.getCantidad(), Integer::sum);
+            cantidades.merge(new StockKey(item.getProductoId(), item.getVarianteId()), item.getCantidad(), BigDecimal::add);
         }
         return cantidades;
     }

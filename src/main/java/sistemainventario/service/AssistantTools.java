@@ -16,6 +16,9 @@ import sistemainventario.model.Supplier;
 
 import java.text.Normalizer;
 import java.time.LocalDate;
+import sistemainventario.util.QuantityUtil;
+
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -249,13 +252,15 @@ public class AssistantTools {
         }
         JsonArray productos = new JsonArray();
         for (Product p : base) {
-            boolean falta = p.getStock() <= p.getStockMin();
+            double stock = p.getStock().doubleValue();
+            double minimo = p.getStockMin().doubleValue();
+            boolean falta = stock <= minimo;
             if (!falta && !todos) {
                 continue;
             }
             JsonObject fila = resumen(p);
-            fila.addProperty("sugerido_pedir", falta ? Math.max(1, p.getStockMin() * 2 - p.getStock()) : 0);
-            fila.addProperty("estado", p.getStock() <= 0 ? "agotado" : (falta ? "bajo el mínimo" : "suficiente"));
+            fila.addProperty("sugerido_pedir", falta ? Math.max(1, Math.ceil(minimo * 2 - stock)) : 0);
+            fila.addProperty("estado", stock <= 0 ? "agotado" : (falta ? "bajo el mínimo" : "suficiente"));
             productos.add(fila);
         }
         JsonObject r = new JsonObject();
@@ -439,8 +444,8 @@ public class AssistantTools {
             if (p.isEmpty()) {
                 continue;
             }
-            if (p.get().getStock() < cantidad) {
-                errores.add("Solo hay " + p.get().getStock() + " de " + p.get().getNombre() + ".");
+            if (!p.get().tieneStockPara(BigDecimal.valueOf(cantidad))) {
+                errores.add("Solo hay " + QuantityUtil.texto(p.get().getStock()) + " de " + p.get().getNombre() + ".");
                 continue;
             }
             double precio = item.has("precio") ? item.get("precio").getAsDouble() : p.get().getPrecioVenta();
@@ -466,7 +471,7 @@ public class AssistantTools {
             Sale venta = new Sale(null, cliente, metodo, OBSERVACION, null);
             venta.setClienteDocumento(cedula.isBlank() ? null : cedula);
             for (LineaVenta l : lineas) {
-                venta.agregarItem(servicios.inventario().obtener(l.productoId()), l.cantidad(), l.precio());
+                venta.agregarItem(servicios.inventario().obtener(l.productoId()), BigDecimal.valueOf(l.cantidad()), l.precio());
             }
             servicios.ventas().registrar(venta);
         });
@@ -488,7 +493,7 @@ public class AssistantTools {
                 continue;
             }
             Double costo = item.has("costo") ? item.get("costo").getAsDouble() : null;
-            lineas.add(new LineaEntrada(p.get().getId(), p.get().getNombre(), cantidad, costo, p.get().getStock()));
+            lineas.add(new LineaEntrada(p.get().getId(), p.get().getNombre(), cantidad, costo, p.get().getStock().doubleValue()));
         }
         if (!errores.isEmpty() || lineas.isEmpty()) {
             return errorConDetalle("No se preparó la entrada.", errores);
@@ -496,7 +501,8 @@ public class AssistantTools {
         List<String> detalle = new ArrayList<>();
         double total = 0;
         for (LineaEntrada l : lineas) {
-            detalle.add("+" + l.cantidad() + " " + l.nombre() + " (queda en " + (l.stockActual() + l.cantidad()) + ")"
+            detalle.add("+" + l.cantidad() + " " + l.nombre() + " (queda en "
+                    + QuantityUtil.texto(BigDecimal.valueOf(l.stockActual() + l.cantidad())) + ")"
                     + (l.costo() != null ? " · costo " + dinero(l.costo()) : ""));
             total += l.costo() != null ? l.costo() * l.cantidad() : 0;
         }
@@ -511,7 +517,8 @@ public class AssistantTools {
                     servicios.inventario().guardar(producto);
                 }
                 servicios.movimientos().registrarEntrada(new StockEntry(null, producto.getId(),
-                        proveedorId != null ? proveedorId : producto.getProveedorId(), l.cantidad(), costo, null, OBSERVACION));
+                        proveedorId != null ? proveedorId : producto.getProveedorId(), BigDecimal.valueOf(l.cantidad()), costo,
+                        null, OBSERVACION));
             }
         });
     }
@@ -523,15 +530,16 @@ public class AssistantTools {
         if (p.isEmpty() || cantidad <= 0) {
             return errorConDetalle("No se preparó la salida.", errores.isEmpty() ? List.of("Falta la cantidad.") : errores);
         }
-        if (p.get().getStock() < cantidad) {
-            return error("Solo hay " + p.get().getStock() + " de " + p.get().getNombre() + ".");
+        if (!p.get().tieneStockPara(BigDecimal.valueOf(cantidad))) {
+            return error("Solo hay " + QuantityUtil.texto(p.get().getStock()) + " de " + p.get().getNombre() + ".");
         }
         String motivo = cadena(a, "motivo");
         String id = p.get().getId();
         return proponer("salida", "Registrar salida de inventario",
-                List.of("-" + cantidad + " " + p.get().getNombre() + " (queda en " + (p.get().getStock() - cantidad) + ")",
+                List.of("-" + cantidad + " " + p.get().getNombre() + " (queda en "
+                                + QuantityUtil.texto(p.get().getStock().subtract(BigDecimal.valueOf(cantidad))) + ")",
                         "Motivo: " + motivo), null,
-                () -> servicios.movimientos().registrarSalida(new StockExit(null, id, cantidad, motivo, null, "AJUSTE")));
+                () -> servicios.movimientos().registrarSalida(new StockExit(null, id, BigDecimal.valueOf(cantidad), motivo, null, "AJUSTE")));
     }
 
     private JsonObject proponerCambioPrecio(JsonObject a) {
@@ -591,7 +599,7 @@ public class AssistantTools {
         proveedor.ifPresent(s -> detalle.add("Proveedor: " + s.getNombre()));
         return proponer("producto", "Crear producto " + nombre, detalle, null, () -> servicios.inventario().guardar(
                 new Product(null, nombre, "", cat.getNombre(), cat.getId(), proveedor.map(Supplier::getId).orElse(null),
-                        compra, venta, stock, minimo, null)));
+                        compra, venta, BigDecimal.valueOf(stock), BigDecimal.valueOf(minimo), null)));
     }
 
     private JsonObject proponer(String tipo, String titulo, List<String> detalle, Double total, Runnable accion) {
@@ -837,6 +845,6 @@ public class AssistantTools {
     }
 
     /** Producto, cantidad y costo (si se dijo) de una entrada propuesta. */
-    private record LineaEntrada(String productoId, String nombre, int cantidad, Double costo, int stockActual) {
+    private record LineaEntrada(String productoId, String nombre, int cantidad, Double costo, double stockActual) {
     }
 }

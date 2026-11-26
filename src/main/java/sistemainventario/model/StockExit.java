@@ -1,5 +1,7 @@
 package sistemainventario.model;
 
+import java.math.BigDecimal;
+
 /**
  * Retiro de mercancía que no es una venta (merma, daño, uso interno):
  * reduce el stock del producto.
@@ -16,7 +18,7 @@ public class StockExit extends InventoryMovement {
         super();
     }
 
-    public StockExit(String id, String productoId, int cantidad,
+    public StockExit(String id, String productoId, BigDecimal cantidad,
                   String motivo, String fecha, String tipo) {
         super(id, productoId, cantidad, fecha);
         this.motivo = motivo;

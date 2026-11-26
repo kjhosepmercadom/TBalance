@@ -1,5 +1,7 @@
 package sistemainventario.model;
 
+import java.math.BigDecimal;
+
 /**
  * Ingreso de mercancía al inventario: incrementa el stock del producto.
  */
@@ -17,7 +19,7 @@ public class StockEntry extends InventoryMovement {
     }
 
     public StockEntry(String id, String productoId, String proveedorId,
-                   int cantidad, double precioUnitario,
+                   BigDecimal cantidad, double precioUnitario,
                    String fecha, String observacion) {
         super(id, productoId, cantidad, fecha);
         this.proveedorId = proveedorId;

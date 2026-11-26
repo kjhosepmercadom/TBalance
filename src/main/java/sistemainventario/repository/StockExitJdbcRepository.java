@@ -24,12 +24,12 @@ public class StockExitJdbcRepository extends JdbcRepository<StockExit> {
 
     @Override
     protected List<String> columnas() {
-        return List.of("PRODUCTO_ID", "CANTIDAD", "FECHA", "MOTIVO", "TIPO", "ESTADO", "FECHA_REGISTRO", "FECHA_ANULACION", "MOTIVO_ANULACION", "ANULADA_POR");
+        return List.of("PRODUCTO_ID", "VARIANTE_ID", "CANTIDAD", "FECHA", "MOTIVO", "TIPO", "ESTADO", "FECHA_REGISTRO", "FECHA_ANULACION", "MOTIVO_ANULACION", "ANULADA_POR");
     }
 
     @Override
     protected Object[] valores(StockExit s) {
-        return new Object[]{s.getProductoId(), s.getCantidad(), momento(s.getFecha()), texto(s.getMotivo()),
+        return new Object[]{s.getProductoId(), texto(s.getVarianteId()), s.getCantidad(), momento(s.getFecha()), texto(s.getMotivo()),
                 texto(s.getTipo()), texto(s.getEstado()), momento(s.getFechaRegistro()),
                 momento(s.getFechaAnulacion()), texto(s.getMotivoAnulacion()), texto(s.getAnuladaPor())};
     }
@@ -39,7 +39,8 @@ public class StockExitJdbcRepository extends JdbcRepository<StockExit> {
         StockExit s = new StockExit();
         s.setId(fila.getString("ID"));
         s.setProductoId(fila.getString("PRODUCTO_ID"));
-        s.setCantidad(fila.getInt("CANTIDAD"));
+        s.setVarianteId(fila.getString("VARIANTE_ID"));
+        s.setCantidad(leerCantidad(fila, "CANTIDAD"));
         s.setFecha(leerMomento(fila, "FECHA"));
         s.setMotivo(fila.getString("MOTIVO"));
         s.setTipo(fila.getString("TIPO"));
