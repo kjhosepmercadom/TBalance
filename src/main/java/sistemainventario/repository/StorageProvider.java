@@ -79,6 +79,14 @@ public interface StorageProvider extends AutoCloseable {
      */
     Repository<sistemainventario.model.Expense> gastos(String perfilId);
 
+    /**
+     * @param perfilId negocio
+     * @return fotos de sus productos (v3.9.0); sin soporte si el almacenamiento no las guarda
+     */
+    default FotoStore fotos(String perfilId) {
+        return FotoStore.SIN_SOPORTE;
+    }
+
     /** Libera la conexión, si la hay. */
     @Override
     default void close() {

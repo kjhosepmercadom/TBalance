@@ -239,6 +239,30 @@ public class Profile extends IdentifiedEntity implements Deshabilitable {
         setConfig(CLAVE_REDONDEO_ALTA, politica.redondeo().name());
     }
 
+    /** Si el negocio usa fotos de producto: {@code true} o {@code false}; vacío = según el tipo de negocio. */
+    public static final String CLAVE_FOTOS = "cap.fotos";
+
+    /**
+     * Las fotos ayudan donde el cliente elige con los ojos (ropa, celulares, accesorios) y
+     * estorban donde se vende por código o peso (tienda, droguería, ferretería). Por eso
+     * vienen activas solo en boutique y tecnología; el dueño puede cambiarlo.
+     *
+     * @return {@code true} si el negocio puede poner foto a sus productos
+     */
+    public boolean usaFotos() {
+        String guardado = getConfig(CLAVE_FOTOS, "").trim();
+        if (!guardado.isEmpty()) {
+            return Boolean.parseBoolean(guardado);
+        }
+        BusinessType tipo = getPerfilNegocio();
+        return tipo == BusinessType.BOUTIQUE || tipo == BusinessType.TECNOLOGIA;
+    }
+
+    /** @param usa {@code true} para activar las fotos de producto en este negocio */
+    public void setUsaFotos(boolean usa) {
+        setConfig(CLAVE_FOTOS, String.valueOf(usa));
+    }
+
     /** Clave de configuración con los medios de pago que acepta el negocio. */
     public static final String CLAVE_MEDIOS_PAGO = "mediosPago";
 
