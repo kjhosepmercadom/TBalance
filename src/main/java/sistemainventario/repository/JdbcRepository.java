@@ -98,6 +98,17 @@ public abstract class JdbcRepository<T extends IdentifiedEntity> implements Repo
     }
 
     /**
+     * Se llama dentro de la transacción, justo antes del INSERT (por ejemplo para dar un número
+     * consecutivo). Por defecto no hace nada.
+     *
+     * @param conexion conexión de la transacción
+     * @param entidad  entidad que se va a guardar
+     * @throws SQLException si la base rechaza un cambio
+     */
+    protected void antesDeInsertar(Connection conexion, T entidad) throws SQLException {
+    }
+
+    /**
      * Prepara el borrado (por ejemplo, quitar referencias). Por defecto no hace nada.
      *
      * @param conexion conexión de la transacción
@@ -144,6 +155,7 @@ public abstract class JdbcRepository<T extends IdentifiedEntity> implements Repo
         // ya traería la fila nueva y quedaría repetida al agregarla abajo
         List<T> enMemoria = datos();
         bd.transaccion(c -> {
+            antesDeInsertar(c, entidad);
             Database.actualizar(c, sqlInsertar(), concatenar(llave(entidad.getId()), valores(entidad)));
             guardarHijos(c, entidad, true);
             return null;

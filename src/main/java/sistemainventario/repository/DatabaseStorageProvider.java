@@ -82,6 +82,11 @@ public class DatabaseStorageProvider implements StorageProvider {
     }
 
     @Override
+    public Repository<sistemainventario.model.Expense> gastos(String perfilId) {
+        return new ExpenseJdbcRepository(bd, perfilId);
+    }
+
+    @Override
     public void close() {
         bd.close();
     }
