@@ -263,6 +263,16 @@ public class JavaBridge {
         return perfiles.obtenerTiposNegocio();
     }
 
+    /** @return lo que maneja el negocio activo */
+    public String capacidadesNegocio() {
+        return perfiles.capacidadesNegocio();
+    }
+
+    /** @param manejo "SIMPLE" o "VARIANTES" @return campos del formulario de producto */
+    public String formularioProducto(String manejo) {
+        return perfiles.formularioProducto(manejo);
+    }
+
     public String crearPerfil(String jsonPerfil) {
         return perfiles.crearPerfil(jsonPerfil);
     }

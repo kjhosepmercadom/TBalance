@@ -1,5 +1,8 @@
 package sistemainventario.model;
 
+import sistemainventario.manejo.InventoryHandling;
+import sistemainventario.manejo.InventoryHandlingFactory;
+import sistemainventario.manejo.StockLine;
 import java.math.BigDecimal;
 
 /**
@@ -28,7 +31,8 @@ public class StockExit extends InventoryMovement {
     /** Polimorfismo: una salida descuenta unidades y valida el stock disponible. */
     @Override
     public void aplicarA(Product producto) {
-        producto.disminuirStock(getCantidad());
+        InventoryHandling estrategia = InventoryHandlingFactory.para(producto);
+        estrategia.descontar(producto, estrategia.reservar(producto, getVarianteId(), getCantidad()));
     }
 
     @Override

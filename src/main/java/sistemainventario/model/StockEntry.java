@@ -1,5 +1,8 @@
 package sistemainventario.model;
 
+import sistemainventario.manejo.InventoryHandling;
+import sistemainventario.manejo.InventoryHandlingFactory;
+import sistemainventario.manejo.StockLine;
 import java.math.BigDecimal;
 
 /**
@@ -33,7 +36,8 @@ public class StockEntry extends InventoryMovement {
      */
     @Override
     public void aplicarA(Product producto) {
-        producto.aumentarStock(getCantidad());
+        InventoryHandlingFactory.para(producto).reponer(producto,
+                StockLine.de(getProductoId(), getVarianteId(), getCantidad()));
         if (precioUnitario > 0 && precioUnitario != producto.getPrecioCompra()) {
             producto.setPrecioCompra(precioUnitario);
         }

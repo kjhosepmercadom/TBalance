@@ -1,6 +1,9 @@
 package sistemainventario.service;
 
 import sistemainventario.exception.ValidationException;
+import sistemainventario.manejo.InventoryHandlingFactory;
+import sistemainventario.model.BusinessCapabilities;
+import sistemainventario.model.ControlVencimiento;
 import sistemainventario.model.Category;
 import sistemainventario.model.Product;
 import sistemainventario.repository.Repository;
@@ -11,6 +14,7 @@ import java.util.Optional;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -24,6 +28,9 @@ import java.util.stream.Collectors;
 public class InventoryService extends EntityService<Product> {
 
     private CategoryService categorias;
+    /** Lo que maneja el negocio; por defecto, todo permitido (solo se usa si el perfil no existe). */
+    private Supplier<BusinessCapabilities> capacidades = () -> BusinessCapabilities.desde(null,
+            new BusinessCapabilities(true, ControlVencimiento.OPCIONAL, true, false, true));
 
     public InventoryService(Repository<Product> repositorio) {
         super(repositorio);
@@ -40,9 +47,17 @@ public class InventoryService extends EntityService<Product> {
         categorias.usarProductos(this::listarTodos);
     }
 
+    /**
+     * @param capacidades de dónde sacar lo que maneja el negocio (cambia al editar el negocio)
+     */
+    public void usarCapacidades(Supplier<BusinessCapabilities> capacidades) {
+        this.capacidades = Objects.requireNonNull(capacidades);
+    }
+
     @Override
     protected void validar(Product producto) {
         producto.validar(LocalDate.now());
+        InventoryHandlingFactory.para(producto).validar(producto, capacidades.get());
         if (categorias != null) {
             categorias.resolverCategoria(producto);
         }

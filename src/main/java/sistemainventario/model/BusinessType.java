@@ -9,8 +9,9 @@ import java.util.Map;
 /**
  * Tipos de negocio que puede tener un {@link Profile}.
  *
- * <p>Cada tipo declara sus categorías predefinidas, si exige control de
- * vencimiento y textos de ejemplo para los formularios.</p>
+ * <p>Cada tipo declara sus categorías predefinidas, sus capacidades iniciales
+ * ({@link BusinessCapabilities}: tallas, vencimiento, fracción...) y textos de
+ * ejemplo para los formularios.</p>
  *
  * <p><b>OCP:</b> agregar un tipo de negocio nuevo consiste en declarar una
  * constante más; ni los servicios ni la vista necesitan cambiar porque
@@ -20,48 +21,48 @@ public enum BusinessType {
 
     BOUTIQUE("Boutique",
             List.of("Camisas", "Vestidos", "Pantalones", "Zapatos", "Accesorios"),
-            true,
+            new BusinessCapabilities(true, ControlVencimiento.NINGUNO, false, false, false),
             new Suggestions("Blusa Casual Mujer", "Ropa", "Moda Fashion")),
 
     FARMACIA("Farmacia",
             List.of("Medicamentos", "Vitaminas", "Higiene", "Cosmeticos", "Primeros Auxilios"),
-            true,
+            new BusinessCapabilities(false, ControlVencimiento.OBLIGATORIO, false, false, false),
             new Suggestions("Acetaminofen 500 mg", "Medicamentos", "Laboratorios XYZ")),
 
     FERRETERIA("Ferreteria",
             List.of("Herramientas", "Pinturas", "Electricidad", "Plomeria", "Tornilleria"),
-            true,
+            new BusinessCapabilities(false, ControlVencimiento.NINGUNO, true, false, false),
             new Suggestions("Martillo de acero", "Herramientas", "FerreDistribuciones")),
 
     SUPERMERCADO("Supermercado",
             List.of("Frutas", "Verduras", "Carnes", "Lacteos", "Bebidas", "Aseo"),
-            true,
+            new BusinessCapabilities(false, ControlVencimiento.OPCIONAL, true, false, true),
             new Suggestions("Leche Entera 1L", "Lacteos", "Alimentos Nacionales")),
 
     TIENDA_BARRIO("Tienda de barrio",
             List.of("Bebidas", "Lacteos", "Snacks", "Dulces", "Aseo"),
-            true,
+            new BusinessCapabilities(false, ControlVencimiento.OPCIONAL, true, false, true),
             new Suggestions("Arroz Diana 500g", "Abarrotes", "Distribuidora Local")),
 
     TECNOLOGIA("Tecnologia",
             List.of("Computadores", "Celulares", "Accesorios", "Audio", "Gaming"),
-            true,
+            new BusinessCapabilities(false, ControlVencimiento.NINGUNO, false, true, false),
             new Suggestions("Portatil HP 15", "Laptops", "Distribuidora Tecnologica")),
 
     NINGUNO("Personalizado (sin categorías predefinidas)",
             List.of(),
-            true,
+            new BusinessCapabilities(false, ControlVencimiento.OPCIONAL, false, false, false),
             new Suggestions("", "", ""));
 
     private final String etiqueta;
     private final List<String> categoriasPredefinidas;
-    private final boolean requiereVencimiento;
+    private final BusinessCapabilities capacidades;
     private final Suggestions sugerencias;
 
-    BusinessType(String etiqueta, List<String> categorias, boolean requiereVencimiento, Suggestions sugerencias) {
+    BusinessType(String etiqueta, List<String> categorias, BusinessCapabilities capacidades, Suggestions sugerencias) {
         this.etiqueta = etiqueta;
         this.categoriasPredefinidas = Collections.unmodifiableList(categorias);
-        this.requiereVencimiento = requiereVencimiento;
+        this.capacidades = capacidades;
         this.sugerencias = sugerencias;
     }
 
@@ -93,9 +94,15 @@ public enum BusinessType {
         return !categoriasPredefinidas.isEmpty();
     }
 
-    /** @return {@code true} si los productos de este negocio manejan fecha de vencimiento */
-    public boolean requiereControlVencimiento() {
-        return requiereVencimiento;
+    /**
+     * <b>v3.6.0:</b> lo que maneja un negocio de este tipo cuando se crea
+     * (tallas en Boutique, fracción en Ferretería, vencimiento obligatorio en
+     * Farmacia...). El dueño lo puede cambiar al editar el negocio.
+     *
+     * @return las capacidades iniciales
+     */
+    public BusinessCapabilities capacidadesPorDefecto() {
+        return capacidades;
     }
 
     /** @return mapa con las claves {@code producto}, {@code categoria} y {@code proveedor} */
@@ -113,7 +120,8 @@ public enum BusinessType {
         descripcion.put("clave", name());
         descripcion.put("etiqueta", etiqueta);
         descripcion.put("categorias", categoriasPredefinidas);
-        descripcion.put("vencimiento", requiereVencimiento);
+        descripcion.put("vencimiento", capacidades.vencimiento() != ControlVencimiento.NINGUNO);
+        descripcion.put("capacidades", capacidades);
         return descripcion;
     }
 

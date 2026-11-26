@@ -1,5 +1,8 @@
 package sistemainventario.service;
 
+import sistemainventario.model.BusinessCapabilities;
+import sistemainventario.model.ControlVencimiento;
+import sistemainventario.model.Profile;
 import sistemainventario.repository.StorageProvider;
 
 import java.util.Objects;
@@ -47,6 +50,10 @@ public class ProfileServicesFactory {
         InventoryService inventario = new InventoryService(almacen.productos(perfilId));
         CategoryService categorias = new CategoryService(almacen.categorias(perfilId));
         inventario.usarCategorias(categorias);
+        inventario.usarCapacidades(() -> almacen.perfiles().buscarPorId(perfilId)
+                .map(Profile::getCapacidades)
+                .orElseGet(() -> BusinessCapabilities.desde(null,
+                        new BusinessCapabilities(true, ControlVencimiento.OPCIONAL, true, false, true))));
         inventario.normalizarCategorias();
         SaleService ventas = new SaleService(inventario, almacen.ventas(perfilId));
         ventas.usarMediosDePago(metodo -> almacen.perfiles().buscarPorId(perfilId)
