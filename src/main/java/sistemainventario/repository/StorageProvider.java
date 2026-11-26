@@ -73,6 +73,12 @@ public interface StorageProvider extends AutoCloseable {
      */
     Repository<sistemainventario.model.CreditPayment> abonos(String perfilId);
 
+    /**
+     * @param perfilId negocio
+     * @return gastos operativos del negocio (luz, agua, arriendo, nómina...)
+     */
+    Repository<sistemainventario.model.Expense> gastos(String perfilId);
+
     /** Libera la conexión, si la hay. */
     @Override
     default void close() {

@@ -45,6 +45,7 @@
   <link rel="stylesheet" href="css/tailwind.css" />
   <link rel="stylesheet" href="css/tbalance.css" />
   <link rel="stylesheet" href="css/tbalance-vistas.css" />
+  <link rel="stylesheet" href="css/tbalance-gastos.css" />
   <link rel="icon" type="image/png" sizes="256x256" href="img/tbalance-app-256.png" />
   <link rel="icon" type="image/png" sizes="192x192" href="img/tbalance-app-192.png" />
   <link rel="icon" type="image/png" sizes="128x128" href="img/tbalance-app-128.png" />
@@ -641,6 +642,33 @@
           </div>
         </div>
 
+        <section class="tbg-bloque" id="tbg-bloque" hidden aria-labelledby="tbg-h2">
+          <div class="tbg-cabeza">
+            <div>
+              <h2 class="tbg-h2" id="tbg-h2">Utilidad neta del mes</h2>
+              <p class="tbg-sub">Lo que de verdad le queda después de pagar la mercancía y los gastos del negocio.</p>
+            </div>
+            <div class="tbg-mes" role="group" aria-label="Mes">
+              <button type="button" aria-label="Mes anterior" onclick="tbGastosMes(-1)">&#8249;</button>
+              <span id="tbg-mes-nombre" aria-live="polite"></span>
+              <button type="button" id="tbg-mes-sig" aria-label="Mes siguiente" onclick="tbGastosMes(1)">&#8250;</button>
+            </div>
+          </div>
+          <p class="tbg-titular" id="tbg-titular"></p>
+          <dl class="tbg-cuenta" id="tbg-cuenta"></dl>
+          <p class="tbg-nota" id="tbg-equilibrio" hidden></p>
+          <p class="tbg-aviso" id="tbg-aviso"></p>
+          <div class="tbg-gastos-cab">
+            <div>
+              <h3 class="tbg-h3">Gastos de <span id="tbg-gastos-mes"></span></h3>
+              <p class="tbg-nota">Luz, agua, gas, internet, arriendo, nómina y otros. Cada mes puede costar distinto: corrija el valor del mes sin cambiar los demás.</p>
+            </div>
+            <button type="button" class="tbv-btn tbg-btn" onclick="tbGastoAbrir()">Agregar gasto</button>
+          </div>
+          <div id="tbg-lista"></div>
+          <p class="tbg-nota" style="margin-top:12px">Las compras de mercancía no se anotan aquí: ya están en el costo de lo que vende.</p>
+        </section>
+
         <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden mb-5">
           <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between gap-3 flex-wrap">
             <h2 class="text-sm font-bold text-gray-900 dark:text-white">Costo por producto</h2>
@@ -854,6 +882,11 @@
           <input id="prod-precio" type="number" min="0" step="0.01" placeholder="Lo que cobra" oninput="actualizarUtilidadForm()"
             class="w-full px-3.5 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-400 transition placeholder-gray-400"/>
         </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">Costo oculto por unidad</label>
+          <input id="prod-costo-oculto" type="number" min="0" step="0.01" placeholder="Empaque, bolsa, flete..." oninput="actualizarUtilidadForm()"
+            class="w-full px-3.5 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-400 transition placeholder-gray-400"/>
+        </div>
         <div id="prod-utilidad" class="col-span-2 tb-utilidad" data-estado="vacio">
           <div class="tb-utilidad-fila">
             <span class="tb-utilidad-label">Utilidad por unidad</span>
@@ -863,6 +896,7 @@
           <div class="tb-utilidad-barra"><i id="prod-utilidad-barra"></i></div>
           <p id="prod-utilidad-nota" class="tb-utilidad-nota">Escriba el precio de compra y el de venta para ver cuánto gana por unidad.</p>
         </div>
+        <div id="prod-real" class="tbg-real" hidden></div>
         <div id="prod-manejo-wrap" class="col-span-2 hidden">
           <label class="block text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wider">¿Cómo se controla este producto?</label>
           <select id="prod-manejo" onchange="tbProdAplicarFormulario()" class="w-full px-3.5 py-2.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-400 transition placeholder-gray-400">
@@ -1167,6 +1201,7 @@
         <span class="text-sm font-semibold text-gray-600 dark:text-gray-300">Total a cobrar</span>
         <span id="ven-total-display" class="text-lg font-extrabold text-brand-600 dark:text-brand-400">$ 0</span>
       </div>
+      <label class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400"><input type="checkbox" class="cmp-auto" onchange="tbComprobanteAlCobrar(this.checked)" /> Mostrar el comprobante para imprimir al cobrar</label>
       <p id="ven-error" class="text-red-500 text-xs font-medium hidden"></p>
     </div>
     <div class="flex justify-end gap-2.5 px-6 py-4 border-t border-gray-100 dark:border-gray-700">
@@ -1244,6 +1279,7 @@
           <span class="text-sm font-semibold text-gray-600 dark:text-gray-300">Total <span id="vqr-unidades" class="font-normal text-gray-400"></span></span>
           <span id="vqr-total" class="text-lg font-extrabold text-brand-600 dark:text-brand-400">$ 0</span>
         </div>
+        <label class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400"><input type="checkbox" class="cmp-auto" onchange="tbComprobanteAlCobrar(this.checked)" /> Mostrar el comprobante para imprimir al cobrar</label>
         <p id="vqr-error" class="text-red-500 text-xs font-medium hidden mt-2"></p>
       </div>
     </div>
@@ -1269,6 +1305,68 @@
     <div class="flex gap-2.5 px-6 pb-5">
       <button onclick="closeModal('modal-confirm')" class="flex-1 px-4 py-2 text-sm font-semibold text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition">Cancelar</button>
       <button id="confirm-btn" class="flex-1 px-4 py-2 text-sm font-semibold text-white bg-red-500 hover:bg-red-600 rounded-xl transition">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Gasto del negocio -->
+<div id="modal-gasto" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden items-center justify-center p-4" onclick="closeModalOnOverlay(event,'modal-gasto')">
+  <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md border border-gray-100 dark:border-gray-700 animate-slide-up" role="dialog" aria-modal="true" aria-labelledby="gas-titulo">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+      <h3 id="gas-titulo" class="text-base font-bold text-gray-900 dark:text-white">Agregar gasto</h3>
+      <button type="button" onclick="closeModal('modal-gasto')" aria-label="Cerrar" class="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg">&#10005;</button>
+    </div>
+    <form class="tbg-form" onsubmit="event.preventDefault(); tbGastoGuardar();">
+      <div class="fila2">
+        <label>Clase de gasto
+          <select id="gas-clase"><option value="AGUA">Agua</option><option value="LUZ">Luz</option><option value="GAS">Gas</option><option value="INTERNET">Internet</option><option value="ARRIENDO">Arriendo</option><option value="NOMINA">Nómina</option><option value="OTRO">Otro</option></select>
+        </label>
+        <label>Cuánto costó
+          <input id="gas-monto" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Valor del mes" />
+        </label>
+      </div>
+      <label>Descripción (opcional)
+        <input id="gas-descripcion" type="text" maxlength="150" placeholder="Ej: recibo de noviembre, sueldo de Ana" />
+      </label>
+      <div class="fila2">
+        <label>Mes al que corresponde
+          <input id="gas-mes" type="month" />
+        </label>
+        <label>Fecha de pago
+          <input id="gas-fecha" type="date" />
+        </label>
+      </div>
+      <label class="repite" id="gas-repite-wrap"><input id="gas-recurrente" type="checkbox" />
+        <span>Se repite cada mes (arriendo, internet, nómina...). El mes siguiente se crea solo con este valor y usted lo corrige si cambió.</span>
+      </label>
+      <p class="tbg-nota" id="gas-copia-nota" hidden>Este gasto salió de un gasto fijo. Corregirlo cambia solo este mes.</p>
+      <p class="error" id="gas-error" hidden></p>
+      <div class="tbg-pie" style="margin: 0 -24px -20px">
+        <button type="button" class="sec" onclick="closeModal('modal-gasto')">Cancelar</button>
+        <button type="submit" class="tbv-btn tbg-btn">Guardar gasto</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: Comprobante de venta -->
+<div id="modal-comprobante" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden items-center justify-center p-4" onclick="closeModalOnOverlay(event,'modal-comprobante')">
+  <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-2xl border border-gray-100 dark:border-gray-700 animate-slide-up" role="dialog" aria-modal="true" aria-labelledby="cmp-titulo">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-700">
+      <h3 id="cmp-titulo" class="text-base font-bold text-gray-900 dark:text-white">Comprobante de venta</h3>
+      <button type="button" onclick="closeModal('modal-comprobante')" aria-label="Cerrar" class="p-1.5 text-gray-400 hover:text-gray-600 rounded-lg">&#10005;</button>
+    </div>
+    <div class="cmp-barra">
+      <div class="formato" id="cmp-formato" role="group" aria-label="Formato">
+        <button type="button" data-f="t80" onclick="tbComprobanteFormato('t80')">Ticket 80 mm</button>
+        <button type="button" data-f="a4" onclick="tbComprobanteFormato('a4')">Carta / A4</button>
+      </div>
+      <span class="tbg-nota" style="margin:0 0 0 auto">En el cuadro de impresión también puede guardarlo como PDF.</span>
+    </div>
+    <div class="cmp-vista" id="cmp-vista"></div>
+    <div class="tbg-pie">
+      <button type="button" class="sec" onclick="closeModal('modal-comprobante')">Cerrar</button>
+      <button type="button" class="tbv-btn tbg-btn" onclick="tbComprobanteImprimir()">Imprimir</button>
     </div>
   </div>
 </div>
@@ -1440,6 +1538,17 @@
           <label class="tb-medio-chip"><input type="checkbox" value="Tarjeta débito" /><span>Tarjeta débito</span></label>
           <label class="tb-medio-chip"><input type="checkbox" value="Tarjeta crédito" /><span>Tarjeta crédito</span></label>
           <label class="tb-medio-chip"><input type="checkbox" value="Fiado" /><span>Fiado</span></label>
+        </div>
+      </div>
+      <div>
+        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Datos del comprobante de venta <span class="text-xs font-normal text-gray-400">(opcional)</span></label>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Salen en el comprobante que se imprime al cliente. No es una factura electrónica de la DIAN.</p>
+        <div class="tbg-datos">
+          <label>NIT o cédula<input id="perfil-nit" type="text" maxlength="30" placeholder="900.123.456-7" /></label>
+          <label>Teléfono<input id="perfil-telefono" type="text" maxlength="30" placeholder="300 123 4567" /></label>
+          <label class="ancho">Dirección<input id="perfil-direccion" type="text" maxlength="100" placeholder="Calle 10 # 5-20, Valledupar" /></label>
+          <label class="ancho">Mensaje al pie<input id="perfil-pie" type="text" maxlength="150" placeholder="Gracias por su compra" /></label>
+          <label class="ancho">Gastos sobre las ventas, en % (opcional)<input id="perfil-carga-gastos" type="text" inputmode="decimal" maxlength="6" placeholder="Vacío: se calcula con el mes anterior" /></label>
         </div>
       </div>
       <div>
@@ -1975,6 +2084,7 @@ function openModalPerfil(perfil) {
   });
   const cfg = (perfil && perfil.configuracion) || {};
   TB_CAMPOS_CUENTA.forEach(function(x) { document.getElementById(x[0]).value = cfg[x[1]] || ''; });
+  if (window.tbDatosNegocioMostrar) tbDatosNegocioMostrar(cfg);
   tbQrPerfil = { cambio: false, dataUrl: '' };
   let qrActual = '';
   if (perfil && perfil.id && window.javaBridge.obtenerQrCobro) {
@@ -2058,6 +2168,7 @@ function submitPerfil() {
   const configuracion = { mediosPago };
   TB_CAMPOS_CUENTA.forEach(function(x) { configuracion[x[1]] = document.getElementById(x[0]).value.trim(); });
   Object.assign(configuracion, tbCapComoConfiguracion());
+  if (window.tbDatosNegocioComoConfiguracion) Object.assign(configuracion, tbDatosNegocioComoConfiguracion());
   const perfil = { id: id || null, nombre, descripcion, color: colorSeleccionado, tipoNegocio, configuracion };
   const r = id
     ? window.javaBridge.editarPerfil(JSON.stringify(perfil))
@@ -3656,7 +3767,7 @@ function tbProdEstablecer(manejo, unidad, variantes) {
 function openModalProducto() {
   state.editMode = { tabla: 'productos', id: null };
   document.getElementById('modal-prod-title').textContent = 'Agregar producto';
-  ['prod-id','prod-nombre','prod-codigo','prod-precio-compra','prod-precio','prod-stock','prod-stock-min','prod-desc','prod-fecha-venc'].forEach(function(id) {
+  ['prod-id','prod-nombre','prod-codigo','prod-precio-compra','prod-precio','prod-costo-oculto','prod-stock','prod-stock-min','prod-desc','prod-fecha-venc'].forEach(function(id) {
     const el = document.getElementById(id); if (el) el.value='';
   });
   document.getElementById('prod-categoria').value = '';
@@ -3727,6 +3838,7 @@ function editarProducto(id) {
   catSelEdit.value = p.categoriaId || '';
   document.getElementById('prod-precio-compra').value = p.precioCompra || '';
   document.getElementById('prod-precio').value    = p.precioVenta || p.precio || '';
+  document.getElementById('prod-costo-oculto').value = p.costoOculto || '';
   actualizarUtilidadForm();
   document.getElementById('prod-stock').value     = p.stock || '';
   document.getElementById('prod-stock-min').value = p.stockMin || '';
@@ -3819,6 +3931,7 @@ function submitProducto() {
     proveedorId: proveedorId,
     precioCompra: precioCompra,
     precioVenta: precio,
+    costoOculto: parseFloat(document.getElementById('prod-costo-oculto').value) || 0,
     stock: manejo === 'VARIANTES' ? 0 : stock,
     stockMin: manejo === 'VARIANTES' ? 0 : stockMin,
     manejo: manejo,
@@ -4390,6 +4503,7 @@ function submitVenta() {
     closeModal('modal-venta');
     cargarEstadoDesdeJava();
     showToast('Venta registrada por $ ' + fmt(cant * precio) + '.');
+    if (window.tbComprobanteTrasVenta) tbComprobanteTrasVenta(resultado);
   }
 }
 
@@ -4649,6 +4763,7 @@ function submitVentaQR() {
   closeModal('modal-venta-qr');
   cargarEstadoDesdeJava();
   showToast('Venta registrada por $ ' + fmt(total) + '.');
+  if (window.tbComprobanteTrasVenta) tbComprobanteTrasVenta(resultado);
 }
 
 // ── ETIQUETAS QR ───────────────────────────────────────────
@@ -5056,5 +5171,6 @@ document.addEventListener('keydown', function(e) {
 <script src="js/tbalance-vistas.js"></script>
 <script src="js/tbalance-sesion.js"></script>
 <script src="js/tbalance-fiados.js"></script>
+<script src="js/tbalance-gastos.js"></script>
 </body>
 </html>

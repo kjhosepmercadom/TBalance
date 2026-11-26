@@ -58,12 +58,23 @@ public class ProfileServicesFactory {
         SaleService ventas = new SaleService(inventario, almacen.ventas(perfilId));
         ventas.usarMediosDePago(metodo -> almacen.perfiles().buscarPorId(perfilId)
                 .map(perfil -> perfil.aceptaMedioPago(metodo)).orElse(true));
+        ExpenseService gastos = new ExpenseService(almacen.gastos(perfilId), ventas);
+        gastos.usarCargaConfigurada(() -> almacen.perfiles().buscarPorId(perfilId)
+                .map(perfil -> perfil.getConfig(Profile.CLAVE_CARGA_GASTOS, null))
+                .map(texto -> {
+                    try {
+                        return Double.valueOf(texto);
+                    } catch (NumberFormatException e) {
+                        return null;
+                    }
+                }).orElse(null));
         return new ProfileServices(
                 inventario,
                 categorias,
                 new SupplierService(almacen.proveedores(perfilId)),
                 new MovementService(inventario, almacen.entradas(perfilId), almacen.salidas(perfilId)),
                 ventas,
-                new CreditService(ventas, almacen.abonos(perfilId)));
+                new CreditService(ventas, almacen.abonos(perfilId)),
+                gastos);
     }
 }

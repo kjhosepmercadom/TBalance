@@ -96,4 +96,9 @@ public class JsonStorageProvider implements StorageProvider {
     public Repository<Sale> ventas(String perfilId) {
         return new SaleRepository(directorios.crear(perfilId));
     }
+
+    @Override
+    public Repository<sistemainventario.model.Expense> gastos(String perfilId) {
+        return new ExpenseRepository(directorios.crear(perfilId));
+    }
 }

@@ -45,6 +45,8 @@ public class Product extends IdentifiedEntity implements Deshabilitable {
     private String proveedorId;
     private double precioCompra;
     private double precioVenta;
+    /** Costo por unidad que no se ve en la venta (empaque, bolsa, flete, comisión). */
+    private double costoOculto;
     private BigDecimal stock;
     private BigDecimal stockMin;
     private ManejoProducto manejo;
@@ -93,6 +95,9 @@ public class Product extends IdentifiedEntity implements Deshabilitable {
         }
         if (precioCompra < 0 || precioVenta < 0) {
             throw new ValidationException("Los precios no pueden ser negativos");
+        }
+        if (costoOculto < 0 || Double.isNaN(costoOculto)) {
+            throw new ValidationException("El costo oculto no puede ser negativo");
         }
         if (QuantityUtil.esNegativa(getStock()) || QuantityUtil.esNegativa(getStockMin())) {
             throw new ValidationException("El stock no puede ser negativo");
@@ -396,6 +401,23 @@ public class Product extends IdentifiedEntity implements Deshabilitable {
 
     public void setProveedorId(String proveedorId) {
         this.proveedorId = proveedorId;
+    }
+
+    /** @return costo oculto por unidad (0 si no tiene) */
+    public double getCostoOculto() {
+        return costoOculto;
+    }
+
+    /** @param costoOculto costo extra por unidad; no puede ser negativo */
+    public void setCostoOculto(double costoOculto) {
+        this.costoOculto = Math.max(0, costoOculto);
+    }
+
+    /**
+     * @return ganancia por unidad después del costo de compra y del costo oculto
+     */
+    public double getGananciaRealUnidad() {
+        return getPrecioVenta() - getPrecioCompra() - costoOculto;
     }
 
     public double getPrecioCompra() {

@@ -58,6 +58,12 @@ public class AccessPolicy {
             Map.entry("obtenerInforme", Permiso.INFORMES),
             Map.entry("exportarInformeExcel", Permiso.INFORMES),
             Map.entry("obtenerCostos", Permiso.COSTOS),
+            Map.entry("obtenerGastos", Permiso.COSTOS),
+            Map.entry("obtenerGastosRecurrentes", Permiso.COSTOS),
+            Map.entry("guardarGasto", Permiso.COSTOS),
+            Map.entry("eliminarGasto", Permiso.COSTOS),
+            Map.entry("obtenerUtilidadNeta", Permiso.COSTOS),
+            Map.entry("obtenerCargaGastos", Permiso.VER_GANANCIA),
             Map.entry("listarFiados", Permiso.VENDER),
             Map.entry("resumenFiados", Permiso.VENDER),
             Map.entry("obtenerQrCobro", Permiso.VENDER),
@@ -93,7 +99,7 @@ public class AccessPolicy {
             "obtenerProductos", "buscarProductos", "filtrarProductosPorCategoria", "obtenerProductosVencidos",
             "obtenerProductosPorVencer", "obtenerVentas", "obtenerVentasAnuladas", "obtenerEstadisticas",
             "listarFiados", "obtenerFiado");
-    private static final Set<String> CAMPOS_COSTO = Set.of("precioCompra", "costoUnitario", "utilidadEstimada", "utilidad");
+    private static final Set<String> CAMPOS_COSTO = Set.of("precioCompra", "costoUnitario", "costoOculto", "utilidadEstimada", "utilidad");
 
     private final AppContext contexto;
 

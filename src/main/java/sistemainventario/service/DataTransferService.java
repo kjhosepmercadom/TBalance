@@ -48,6 +48,7 @@ public class DataTransferService {
             copiarTodo(origen.entradas(id).listarTodos(), destino.entradas(id));
             copiarTodo(origen.salidas(id).listarTodos(), destino.salidas(id));
             copiarTodo(origen.abonos(id).listarTodos(), destino.abonos(id));
+            copiarGastos(origen.gastos(id).listarTodos(), destino.gastos(id));
             ventas += copiarTodo(origen.ventas(id).listarTodos(), destino.ventas(id));
         }
         // las personas van después de los negocios: sus accesos apuntan a ellos
@@ -93,6 +94,12 @@ public class DataTransferService {
         for (Profile perfil : perfiles.listarTodos()) {
             perfiles.eliminar(perfil.getId());
         }
+    }
+
+    /** Los gastos fijos (plantillas) van primero: sus copias mensuales apuntan a ellos. */
+    private static void copiarGastos(List<sistemainventario.model.Expense> datos, Repository<sistemainventario.model.Expense> destino) {
+        datos.stream().filter(g -> g.getOrigenId() == null).forEach(destino::agregar);
+        datos.stream().filter(g -> g.getOrigenId() != null).forEach(destino::agregar);
     }
 
     private static <T extends IdentifiedEntity> int copiarTodo(List<T> datos, Repository<T> destino) {
