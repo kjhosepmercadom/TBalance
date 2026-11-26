@@ -49,6 +49,7 @@ public class JavaBridge {
     private final CostController costos;
     private final ExpenseController gastos;
     private final AltaController alta;
+    private final FotoController fotos;
     private final CreditController fiados;
     private final SessionController sesion;
     private final ViewNotifier notificador;
@@ -78,6 +79,7 @@ public class JavaBridge {
         this.costos = new CostController(contexto);
         this.gastos = new ExpenseController(contexto);
         this.alta = new AltaController(contexto);
+        this.fotos = new FotoController(contexto);
         this.fiados = new CreditController(contexto);
         this.sesion = new SessionController(contexto);
         this.etiquetas = new LabelController(contexto, new DesktopFileOpener());
@@ -592,6 +594,55 @@ public class JavaBridge {
     /** @return número que cambia cuando otro equipo guardó algo en la misma base */
     public String revisarCambios() {
         return almacenamiento.revisarCambios();
+    }
+
+    // ---- Fotos de producto (v3.9.0) -------------------------------------------
+
+    /** @return si el negocio usa fotos, qué productos tienen y cuánto espacio ocupan */
+    public String obtenerEstadoFotos() {
+        return fotos.obtenerEstadoFotos();
+    }
+
+    /**
+     * @param productoId producto
+     * @return su foto como data URL o vacío
+     */
+    public String obtenerFotoProducto(String productoId) {
+        return fotos.obtenerFotoProducto(productoId);
+    }
+
+    /**
+     * @param productoId producto
+     * @param dataUrl    foto ya reducida
+     * @return OK o el error
+     */
+    public String guardarFotoProducto(String productoId, String dataUrl) {
+        return fotos.guardarFotoProducto(productoId, dataUrl);
+    }
+
+    /**
+     * @param jsonProducto producto en JSON
+     * @param foto         vacío, "QUITAR" o la foto reducida
+     * @return OK, OK_SIN_FOTO con el motivo, o el error
+     */
+    public String guardarProductoConFoto(String jsonProducto, String foto) {
+        return fotos.guardarProductoConFoto(jsonProducto, foto);
+    }
+
+    /**
+     * @param productoId producto
+     * @return OK o el error
+     */
+    public String quitarFotoProducto(String productoId) {
+        return fotos.quitarFotoProducto(productoId);
+    }
+
+    /**
+     * @param usar "true" para usar fotos en el negocio abierto
+     * @return OK o el error
+     */
+    public String usarFotosProducto(String usar) {
+        return fotos.usarFotosProducto(usar);
     }
 
     // ---- QR de cobro ---------------------------------------------------------

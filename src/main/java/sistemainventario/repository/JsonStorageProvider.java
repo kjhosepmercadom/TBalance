@@ -68,6 +68,11 @@ public class JsonStorageProvider implements StorageProvider {
     }
 
     @Override
+    public FotoStore fotos(String perfilId) {
+        return new FotoFileStore(directorios.crear(perfilId).resolve("fotos"));
+    }
+
+    @Override
     public Repository<Category> categorias(String perfilId) {
         return new CategoryRepository(directorios.crear(perfilId));
     }
