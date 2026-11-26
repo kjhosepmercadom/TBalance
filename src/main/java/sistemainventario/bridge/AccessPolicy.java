@@ -41,6 +41,7 @@ public class AccessPolicy {
             Map.entry("plantillaDesdeProducto", Permiso.EDITAR_CATALOGO),
             Map.entry("revisarListaProductos", Permiso.EDITAR_CATALOGO),
             Map.entry("importarListaProductos", Permiso.EDITAR_CATALOGO),
+            Map.entry("leerArchivoLista", Permiso.EDITAR_CATALOGO),
             Map.entry("obtenerPoliticaPrecio", Permiso.EDITAR_CATALOGO),
             Map.entry("guardarPoliticaPrecio", Permiso.EDITAR_CATALOGO),
             Map.entry("guardarProductoConFoto", Permiso.EDITAR_CATALOGO),
