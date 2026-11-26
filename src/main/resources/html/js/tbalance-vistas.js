@@ -73,7 +73,7 @@
   const msVenta = v => { const m = /(\d{13})/.exec(String(v.id || '')); return m ? +m[1] : 0; };
 
   // ── Cálculos sobre los datos del perfil ──
-  const ganancia = v => (v.items || []).reduce((t, it) => t + (it.costoUnitario > 0 ? (it.precioUnitario - it.costoUnitario) * it.cantidad : 0), 0);
+  const ganancia = v => (v.items || []).reduce((t, it) => t + (it.costoUnitario > 0 ? (it.precioUnitario - it.costoUnitario - (it.costoOculto || 0)) * it.cantidad : 0), 0);
   const ventasDe = f => state.ventas.filter(v => String(v.fecha || '').slice(0, 10) === f);
   const esCredito = v => /fiado|cr[eé]dito$/i.test(v.metodoPago || '') && !/tarjeta/i.test(v.metodoPago || '');
   const esDigital = v => !esCredito(v) && !/efectivo/i.test(v.metodoPago || 'Efectivo');
@@ -218,7 +218,7 @@
       const cred = suma(esCredito);
       return '<section><div class="tbv-dia"><h2 class="tbv-h2" style="margin:0">' + nombre.charAt(0).toUpperCase() + nombre.slice(1) + '</h2><span class="tot tbv-num">' + vs.length + (vs.length === 1 ? ' venta' : ' ventas') +
         ' · Efectivo <b>' + pesos(suma(v => !esCredito(v) && !esDigital(v))) + '</b> · Digital <b>' + pesos(suma(esDigital)) + '</b>' + (cred ? ' · ' + (palabraCredito() === 'fiado' ? 'Fiado' : 'A crédito') + ' <b>' + pesos(cred) + '</b>' : '') + ' · Total <b>' + pesos(suma(() => true)) + '</b></span></div>' +
-        '<div class="tbv-card">' + vs.map(v => '<div class="tbv-venta"><time class="tbv-num">' + (horaVenta(v) || '—') + '</time><span class="p">' + e(resumenProductos(v)) + '</span><span class="pago">' + e(v.metodoPago || 'Efectivo') + (v.referenciaPago ? ' · ' + e(v.referenciaPago) : '') + (esCredito(v) && v.cliente ? ' · ' + e(v.cliente) : '') + '</span><b class="tbv-num">' + pesos(v.total) + '</b>' + link('Anular', "confirmarEliminar('" + v.id + "','ventas')") + '</div>').join('') + '</div></section>';
+        '<div class="tbv-card">' + vs.map(v => '<div class="tbv-venta"><time class="tbv-num">' + (horaVenta(v) || '—') + '</time><span class="p">' + e(resumenProductos(v)) + '</span><span class="pago">' + e(v.metodoPago || 'Efectivo') + (v.referenciaPago ? ' · ' + e(v.referenciaPago) : '') + (esCredito(v) && v.cliente ? ' · ' + e(v.cliente) : '') + '</span><b class="tbv-num">' + pesos(v.total) + '</b>' + '<span class="tbv-acc">' + link('Imprimir', "tbComprobanteAbrir('" + v.id + "')") + link('Anular', "confirmarEliminar('" + v.id + "','ventas')") + '</span>' + '</div>').join('') + '</div></section>';
     }).join('') + (claves.length > diasVisibles ? '<div>' + link('Ver ' + Math.min(7, claves.length - diasVisibles) + ' días más', 'tbvMasDias()') + '</div>' : '');
   }
   window.tbvMasDias = function () { diasVisibles += 7; renderCuaderno(); };
