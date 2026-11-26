@@ -24,12 +24,12 @@ public class StockEntryJdbcRepository extends JdbcRepository<StockEntry> {
 
     @Override
     protected List<String> columnas() {
-        return List.of("PRODUCTO_ID", "CANTIDAD", "FECHA", "PROVEEDOR_ID", "PRECIO_UNITARIO", "OBSERVACION", "ESTADO", "FECHA_REGISTRO", "FECHA_ANULACION", "MOTIVO_ANULACION", "ANULADA_POR");
+        return List.of("PRODUCTO_ID", "VARIANTE_ID", "CANTIDAD", "FECHA", "PROVEEDOR_ID", "PRECIO_UNITARIO", "OBSERVACION", "ESTADO", "FECHA_REGISTRO", "FECHA_ANULACION", "MOTIVO_ANULACION", "ANULADA_POR");
     }
 
     @Override
     protected Object[] valores(StockEntry e) {
-        return new Object[]{e.getProductoId(), e.getCantidad(), momento(e.getFecha()), texto(e.getProveedorId()),
+        return new Object[]{e.getProductoId(), texto(e.getVarianteId()), e.getCantidad(), momento(e.getFecha()), texto(e.getProveedorId()),
                 e.getPrecioUnitario(), texto(e.getObservacion()), texto(e.getEstado()), momento(e.getFechaRegistro()),
                 momento(e.getFechaAnulacion()), texto(e.getMotivoAnulacion()), texto(e.getAnuladaPor())};
     }
@@ -39,7 +39,8 @@ public class StockEntryJdbcRepository extends JdbcRepository<StockEntry> {
         StockEntry e = new StockEntry();
         e.setId(fila.getString("ID"));
         e.setProductoId(fila.getString("PRODUCTO_ID"));
-        e.setCantidad(fila.getInt("CANTIDAD"));
+        e.setVarianteId(fila.getString("VARIANTE_ID"));
+        e.setCantidad(leerCantidad(fila, "CANTIDAD"));
         e.setFecha(leerMomento(fila, "FECHA"));
         e.setProveedorId(fila.getString("PROVEEDOR_ID"));
         e.setPrecioUnitario(leerNumero(fila, "PRECIO_UNITARIO"));

@@ -99,7 +99,7 @@ public class ReportService {
             for (SaleItem item : venta.getItems()) {
                 suma.sumar(item, costoDe(item));
                 productos.append(productos.length() > 0 ? ", " : "")
-                        .append(item.getCantidad()).append(" × ").append(nombreDe(item));
+                        .append(sistemainventario.util.QuantityUtil.texto(item.getCantidad())).append(" × ").append(nombreDe(item));
             }
             lineas.add(new SalesReport.SaleLine(fechaDe(venta).map(LocalDate::toString).orElse(""), venta.getId(),
                     venta.getCliente(), venta.getMetodoPago(), venta.getReferenciaPago(), productos.toString(),
@@ -141,17 +141,17 @@ public class ReportService {
     private SalesReport.Totals totales(List<Sale> lista) {
         double total = 0;
         double utilidad = 0;
-        int unidades = 0;
-        int sinCosto = 0;
+        double unidades = 0;
+        double sinCosto = 0;
         for (Sale venta : lista) {
             total += venta.getTotal();
             for (SaleItem item : venta.getItems()) {
-                unidades += item.getCantidad();
+                unidades += item.getCantidad().doubleValue();
                 double costo = costoDe(item);
                 if (costo > 0) {
                     utilidad += item.utilidadCon(costo);
                 } else {
-                    sinCosto += item.getCantidad();
+                    sinCosto += item.getCantidad().doubleValue();
                 }
             }
         }
@@ -222,7 +222,7 @@ public class ReportService {
         List<SalesReport.ProductRanking> resultado = new ArrayList<>();
         porProducto.forEach((id, p) -> resultado.add(new SalesReport.ProductRanking(
                 id, p.nombre, p.unidades, p.ventas, p.utilidad, p.conCosto)));
-        resultado.sort(Comparator.comparingInt(SalesReport.ProductRanking::unidades).reversed()
+        resultado.sort(Comparator.comparingDouble(SalesReport.ProductRanking::unidades).reversed()
                 .thenComparing(Comparator.comparingDouble(SalesReport.ProductRanking::ventas).reversed()));
         return resultado.size() > TOPE_PRODUCTOS ? resultado.subList(0, TOPE_PRODUCTOS) : resultado;
     }
@@ -251,13 +251,13 @@ public class ReportService {
         private String nombre;
         private double ventas;
         private double utilidad;
-        private int unidades;
+        private double unidades;
         private int numero;
         private boolean conCosto = true;
 
         private void sumar(SaleItem item, double costo) {
             ventas += item.getSubtotal();
-            unidades += item.getCantidad();
+            unidades += item.getCantidad().doubleValue();
             if (costo > 0) {
                 utilidad += item.utilidadCon(costo);
             } else {

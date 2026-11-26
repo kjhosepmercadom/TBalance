@@ -4,10 +4,12 @@ import sistemainventario.exception.ValidationException;
 import sistemainventario.model.Product;
 import sistemainventario.model.Sale;
 import sistemainventario.model.SaleItem;
+import sistemainventario.model.StockKey;
 import sistemainventario.repository.Repository;
 import sistemainventario.util.DateUtil;
 import sistemainventario.util.IdGenerator;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -66,7 +68,7 @@ public class SaleService {
             throw new ValidationException("Este negocio no tiene activo el pago con " + venta.getMetodoPago()
                     + ". Actívelo en Editar negocio o elija otro medio.");
         }
-        Map<String, Integer> cantidades = venta.cantidadesPorProducto();
+        Map<StockKey, BigDecimal> cantidades = venta.cantidadesPorProducto();
         verificarStock(cantidades);
         guardarCostos(venta);
         descontarStock(cantidades);
@@ -75,9 +77,9 @@ public class SaleService {
         return venta;
     }
 
-    private void verificarStock(Map<String, Integer> cantidades) {
-        cantidades.forEach((productoId, cantidad) ->
-                inventario.obtenerHabilitado(productoId).verificarStockDisponible(cantidad));
+    private void verificarStock(Map<StockKey, BigDecimal> cantidades) {
+        cantidades.forEach((clave, cantidad) ->
+                inventario.obtenerHabilitado(clave.productoId()).verificarStockDisponible(cantidad));
     }
 
     /** Guarda en cada ítem el precio de compra actual del producto, para la utilidad real. */
@@ -87,9 +89,9 @@ public class SaleService {
         }
     }
 
-    private void descontarStock(Map<String, Integer> cantidades) {
-        cantidades.forEach((productoId, cantidad) -> {
-            Product producto = inventario.obtener(productoId);
+    private void descontarStock(Map<StockKey, BigDecimal> cantidades) {
+        cantidades.forEach((clave, cantidad) -> {
+            Product producto = inventario.obtener(clave.productoId());
             producto.disminuirStock(cantidad);
             inventario.registrarCambioDeStock(producto);
         });
@@ -139,8 +141,8 @@ public class SaleService {
         Sale venta = obtener(id);
         venta.anular(DateUtil.ahora(), motivo);
         venta.setAnuladaPor(quien);
-        venta.cantidadesPorProducto().forEach((productoId, cantidad) ->
-                inventario.buscarPorId(productoId).ifPresent(producto -> {
+        venta.cantidadesPorProducto().forEach((clave, cantidad) ->
+                inventario.buscarPorId(clave.productoId()).ifPresent(producto -> {
                     producto.aumentarStock(cantidad);
                     inventario.registrarCambioDeStock(producto);
                 }));

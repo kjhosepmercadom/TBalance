@@ -242,6 +242,11 @@ public abstract class JdbcRepository<T extends IdentifiedEntity> implements Repo
         return fecha.toLocalTime().equals(LocalTime.MIDNIGHT) ? fecha.toLocalDate().toString() : fecha.format(FECHA_HORA);
     }
 
+    /** @return la columna de cantidad (NUMERIC(13,3)) sin ceros de sobra (0 si es nula) */
+    protected static java.math.BigDecimal leerCantidad(ResultSet fila, String columna) throws SQLException {
+        return sistemainventario.util.QuantityUtil.normal(fila.getBigDecimal(columna));
+    }
+
     /** @return la columna numérica como double (0 si es nula) */
     protected static double leerNumero(ResultSet fila, String columna) throws SQLException {
         java.math.BigDecimal valor = fila.getBigDecimal(columna);

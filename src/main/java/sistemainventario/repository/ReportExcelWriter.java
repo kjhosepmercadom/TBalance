@@ -128,7 +128,7 @@ public class ReportExcelWriter {
             r++;
             h.fila(r, 16, texto("A" + r, a.unidadesSinCosto() == 1
                     ? "Nota: 1 unidad vendida no tiene precio de compra y no suma a la utilidad."
-                    : "Nota: " + a.unidadesSinCosto() + " unidades vendidas no tienen precio de compra y no suman a la utilidad.", NOTA));
+                    : "Nota: " + sistemainventario.util.QuantityUtil.texto(java.math.BigDecimal.valueOf(a.unidadesSinCosto())) + " unidades vendidas no tienen precio de compra y no suman a la utilidad.", NOTA));
             h.unir("A" + r + ":D" + r);
         }
         r += 2;

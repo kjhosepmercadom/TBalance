@@ -8,6 +8,7 @@ import sistemainventario.model.StockExit;
 import sistemainventario.repository.Repository;
 import sistemainventario.util.DateUtil;
 import sistemainventario.util.IdGenerator;
+import sistemainventario.util.QuantityUtil;
 
 import java.util.List;
 import java.util.Objects;
@@ -80,9 +81,10 @@ public class MovementService {
     public StockEntry anularEntrada(String id, String motivo, String quien) {
         StockEntry entrada = entradas.buscarPorId(id).orElseThrow(() -> new ValidationException("Entrada no encontrada"));
         Product producto = inventario.obtener(entrada.getProductoId());
-        if (!entrada.isAnulada() && producto.getStock() < entrada.getCantidad()) {
+        if (!entrada.isAnulada() && producto.getStock().compareTo(entrada.getCantidad()) < 0) {
             throw new ValidationException("No se puede anular: ya salieron unidades de esa entrada (stock actual "
-                    + producto.getStock() + ", la entrada sumó " + entrada.getCantidad() + ")");
+                    + QuantityUtil.texto(producto.getStock()) + ", la entrada sumó "
+                    + QuantityUtil.texto(entrada.getCantidad()) + ")");
         }
         entrada.anular(DateUtil.ahora(), motivo);
         entrada.setAnuladaPor(quien);

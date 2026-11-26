@@ -1,7 +1,10 @@
 package sistemainventario.model;
 
 import sistemainventario.exception.ValidationException;
+import sistemainventario.util.QuantityUtil;
 import sistemainventario.util.TextUtil;
+
+import java.math.BigDecimal;
 
 /**
  * Línea de detalle de una {@link Sale}: producto, cantidad y precio.
@@ -14,7 +17,11 @@ public class SaleItem {
 
     private String productoId;
     private String nombreProducto;
-    private int cantidad;
+    /** Talla/color vendido (v3.6.0); {@code null} en un producto simple. */
+    private String varianteId;
+    /** "M / Azul": se copia al vender para que el historial no cambie si después se edita la variante. */
+    private String descripcionVariante;
+    private BigDecimal cantidad;
     private double precioUnitario;
     private double subtotal;
     /**
@@ -32,10 +39,10 @@ public class SaleItem {
      * Visibilidad de paquete: según GRASP Creator, solo {@link Sale}
      * (que agrega sus ítems) crea instancias con datos.
      */
-    SaleItem(String productoId, String nombreProducto, int cantidad, double precioUnitario) {
+    SaleItem(String productoId, String nombreProducto, BigDecimal cantidad, double precioUnitario) {
         this.productoId = productoId;
         this.nombreProducto = nombreProducto;
-        this.cantidad = cantidad;
+        this.cantidad = QuantityUtil.normal(cantidad);
         this.precioUnitario = precioUnitario;
         sincronizarSubtotal();
     }
@@ -48,7 +55,7 @@ public class SaleItem {
         if (TextUtil.esVacio(productoId)) {
             throw new ValidationException("Cada item de la venta debe tener un producto");
         }
-        if (cantidad <= 0) {
+        if (!QuantityUtil.esPositiva(cantidad)) {
             throw new ValidationException("La cantidad vendida debe ser mayor que cero");
         }
         if (precioUnitario < 0) {
@@ -66,7 +73,7 @@ public class SaleItem {
      * @return utilidad del ítem: (precio de venta - costo) por cantidad
      */
     public double utilidadCon(double costo) {
-        return (precioUnitario - costo) * cantidad;
+        return (precioUnitario - costo) * getCantidad().doubleValue();
     }
 
     public double getCostoUnitario() {
@@ -79,7 +86,7 @@ public class SaleItem {
 
     /** @return cantidad × precio unitario, siempre calculado */
     public double getSubtotal() {
-        return cantidad * precioUnitario;
+        return getCantidad().doubleValue() * precioUnitario;
     }
 
     /** Actualiza el atributo persistido con el subtotal calculado. */
@@ -103,13 +110,37 @@ public class SaleItem {
         this.nombreProducto = nombreProducto;
     }
 
-    public int getCantidad() {
-        return cantidad;
+    public BigDecimal getCantidad() {
+        return cantidad == null ? BigDecimal.ZERO : cantidad;
     }
 
-    public void setCantidad(int cantidad) {
-        this.cantidad = cantidad;
+    public void setCantidad(BigDecimal cantidad) {
+        this.cantidad = QuantityUtil.normal(cantidad);
         sincronizarSubtotal();
+    }
+
+    /** @return la variante vendida, o {@code null} */
+    public String getVarianteId() {
+        return TextUtil.esVacio(varianteId) ? null : varianteId;
+    }
+
+    public void setVarianteId(String varianteId) {
+        this.varianteId = varianteId;
+    }
+
+    /** @return por ejemplo "M / Azul", o {@code null} */
+    public String getDescripcionVariante() {
+        return TextUtil.esVacio(descripcionVariante) ? null : descripcionVariante;
+    }
+
+    public void setDescripcionVariante(String descripcionVariante) {
+        this.descripcionVariante = descripcionVariante;
+    }
+
+    /** @return el producto con su talla: "Camiseta deportiva — M / Azul" */
+    public String getNombreConVariante() {
+        String base = nombreProducto == null ? "" : nombreProducto;
+        return getDescripcionVariante() == null ? base : base + " — " + getDescripcionVariante();
     }
 
     public double getPrecioUnitario() {
