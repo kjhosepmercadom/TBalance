@@ -36,6 +36,21 @@ public interface SqlDialect {
     boolean tablaExiste(Connection conexion, String tabla) throws SQLException;
 
     /**
+     * Dice si una tabla tiene una columna. Por defecto responde {@code true} (no se revisa):
+     * solo PostgreSQL lo usa, para aplicar el cambio de los tipos de negocio según lo que
+     * tiene la base y no solo según el número de versión.
+     *
+     * @param conexion conexión abierta
+     * @param tabla    nombre de la tabla
+     * @param columna  nombre de la columna
+     * @return {@code true} si la tabla tiene esa columna
+     * @throws SQLException si la base no responde
+     */
+    default boolean columnaExiste(Connection conexion, String tabla, String columna) throws SQLException {
+        return true;
+    }
+
+    /**
      * @param script contenido de un archivo .sql
      * @return sentencias listas para enviar una por una por JDBC
      */
