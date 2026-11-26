@@ -95,6 +95,7 @@ public class ProfileService {
                 datos.getColor(),
                 datos.getTipoNegocio());
         perfil.copiarAjustesDePago(datos);
+        perfil.copiarDatosComprobante(datos);
         if (BusinessCapabilities.estanGuardadas(datos.getConfiguracion())) {
             perfil.setCapacidades(perfil.capacidadesPedidas(datos));
         }
@@ -128,6 +129,7 @@ public class ProfileService {
         }
         perfil.actualizarDatos(cambios.getNombre(), cambios.getDescripcion(), cambios.getColor());
         perfil.copiarAjustesDePago(cambios);
+        perfil.copiarDatosComprobante(cambios);
         if (BusinessCapabilities.estanGuardadas(cambios.getConfiguracion())) {
             perfil.setCapacidades(pedidas);
         }

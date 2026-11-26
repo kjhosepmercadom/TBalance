@@ -36,6 +36,8 @@ public class AuditTrail {
             Map.entry("registrarAbono", "Registró un abono de un fiado"),
             Map.entry("anularAbono", "Anuló un abono de un fiado"),
             Map.entry("guardarProducto", "Guardó un producto"),
+            Map.entry("guardarGasto", "Guardó un gasto del negocio"),
+            Map.entry("eliminarGasto", "Quitó un gasto del negocio"),
             Map.entry("cambiarEstadoProducto", "producto"),
             Map.entry("guardarCategoria", "Guardó una categoría"),
             Map.entry("cambiarEstadoCategoria", "categoría"),
@@ -63,7 +65,7 @@ public class AuditTrail {
 
     /** Campos que se pueden copiar al detalle (nunca la clave). */
     private static final List<String> CAMPOS = List.of("nombre", "nombreProducto", "productoNombre", "cantidad",
-            "total", "monto", "metodoPago", "cliente", "clienteDocumento", "tipo", "motivo", "usuario", "rol", "referencia");
+            "total", "monto", "metodoPago", "cliente", "clienteDocumento", "tipo", "categoria", "periodo", "motivo", "usuario", "rol", "referencia");
 
     /** Quién y dónde, tomado antes de la llamada (cerrar sesión, por ejemplo, la borra). */
     public record Momento(Optional<User> persona, String perfilId) {

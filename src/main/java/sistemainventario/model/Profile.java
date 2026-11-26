@@ -166,6 +166,51 @@ public class Profile extends IdentifiedEntity implements Deshabilitable {
         }
     }
 
+    /** Datos que salen en el comprobante de venta y su largo máximo (la columna VALOR admite 200). */
+    public static final java.util.Map<String, Integer> CLAVES_COMPROBANTE = java.util.Map.of(
+            "negocio.nit", 30, "negocio.direccion", 100, "negocio.telefono", 30, "negocio.pie", 150);
+    /** Porcentaje de gastos operativos sobre las ventas (opcional; vacío = se calcula con el mes anterior). */
+    public static final String CLAVE_CARGA_GASTOS = "gastos.cargaPct";
+
+    /**
+     * Copia los datos del comprobante (NIT, dirección, teléfono, pie) y el porcentaje de gastos
+     * que llegan de la pantalla. Un valor vacío borra el dato. El resto de la configuración no se toca.
+     *
+     * @param datos perfil recibido de la pantalla
+     */
+    public void copiarDatosComprobante(Profile datos) {
+        if (datos == null || datos.getConfiguracion() == null) {
+            return;
+        }
+        CLAVES_COMPROBANTE.forEach((clave, largo) -> {
+            String valor = datos.getConfiguracion().get(clave);
+            if (valor != null) {
+                String limpio = valor.replaceAll("[\\r\\n\\t]", " ").trim();
+                guardarOQuitar(clave, limpio.length() > largo ? limpio.substring(0, largo) : limpio);
+            }
+        });
+        String carga = datos.getConfiguracion().get(CLAVE_CARGA_GASTOS);
+        if (carga != null) {
+            String limpio = carga.trim().replace(',', '.');
+            try {
+                double pct = limpio.isEmpty() ? -1 : Double.parseDouble(limpio);
+                guardarOQuitar(CLAVE_CARGA_GASTOS, pct >= 0 && pct <= 100 ? limpio : "");
+            } catch (NumberFormatException e) {
+                throw new sistemainventario.exception.ValidationException("El porcentaje de gastos debe ser un número entre 0 y 100");
+            }
+        }
+    }
+
+    private void guardarOQuitar(String clave, String valor) {
+        if (valor.isEmpty()) {
+            if (configuracion != null) {
+                configuracion.remove(clave);
+            }
+        } else {
+            setConfig(clave, valor);
+        }
+    }
+
     /** Clave de configuración con los medios de pago que acepta el negocio. */
     public static final String CLAVE_MEDIOS_PAGO = "mediosPago";
 
