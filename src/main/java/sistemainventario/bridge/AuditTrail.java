@@ -36,6 +36,8 @@ public class AuditTrail {
             Map.entry("registrarAbono", "Registró un abono de un fiado"),
             Map.entry("anularAbono", "Anuló un abono de un fiado"),
             Map.entry("guardarProducto", "Guardó un producto"),
+            Map.entry("importarListaProductos", "Cargó una lista de productos"),
+            Map.entry("guardarPoliticaPrecio", "Cambió el margen y el redondeo de precios"),
             Map.entry("guardarGasto", "Guardó un gasto del negocio"),
             Map.entry("eliminarGasto", "Quitó un gasto del negocio"),
             Map.entry("cambiarEstadoProducto", "producto"),

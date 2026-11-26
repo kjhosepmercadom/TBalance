@@ -139,6 +139,21 @@ public class ProfileService {
     }
 
     /**
+     * Guarda el margen y el redondeo con que el negocio fija sus precios (v3.8.0).
+     *
+     * @param id       ID del negocio
+     * @param politica margen y redondeo elegidos
+     * @return el negocio actualizado
+     */
+    public Profile guardarPoliticaPrecio(String id, sistemainventario.model.PoliticaPrecio politica) {
+        Profile perfil = obtener(id);
+        perfil.setPoliticaPrecio(politica);
+        perfiles.actualizar(perfil);
+        sincronizarConfiguracion();
+        return perfil;
+    }
+
+    /**
      * No deja apagar una capacidad que los productos ya usan: primero hay que
      * cambiar esos productos (por ejemplo, de "Con tallas y colores" a "Simple").
      */
