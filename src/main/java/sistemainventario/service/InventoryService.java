@@ -54,6 +54,11 @@ public class InventoryService extends EntityService<Product> {
         this.capacidades = Objects.requireNonNull(capacidades);
     }
 
+    /** @return lo que maneja el negocio en este momento (tallas, fracciones, vencimiento) */
+    public BusinessCapabilities capacidadesActuales() {
+        return capacidades.get();
+    }
+
     @Override
     protected void validar(Product producto) {
         producto.validar(LocalDate.now());
