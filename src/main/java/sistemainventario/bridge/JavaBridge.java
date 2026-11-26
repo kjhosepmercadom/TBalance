@@ -571,6 +571,27 @@ public class JavaBridge {
         return alta.importarListaProductos(texto);
     }
 
+    /**
+     * Lee un archivo de Excel (.xlsx) o de texto (.csv) que la persona eligió y
+     * lo devuelve como texto para "Varios desde Excel". No guarda nada.
+     *
+     * @param nombre nombre del archivo
+     * @param base64 contenido del archivo en Base64
+     * @return JSON {"texto": "..."} o {"error": "..."}
+     */
+    public String leerArchivoLista(String nombre, String base64) {
+        com.google.gson.JsonObject r = new com.google.gson.JsonObject();
+        try {
+            byte[] datos = java.util.Base64.getDecoder().decode(base64 == null ? "" : base64);
+            r.addProperty("texto", sistemainventario.service.ListaArchivoReader.aTexto(nombre, datos));
+        } catch (sistemainventario.service.ListaArchivoReader.ArchivoInvalido e) {
+            r.addProperty("error", e.getMessage());
+        } catch (IllegalArgumentException e) {
+            r.addProperty("error", "No se pudo leer el archivo.");
+        }
+        return r.toString();
+    }
+
     /** @return margen y redondeo del negocio activo */
     public String obtenerPoliticaPrecio() {
         return alta.obtenerPoliticaPrecio();
